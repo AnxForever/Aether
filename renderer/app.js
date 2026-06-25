@@ -548,20 +548,29 @@
       <div class="message-avatar">${escapeHtml(avatar)}</div>
       <div class="message-content">
         <div class="message-role">${escapeHtml(roleLabel)}</div>
-        <div class="message-text"></div>
+        <div class="message-text">${formatMessage(msg.content)}</div>
         <div class="message-actions">
-          <button class="message-action" data-action="copy">Copy</button>
+          <button class="message-action" data-action="copy-msg">Copy All</button>
           ${msg.role === 'assistant' ? '<button class="message-action" data-action="regenerate">Regenerate</button>' : ''}
         </div>
       </div>
     `;
 
-    const textEl = div.querySelector('.message-text');
-    textEl.innerHTML = formatMessage(msg.content);
+    // Wire up code block copy buttons
+    div.querySelectorAll('.cb-copy-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const code = btn.dataset.code;
+        navigator.clipboard.writeText(code).then(() => {
+          btn.textContent = 'Copied!';
+          setTimeout(() => { btn.textContent = 'Copy'; }, 1500);
+        });
+      });
+    });
 
-    // Action handlers
-    div.querySelector('[data-action="copy"]').addEventListener('click', () => {
+    // Copy full message
+    div.querySelector('[data-action="copy-msg"]').addEventListener('click', () => {
       navigator.clipboard.writeText(msg.content);
+      showToast('Copied', 'Message copied to clipboard', 'success', 2000);
     });
     const regen = div.querySelector('[data-action="regenerate"]');
     if (regen) {
@@ -572,19 +581,61 @@
   }
 
   function formatMessage(content) {
-    // Minimal markdown: code blocks, inline code, line breaks
     let html = escapeHtml(content);
-    // Code blocks ```
-    html = html.replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) =>
-      `<pre><code>${code}</code></pre>`
-    );
+    // Code blocks with language label + copy button
+    html = html.replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) => {
+      const langLabel = lang ? `<span class="cb-lang">${lang}</span>` : '';
+      const escapedCode = code.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const highlighted = highlightCode(escapedCode, lang || 'plaintext');
+      return `<div class="code-block">` +
+        `<div class="cb-header">${langLabel}<button class="cb-copy-btn" data-code="${escapedCode.replace(/"/g, '&quot;')}">Copy</button></div>` +
+        `<pre><code class="language-${lang || 'plaintext'}">${highlighted}</code></pre>` +
+        `</div>`;
+    });
     // Inline code
-    html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+    html = html.replace(/`([^`]+)`/g, '<code class="inline-code">$1</code>');
     // Bold
     html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    // Italic
+    html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
     // Line breaks
     html = html.replace(/\n/g, '<br>');
     return html;
+  }
+
+  // Basic keyword highlighter for common languages
+  function highlightCode(code, lang) {
+    const keywords = {
+      javascript: /\b(const|let|var|function|return|if|else|for|while|class|import|export|from|async|await|try|catch|throw|new|this|typeof|instanceof|true|false|null|undefined)\b/g,
+      typescript: /\b(const|let|var|function|return|if|else|for|while|class|import|export|from|async|await|try|catch|throw|new|this|typeof|instanceof|true|false|null|undefined|type|interface|enum|readonly|as|is|keyof|infer|extends|implements)\b/g,
+      python: /\b(def|class|return|if|elif|else|for|while|import|from|as|try|except|finally|raise|with|yield|lambda|True|False|None|and|or|not|in|is|pass|break|continue|self|async|await)\b/g,
+      go: /\b(func|return|if|else|for|range|var|const|type|struct|interface|map|chan|go|select|defer|import|package|true|false|nil|break|continue|switch|case|default|error|string|int|bool|byte|float64)\b/g,
+      rust: /\b(fn|let|mut|return|if|else|for|while|loop|match|struct|impl|trait|enum|pub|use|mod|crate|self|super|where|as|in|ref|move|async|await|true|false|Some|None|Ok|Err|Result|Option|Vec|String|i32|i64|u32|u64|bool|char|f32|f64)\b/g,
+      bash: /\b(echo|cd|ls|mkdir|rm|cp|mv|cat|grep|sed|awk|export|source|chmod|if|then|else|fi|for|do|done|while|case|esac|exit|return|function|alias|unset)\b/g,
+      sql: /\b(SELECT|FROM|WHERE|JOIN|LEFT|RIGHT|INNER|ON|AND|OR|NOT|IN|LIKE|ORDER|BY|GROUP|HAVING|LIMIT|INSERT|INTO|VALUES|UPDATE|SET|DELETE|CREATE|TABLE|INDEX|VIEW|DROP|ALTER|AS|DISTINCT|COUNT|SUM|AVG|MAX|MIN|NULL|IS|TRUE|FALSE|PRIMARY|KEY|FOREIGN|REFERENCES)\b/gi,
+      json: /\b(true|false|null)\b/g,
+    };
+    const builtins = {
+      javascript: /\b(console|Math|JSON|Promise|Array|Object|String|Number|Boolean|Date|RegExp|Error|Map|Set|parseInt|parseFloat|isNaN)\b/g,
+      python: /\b(print|len|range|enumerate|zip|map|filter|sorted|reversed|list|dict|set|tuple|str|int|float|bool|type|isinstance|hasattr|getattr|setattr|open|input|format)\b/g,
+    };
+    const comments = /(\/\/.*$|#.*$|\/\*[\s\S]*?\*\/)/gm;
+    const strings = /("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|`(?:[^`\\]|\\.)*`)/g;
+    const numbers = /\b(\d+\.?\d*)\b/g;
+
+    // Highlight strings (must come before keywords)
+    code = code.replace(strings, '<span class="hl-string">$1</span>');
+    // Highlight comments
+    code = code.replace(comments, '<span class="hl-comment">$1</span>');
+    // Highlight keywords
+    if (keywords[lang]) code = code.replace(keywords[lang], '<span class="hl-keyword">$1</span>');
+    else if (keywords.javascript) code = code.replace(keywords.javascript, '<span class="hl-keyword">$1</span>');
+    // Highlight builtins
+    if (builtins[lang]) code = code.replace(builtins[lang], '<span class="hl-builtin">$1</span>');
+    // Highlight numbers
+    code = code.replace(numbers, '<span class="hl-number">$1</span>');
+
+    return code;
   }
 
   function escapeHtml(str) {
@@ -701,16 +752,26 @@
         api.off('event:stream-end', endHandler);
       }
       textEl.innerHTML = formatMessage(accumulated);
+      // Wire up code block copy buttons
+      textEl.querySelectorAll('.cb-copy-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          navigator.clipboard.writeText(btn.dataset.code).then(() => {
+            btn.textContent = 'Copied!';
+            setTimeout(() => { btn.textContent = 'Copy'; }, 1500);
+          });
+        });
+      });
       // Add actions
       const actions = document.createElement('div');
       actions.className = 'message-actions';
       actions.innerHTML = `
-        <button class="message-action" data-action="copy">Copy</button>
+        <button class="message-action" data-action="copy-all">Copy All</button>
         <button class="message-action" data-action="regenerate">Regenerate</button>
       `;
       assistantEl.querySelector('.message-content').appendChild(actions);
-      actions.querySelector('[data-action="copy"]').addEventListener('click', () => {
+      actions.querySelector('[data-action="copy-all"]').addEventListener('click', () => {
         navigator.clipboard.writeText(accumulated);
+        showToast('Copied', 'Message copied to clipboard', 'success', 2000);
       });
       actions.querySelector('[data-action="regenerate"]').addEventListener('click', regenerateLast);
 
@@ -906,6 +967,7 @@
     }
 
     el.exportModal.classList.add('hidden');
+    showToast('Exported', `Conversation saved as ${filename}`, 'success', 3000);
   }
 
   function downloadFile(content, filename, mimeType) {
