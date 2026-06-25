@@ -14,6 +14,7 @@ export interface PipelineContext {
   cycle: Cycle;
   config: any;
   connectorRegistry: any;
+  skillRegistry?: any; // Optional skill registry for tool execution
 }
 
 export class Pipeline {
@@ -97,15 +98,71 @@ export class Pipeline {
    * Stage 3: Tool execution (if needed)
    */
   private async toolExecutionStage(context: any): Promise<any> {
-    const { aiResponse } = context;
+    const { aiResponse, skillRegistry } = context;
 
     // Check for tool calls
-    if (aiResponse.toolCalls && aiResponse.toolCalls.length > 0) {
-      // TODO: Execute tools
-      logger.warn('Tool execution not yet implemented');
+    if (!aiResponse.toolCalls || aiResponse.toolCalls.length === 0) {
+      return context;
     }
 
-    return context;
+    // If no skill registry provided, skip tool execution
+    if (!skillRegistry) {
+      logger.warn('Tool execution requested but no skillRegistry provided');
+      return context;
+    }
+
+    const toolResults: Array<{ id: string; result: any; error?: string }> = [];
+
+    // Execute each tool call
+    for (const toolCall of aiResponse.toolCalls) {
+      try {
+        logger.info(`Executing tool: ${toolCall.name}`, { args: toolCall.arguments });
+
+        // Find tool in skill registry
+        const tool = skillRegistry.findTool(toolCall.name);
+
+        if (!tool) {
+          logger.error(`Tool not found: ${toolCall.name}`);
+          toolResults.push({
+            id: toolCall.id,
+            result: null,
+            error: `Tool '${toolCall.name}' not found`
+          });
+          continue;
+        }
+
+        // Execute tool handler
+        const result = await tool.handler(toolCall.arguments, {
+          sessionId: context.cycle.sessionId || 'unknown',
+          userId: context.cycle.userId,
+          workingDir: process.cwd(),
+          env: process.env as Record<string, string>
+        });
+
+        toolResults.push({
+          id: toolCall.id,
+          result: result.data,
+          error: result.error
+        });
+
+        logger.info(`Tool execution completed: ${toolCall.name}`, {
+          success: !result.error
+        });
+
+      } catch (error) {
+        logger.error(`Tool execution failed: ${toolCall.name}`, error instanceof Error ? error : new Error(String(error)));
+        toolResults.push({
+          id: toolCall.id,
+          result: null,
+          error: error instanceof Error ? error.message : String(error)
+        });
+      }
+    }
+
+    return {
+      ...context,
+      toolResults
+    };
   }
 
   /**

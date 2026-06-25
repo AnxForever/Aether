@@ -1,5 +1,5 @@
 /**
- * Local HTTP Server - REST API for Nexus Agent
+ * Local HTTP Server - REST API for Aether Agent
  */
 
 import express, { Express, Request, Response } from 'express';
@@ -7,6 +7,8 @@ import cors from 'cors';
 import { createServer, Server } from 'http';
 import { NexusAgent } from '../agent';
 import { createLogger } from '../utils/logger';
+import { ChatHistory } from '../storage/chat-history';
+import { ConfigManager } from '../storage/config-manager';
 
 const logger = createLogger('LocalServer');
 
@@ -17,6 +19,8 @@ export interface ServerConfig {
   port: number;
   host: string;
   cors?: boolean;
+  dbPath?: string;
+  configPassword?: string;
 }
 
 /**
@@ -27,11 +31,22 @@ export class LocalServer {
   private server?: Server;
   private agent: NexusAgent;
   private config: ServerConfig;
+  private chatHistory?: ChatHistory;
+  private configManager?: ConfigManager;
 
   constructor(agent: NexusAgent, config: ServerConfig = { port: 3000, host: 'localhost' }) {
     this.agent = agent;
     this.config = config;
     this.app = express();
+
+    // Initialize storage if paths provided
+    if (config.dbPath) {
+      this.chatHistory = new ChatHistory(config.dbPath);
+    }
+    if (config.configPassword) {
+      this.configManager = new ConfigManager(config.configPassword);
+    }
+
     this.setupMiddleware();
     this.setupRoutes();
   }
@@ -121,8 +136,22 @@ export class LocalServer {
     // Sessions
     this.app.get('/api/sessions', async (req, res) => {
       try {
-        // TODO: Implement session listing
-        res.json({ success: true, data: { sessions: [] } });
+        if (!this.chatHistory) {
+          res.status(503).json({
+            success: false,
+            error: 'Chat history not configured'
+          });
+          return;
+        }
+
+        const sessions = this.chatHistory.listSessions();
+        res.json({
+          success: true,
+          data: {
+            sessions,
+            count: sessions.length
+          }
+        });
       } catch (error: any) {
         logger.error('Sessions error:', error as Error);
         res.status(500).json({ error: error.message });
@@ -133,8 +162,26 @@ export class LocalServer {
     this.app.get('/api/sessions/:id', async (req, res) => {
       try {
         const { id } = req.params;
-        // TODO: Implement session retrieval
-        res.json({ success: true, data: { session: { id } } });
+
+        if (!this.chatHistory) {
+          res.status(503).json({
+            success: false,
+            error: 'Chat history not configured'
+          });
+          return;
+        }
+
+        const session = this.chatHistory.getSession(id);
+
+        if (!session) {
+          res.status(404).json({
+            success: false,
+            error: 'Session not found'
+          });
+          return;
+        }
+
+        res.json({ success: true, data: { session } });
       } catch (error: any) {
         logger.error('Get session error:', error as Error);
         res.status(500).json({ error: error.message });
@@ -145,7 +192,16 @@ export class LocalServer {
     this.app.delete('/api/sessions/:id', async (req, res) => {
       try {
         const { id } = req.params;
-        // TODO: Implement session deletion
+
+        if (!this.chatHistory) {
+          res.status(503).json({
+            success: false,
+            error: 'Chat history not configured'
+          });
+          return;
+        }
+
+        this.chatHistory.deleteSession(id);
         res.json({ success: true, message: 'Session deleted' });
       } catch (error: any) {
         logger.error('Delete session error:', error as Error);
@@ -156,8 +212,21 @@ export class LocalServer {
     // Configuration
     this.app.get('/api/config', async (req, res) => {
       try {
-        // TODO: Implement config retrieval
-        res.json({ success: true, data: { config: {} } });
+        if (!this.configManager) {
+          res.status(503).json({
+            success: false,
+            error: 'Config manager not configured'
+          });
+          return;
+        }
+
+        // Return basic config info (avoid exposing sensitive data)
+        const config = {
+          version: '1.0.0',
+          configured: true
+        };
+
+        res.json({ success: true, data: { config } });
       } catch (error: any) {
         logger.error('Config error:', error as Error);
         res.status(500).json({ error: error.message });
@@ -168,8 +237,18 @@ export class LocalServer {
     this.app.patch('/api/config', async (req, res) => {
       try {
         const updates = req.body;
-        // TODO: Implement config update
-        res.json({ success: true, message: 'Config updated' });
+
+        if (!this.configManager) {
+          res.status(503).json({
+            success: false,
+            error: 'Config manager not configured'
+          });
+          return;
+        }
+
+        // Note: Config updates would need specific methods
+        // For now, acknowledge the request
+        res.json({ success: true, message: 'Config update acknowledged' });
       } catch (error: any) {
         logger.error('Update config error:', error as Error);
         res.status(500).json({ error: error.message });
