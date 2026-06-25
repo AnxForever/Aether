@@ -4,7 +4,7 @@
  * Handles Interactive Components (buttons, menus, modals)
  */
 
-import { EventEmitter } from 'events';
+import { EventEmitter } from 'eventemitter3';
 import { App } from '@slack/bolt';
 import { ActionPayload, ActionHandler, ModalView } from './types';
 

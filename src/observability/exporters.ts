@@ -7,6 +7,9 @@ import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-http';
 import type { SpanExporter } from '@opentelemetry/sdk-trace-base';
 import type { PushMetricExporter } from '@opentelemetry/sdk-metrics';
 import type { TelemetryConfig } from './types';
+import { createLogger } from '@/utils/logger';
+
+const logger = createLogger('TelemetryExporters');
 
 /**
  * Create trace exporter based on config
@@ -43,7 +46,7 @@ export function createTraceExporter(config: TelemetryConfig): SpanExporter | und
           endpoint: endpoint || 'http://localhost:14268/api/traces',
         });
       } catch (err) {
-        console.warn('[Telemetry] Jaeger exporter not available, install @opentelemetry/exporter-jaeger');
+        logger.warn(' Jaeger exporter not available, install @opentelemetry/exporter-jaeger');
         return undefined;
       }
     }
@@ -56,13 +59,13 @@ export function createTraceExporter(config: TelemetryConfig): SpanExporter | und
           url: endpoint || 'http://localhost:9411/api/v2/spans',
         });
       } catch (err) {
-        console.warn('[Telemetry] Zipkin exporter not available, install @opentelemetry/exporter-zipkin');
+        logger.warn(' Zipkin exporter not available, install @opentelemetry/exporter-zipkin');
         return undefined;
       }
     }
 
     default:
-      console.warn(`[Telemetry] Unknown exporter type: ${exporterType}`);
+      logger.warn(`[Telemetry] Unknown exporter type: ${exporterType}`);
       return undefined;
   }
 }

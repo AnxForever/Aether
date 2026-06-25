@@ -1,6 +1,6 @@
-# Nexus Agent API Reference
+# Aether API Reference
 
-Complete API documentation for Nexus Agent.
+Complete API documentation for Aether.
 
 ## Table of Contents
 
@@ -15,19 +15,19 @@ Complete API documentation for Nexus Agent.
 
 ## Core API
 
-### NexusAgent
+### AetherAgent
 
-Main agent class for interacting with Nexus.
+Main agent class for interacting with Aether.
 
 #### Constructor
 
 ```typescript
-new NexusAgent(config: NexusAgentConfig)
+new AetherAgent(config: AetherAgentConfig)
 ```
 
 **Config:**
 ```typescript
-interface NexusAgentConfig {
+interface AetherAgentConfig {
   apiKeys: Record<string, string>;  // AI provider API keys
   model?: string;                   // Default model
   provider?: string;                // Default provider

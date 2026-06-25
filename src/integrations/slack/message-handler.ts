@@ -4,7 +4,7 @@
  * Handles message events, formatting, and sending
  */
 
-import { EventEmitter } from 'events';
+import { EventEmitter } from 'eventemitter3';
 import { WebClient } from '@slack/web-api';
 import {
   MessageEvent,

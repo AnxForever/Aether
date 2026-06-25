@@ -1,5 +1,5 @@
 /**
- * Nexus Agent - Quick Start Guide
+ * Aether - Quick Start Guide
  */
 
 # Quick Start Guide
@@ -7,7 +7,7 @@
 ## Installation
 
 ```bash
-cd nexus-agent
+cd aether
 npm install
 npm run build
 ```
@@ -15,9 +15,9 @@ npm run build
 ## Basic Usage
 
 ```typescript
-import { createNexusAgent } from 'nexus-agent';
+import { createAetherAgent } from 'aether';
 
-const agent = createNexusAgent({
+const agent = createAetherAgent({
   apiKeys: {
     claude: process.env.ANTHROPIC_API_KEY!
   },
@@ -57,7 +57,7 @@ GOOGLE_API_KEY=xxx
 ## Configuration
 
 ```typescript
-const agent = createNexusAgent({
+const agent = createAetherAgent({
   // Required
   apiKeys: {
     claude: 'your-api-key',
@@ -135,6 +135,6 @@ See `/examples` directory for complete examples:
 
 ## Support
 
-- GitHub: https://github.com/nexus-team/nexus-agent
-- Issues: https://github.com/nexus-team/nexus-agent/issues
-- Docs: https://nexus-agent.dev/docs
+- GitHub: https://github.com/nexus-team/aether
+- Issues: https://github.com/nexus-team/aether/issues
+- Docs: https://aether.dev/docs

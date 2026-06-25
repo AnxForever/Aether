@@ -4,7 +4,7 @@
  * Handles OAuth 2.0 flow and token management
  */
 
-import { EventEmitter } from 'events';
+import { EventEmitter } from 'eventemitter3';
 import { Installation, SlackManagerConfig } from './types';
 
 /**

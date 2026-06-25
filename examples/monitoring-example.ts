@@ -4,8 +4,8 @@
  * Quick example showing how to use Sentry monitoring in Nexus Agent
  */
 
-import { createSentryManagerFromEnv } from './monitoring';
-import { createLogger } from './utils/logger';
+import { createSentryManagerFromEnv } from '../src/monitoring';
+import { createLogger } from '../src/utils/logger';
 
 // ============================================================================
 // 1. Initialize Sentry

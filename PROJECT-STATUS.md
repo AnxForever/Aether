@@ -1,4 +1,4 @@
-# Nexus Agent - Project Status
+# Aether - Project Status
 
 ## 📊 Current Progress
 
@@ -72,7 +72,7 @@
 ## 🏗️ Project Structure
 
 ```
-nexus-agent/
+aether/
 ├── src/
 │   ├── types/          ✅ Complete
 │   ├── core/           ✅ Complete
@@ -98,7 +98,7 @@ nexus-agent/
 
 ## 📈 Comparison with Cola
 
-| Metric | Cola | Nexus | Status |
+| Metric | Cola | Aether | Status |
 |--------|------|-------|--------|
 | **Code Lines** | ~16,570 (beautified) | 6,158 | 37% |
 | **AI Providers** | 3 | 7 | ✅ 233% |

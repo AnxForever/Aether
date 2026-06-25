@@ -55,7 +55,7 @@
 - [ ] 实现适配层
   - 保留现有 Orchestrator 作为兼容层
   - 创建 `src/agent/pi-adapter.ts`
-  - 封装 pi-agent-core 到 Nexus 接口
+  - 封装 pi-agent-core 到 Aether 接口
 - [ ] 迁移工具系统
   - 将现有 105 工具注册到 pi-agent-core
   - 实现工具权限映射
@@ -95,7 +95,7 @@
   - `src/skills/skill-matcher.ts` - 触发匹配
 - [ ] 迁移现有工具
   - 将 105 工具转换为 SKILL.md 格式
-  - 创建 `/mnt/d/cola/nexus-agent/skills/` 目录
+  - 创建 `/mnt/d/cola/aether/skills/` 目录
   - 编写迁移脚本
 - [ ] 技能目录结构
   ```
@@ -453,7 +453,7 @@ npm install @types/express @types/qrcode --save-dev
 
 ## 九、后续规划
 
-完成对齐后，Nexus-Agent 将具备：
+完成对齐后，Aether-Agent 将具备：
 1. ✅ 与 Cola 功能对等
 2. ✅ 更好的代码质量和架构
 3. ✅ 更多的 AI Provider 支持

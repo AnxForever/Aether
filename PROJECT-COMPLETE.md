@@ -1,4 +1,4 @@
-# 🎉 Nexus Agent - 项目完成报告
+# 🎉 Aether - 项目完成报告
 
 ## 📊 最终统计
 
@@ -30,7 +30,7 @@
 ## 🏗️ 项目结构
 
 ```
-nexus-agent/
+aether/
 ├── src/                      # 源代码 (105 个 .ts 文件)
 │   ├── agent.ts              # 主入口
 │   ├── main.ts               # Electron 主进程
@@ -162,7 +162,7 @@ nexus-agent/
 
 ## 🔒 安全增强
 
-| 项目 | Cola | Nexus | 状态 |
+| 项目 | Cola | Aether | 状态 |
 |------|------|-------|------|
 | 加密算法 | AES-256-GCM | AES-256-GCM | ✅ |
 | 密钥管理 | ⚠️ 硬编码 | ✅ Scrypt | **CRITICAL FIX** |
@@ -206,7 +206,7 @@ nexus-agent/
 ```bash
 # 克隆项目
 git clone <repository-url>
-cd nexus-agent
+cd aether
 
 # 安装依赖
 npm install
@@ -227,7 +227,7 @@ docker-compose up -d
 
 ## 🎯 与 Cola 对比
 
-| 特性 | Cola | Nexus | 提升 |
+| 特性 | Cola | Aether | 提升 |
 |------|------|-------|------|
 | 代码行数 | ~15,000 | 19,779 | +31% |
 | AI 提供商 | 3 | 7 | +133% |
@@ -277,4 +277,4 @@ docker-compose up -d
 
 **最后更新**: 2024-06-24
 
-**构建者**: Nexus Team with ❤️
+**构建者**: AnxForever with ❤️

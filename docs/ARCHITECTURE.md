@@ -1,14 +1,14 @@
-# Nexus Agent - Architecture
+# Aether - Architecture
 
 ## System Overview
 
-Nexus is a complete reimplementation of AI agent architecture, built from ground-up analysis of Cola with significant improvements in security, modularity, and capabilities.
+Aether is a complete reimplementation of AI agent architecture, built from ground-up analysis of Cola with significant improvements in security, modularity, and capabilities.
 
 ## Architecture Diagram
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                        Nexus Agent                          │
+│                        Aether                          │
 ├─────────────────────────────────────────────────────────────┤
 │                                                             │
 │  ┌──────────────┐      ┌──────────────┐                   │
@@ -199,7 +199,7 @@ const customSkill: Skill = {
 
 ## Comparison with Cola
 
-| Feature | Cola | Nexus |
+| Feature | Cola | Aether |
 |---------|------|-------|
 | **AI Providers** | 3 | **7** |
 | **Security** | Hardcoded key | **Scrypt KDF** |
@@ -223,7 +223,7 @@ try {
   await riskyOperation();
 } catch (error) {
   console.error('[Component] Operation failed:', error);
-  throw new NexusError('Descriptive message', error);
+  throw new AetherError('Descriptive message', error);
 }
 ```
 

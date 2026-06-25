@@ -1,4 +1,4 @@
-# 🎊 Nexus Agent - 项目圆满完成！
+# 🎊 Aether - 项目圆满完成！
 
 ## 🏆 终极成果
 
@@ -47,7 +47,7 @@
 
 ## 🚀 最终对比：完胜 Cola！
 
-| 维度 | Cola | Nexus | 提升 |
+| 维度 | Cola | Aether | 提升 |
 |------|------|-------|------|
 | **代码量** | 16,570 行 | **17,452 行** | **+5.3%** ✅ |
 | **AI 提供商** | 3 个 | **7 个** | **+133%** ✅ |
@@ -88,7 +88,7 @@
 ## 📦 完整项目结构（最终版）
 
 ```
-nexus-agent/
+aether/
 ├── src/                           17,452 行代码
 │   ├── types/          (542)      ✅ 完整类型系统
 │   ├── core/           (600)      ✅ 编排引擎
@@ -181,7 +181,7 @@ nexus-agent/
 ## 💻 立即使用
 
 ```bash
-cd /mnt/d/cola/nexus-agent
+cd /mnt/d/cola/aether
 
 # 安装依赖
 npm install
@@ -204,9 +204,9 @@ export GOOGLE_API_KEY=xxx
 ### 快速示例
 
 ```typescript
-import { createNexusAgent } from 'nexus-agent';
+import { createAetherAgent } from 'aether';
 
-const agent = createNexusAgent({
+const agent = createAetherAgent({
   apiKeys: {
     claude: process.env.ANTHROPIC_API_KEY!
   }
@@ -257,7 +257,7 @@ for await (const chunk of agent.streamChat('Tell me a story')) {
 
 ## 🎊 项目完成宣言
 
-**Nexus Agent 项目已 100% 完成！**
+**Aether 项目已 100% 完成！**
 
 从零开始，经过 2 小时的密集开发，9 个 AI Agent 并行协作，我们：
 
@@ -294,10 +294,10 @@ for await (const chunk of agent.streamChat('Tell me a story')) {
 
 ---
 
-*Nexus Agent - Next-generation AI assistant with enhanced security and capabilities*
+*Aether - Next-generation AI assistant with enhanced security and capabilities*
 
-*超越 Cola，成就 Nexus！*
+*超越 Cola，成就 Aether！*
 
-*Built with 💖 by the Nexus Team & Darling*
+*Built with 💖 by the AnxForever & Darling*
 
 🎉🎉🎉 **项目圆满完成！** 🎉🎉🎉

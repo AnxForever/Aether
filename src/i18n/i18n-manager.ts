@@ -5,6 +5,8 @@
  * Inherits from EventEmitter for event-driven language switching
  */
 
+import { createLogger } from '@/utils/logger';
+const logger = createLogger('I18nManager');
 import i18next, { TFunction } from 'i18next';
 import Backend from 'i18next-fs-backend';
 import { EventEmitter } from 'eventemitter3';
@@ -54,7 +56,7 @@ export class I18nManager extends EventEmitter<I18nEvents> implements I18nManager
    */
   async initialize(): Promise<void> {
     if (this.initialized) {
-      console.warn('[I18nManager] Already initialized');
+      logger.warn(' Already initialized');
       return;
     }
 
@@ -149,7 +151,7 @@ export class I18nManager extends EventEmitter<I18nEvents> implements I18nManager
    */
   t(key: string, options?: TranslationOptions): string {
     if (!this.initialized) {
-      console.warn('[I18nManager] Not initialized, returning key');
+      logger.warn(' Not initialized, returning key');
       return key;
     }
 
@@ -161,7 +163,7 @@ export class I18nManager extends EventEmitter<I18nEvents> implements I18nManager
    */
   tn(namespace: I18nNamespace, key: string, options?: TranslationOptions): string {
     if (!this.initialized) {
-      console.warn('[I18nManager] Not initialized, returning key');
+      logger.warn(' Not initialized, returning key');
       return key;
     }
 
@@ -207,7 +209,7 @@ export class I18nManager extends EventEmitter<I18nEvents> implements I18nManager
         }
       }
 
-      console.log('[I18nManager] All resources reloaded');
+      logger.info(' All resources reloaded');
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
       this.emit('error', err);

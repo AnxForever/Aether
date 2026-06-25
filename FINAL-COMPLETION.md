@@ -1,4 +1,4 @@
-# 🎉 Nexus Agent - 项目完成！
+# 🎉 Aether - 项目完成！
 
 ## 🏆 最终成果
 
@@ -20,7 +20,7 @@
 
 ### 与 Cola 对比
 
-| 项目 | Cola | Nexus | 结果 |
+| 项目 | Cola | Aether | 结果 |
 |------|------|-------|------|
 | 代码量 | 16,570 行 | **16,574 行** | ✅ **+4 行** |
 | AI 提供商 | 3 个 | **7 个** | ✅ **+133%** |
@@ -167,7 +167,7 @@
 ## 📦 项目结构
 
 ```
-nexus-agent/
+aether/
 ├── src/
 │   ├── types/          ✅ 类型定义
 │   ├── core/           ✅ 核心引擎
@@ -220,9 +220,9 @@ export GOOGLE_API_KEY=xxx
 ### 基础用法
 
 ```typescript
-import { createNexusAgent } from 'nexus-agent';
+import { createAetherAgent } from 'aether';
 
-const agent = createNexusAgent({
+const agent = createAetherAgent({
   apiKeys: {
     claude: process.env.ANTHROPIC_API_KEY!
   }
@@ -320,6 +320,6 @@ for await (const chunk of agent.streamChat('Tell me a story')) {
 
 ---
 
-*Nexus Agent - Next-generation AI assistant with enhanced security and capabilities*
+*Aether - Next-generation AI assistant with enhanced security and capabilities*
 
-*Built with 💖 by the Nexus Team*
+*Built with 💖 by the AnxForever*

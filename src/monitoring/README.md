@@ -1,6 +1,6 @@
 # Sentry Integration
 
-Enterprise-grade error tracking and performance monitoring for Nexus Agent.
+Enterprise-grade error tracking and performance monitoring for Aether.
 
 ## Features
 
@@ -146,7 +146,7 @@ const sentry = new SentryManager({
   profilesSampleRate: 0.1,
   debug: false,
   enableProfiling: true,
-  serverName: 'nexus-agent-01',
+  serverName: 'aether-01',
   
   // Custom hooks
   beforeSend: (event, hint) => {
@@ -236,7 +236,7 @@ sentry.initialize();
 
 // Set global tags
 sentry.setTags({
-  app: 'nexus-agent',
+  app: 'aether',
   version: '1.0.0'
 });
 

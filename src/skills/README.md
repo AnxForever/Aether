@@ -1,10 +1,10 @@
-# Nexus Skills System
+# Aether Skills System
 
-Complete skill system implementation for Nexus Agent with 6 core skills.
+Complete skill system implementation for Aether with 6 core skills.
 
 ## Overview
 
-The Nexus skills system provides a modular, extensible architecture for adding capabilities to the agent. Each skill encapsulates related tools with proper validation, error handling, and authentication.
+The Aether skills system provides a modular, extensible architecture for adding capabilities to the agent. Each skill encapsulates related tools with proper validation, error handling, and authentication.
 
 ## Architecture
 

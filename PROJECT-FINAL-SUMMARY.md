@@ -1,4 +1,4 @@
-# Nexus Agent - 最终项目报告
+# Aether - 最终项目报告
 
 **完成时间：** 2026-06-24  
 **项目版本：** 1.0.0  
@@ -300,7 +300,7 @@ GET  /api/status            # 状态查询
 const ENCRYPTION_KEY = "colacola";
 ```
 
-**Nexus 的解决方案：**
+**Aether 的解决方案：**
 ```typescript
 // Scrypt 密钥派生 + AES-256-GCM
 const salt = randomBytes(32);
@@ -420,7 +420,7 @@ orchestrator.on('turn_end', handler);
 
 ## 📈 与 Cola 的全面对比
 
-| 维度 | Cola v1.0.10 | Nexus v1.0.0 | 提升 |
+| 维度 | Cola v1.0.10 | Aether v1.0.0 | 提升 |
 |------|-------------|--------------|------|
 | **代码量** | ~15K 行（混淆） | 27,861 行（可读） | +86% 可读性 |
 | **文件数** | 未知 | 148 个模块 | 模块化 |
@@ -640,10 +640,10 @@ MIT License - 详见 LICENSE 文件
 
 ## 📞 联系方式
 
-- **项目地址：** https://github.com/your-org/nexus-agent
-- **问题反馈：** https://github.com/your-org/nexus-agent/issues
-- **文档中心：** https://nexus-agent.dev/docs
-- **社区讨论：** https://discord.gg/nexus-agent
+- **项目地址：** https://github.com/your-org/aether
+- **问题反馈：** https://github.com/your-org/aether/issues
+- **文档中心：** https://aether.dev/docs
+- **社区讨论：** https://discord.gg/aether
 
 ---
 

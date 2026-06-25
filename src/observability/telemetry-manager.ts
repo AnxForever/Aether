@@ -9,11 +9,14 @@ import { resourceFromAttributes, defaultResource } from '@opentelemetry/resource
 import { ATTR_SERVICE_NAME, ATTR_SERVICE_VERSION } from '@opentelemetry/semantic-conventions';
 import { diag, DiagConsoleLogger, DiagLogLevel } from '@opentelemetry/api';
 import { PeriodicExportingMetricReader } from '@opentelemetry/sdk-metrics';
+import { createLogger } from '@/utils/logger';
 
 import type { TelemetryConfig, TelemetryEvents } from './types';
 import { createTraceExporter, createMetricExporter } from './exporters';
 import { Tracer, createTracer } from './tracer';
 import { Metrics, createMetrics } from './metrics';
+
+const logger = createLogger('TelemetryManager');
 
 /**
  * Telemetry Manager - Centralized OpenTelemetry management
@@ -37,7 +40,7 @@ export class TelemetryManager extends EventEmitter<TelemetryEvents> {
    */
   async initialize(): Promise<void> {
     if (this.isInitialized) {
-      console.warn('[TelemetryManager] Already initialized');
+      logger.warn(' Already initialized');
       return;
     }
 
@@ -84,11 +87,12 @@ export class TelemetryManager extends EventEmitter<TelemetryEvents> {
       this.isInitialized = true;
       this.emit('telemetry:started');
 
-      console.log(`[TelemetryManager] Initialized for service: ${this.config.serviceName}`);
+      logger.info(`Initialized for service: ${this.config.serviceName}`);
     } catch (error) {
-      this.emit('telemetry:error', error as Error);
-      console.error('[TelemetryManager] Initialization failed:', error);
-      throw error;
+      const err = error instanceof Error ? error : new Error(String(error));
+      this.emit('telemetry:error', err);
+      logger.error('Initialization failed:', err);
+      throw err;
     }
   }
 
@@ -101,15 +105,16 @@ export class TelemetryManager extends EventEmitter<TelemetryEvents> {
     }
 
     try {
-      console.log('[TelemetryManager] Shutting down...');
+      logger.info('Shutting down...');
       await this.sdk.shutdown();
       this.isInitialized = false;
       this.emit('telemetry:stopped');
-      console.log('[TelemetryManager] Shutdown complete');
+      logger.info('Shutdown complete');
     } catch (error) {
-      this.emit('telemetry:error', error as Error);
-      console.error('[TelemetryManager] Shutdown failed:', error);
-      throw error;
+      const err = error instanceof Error ? error : new Error(String(error));
+      this.emit('telemetry:error', err);
+      logger.error('Shutdown failed:', err);
+      throw err;
     }
   }
 
@@ -223,7 +228,7 @@ let globalTelemetry: TelemetryManager | null = null;
  */
 export async function initGlobalTelemetry(config: TelemetryConfig): Promise<TelemetryManager> {
   if (globalTelemetry) {
-    console.warn('[TelemetryManager] Global telemetry already initialized');
+    logger.warn(' Global telemetry already initialized');
     return globalTelemetry;
   }
 

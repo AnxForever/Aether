@@ -5,7 +5,7 @@
  * Coordinates OAuth, messages, commands, and actions
  */
 
-import { EventEmitter } from 'events';
+import { EventEmitter } from 'eventemitter3';
 import { App, LogLevel } from '@slack/bolt';
 import { WebClient } from '@slack/web-api';
 import {
@@ -37,7 +37,7 @@ import { ActionHandlerManager, ExampleActions } from './action-handler';
  * - Error handling
  * - Type-safe API
  */
-export class SlackManager extends EventEmitter {
+export class SlackManager extends EventEmitter<SlackManagerEvents> {
   private config: SlackManagerConfig;
   private app: App;
   private client: WebClient;
@@ -345,18 +345,17 @@ export class SlackManager extends EventEmitter {
   isReady(): boolean {
     return this.isInitialized;
   }
-}
 
-/**
- * Type-safe event emitter for SlackManager
- */
-export interface SlackManager {
-  on<K extends keyof SlackManagerEvents>(
-    event: K,
-    listener: SlackManagerEvents[K]
-  ): this;
-  emit<K extends keyof SlackManagerEvents>(
-    event: K,
-    ...args: Parameters<SlackManagerEvents[K]>
-  ): boolean;
+  /**
+   * Cleanup and remove all event listeners
+   */
+  destroy(): void {
+    this.removeAllListeners();
+    this.messageHandler.removeAllListeners();
+    this.commandHandler.removeAllListeners();
+    this.actionHandler.removeAllListeners();
+    if (this.oauthHandler) {
+      this.oauthHandler.removeAllListeners();
+    }
+  }
 }

@@ -4,7 +4,7 @@
  * Handles Slash Commands registration and processing
  */
 
-import { EventEmitter } from 'events';
+import { EventEmitter } from 'eventemitter3';
 import { App } from '@slack/bolt';
 import { SlashCommandPayload, CommandHandler } from './types';
 

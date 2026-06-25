@@ -141,13 +141,10 @@ export class SentryManager extends EventEmitter {
           if (this.config.beforeSend) {
             const result = this.config.beforeSend(event, hint);
             if (!result) return null;
-            event = result as Sentry.Event;
           }
 
           // Filter sensitive data
-          event = this.filterSensitiveData(event) as Sentry.Event;
-
-          return event;
+          return this.filterSensitiveData(event) as any;
         },
 
         // Before breadcrumb hook

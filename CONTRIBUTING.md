@@ -1,6 +1,6 @@
-# Contributing to Nexus Agent
+# Contributing to Aether
 
-Thank you for your interest in contributing to Nexus Agent! This document provides guidelines and instructions for contributing.
+Thank you for your interest in contributing to Aether! This document provides guidelines and instructions for contributing.
 
 ## 🎯 Ways to Contribute
 
@@ -24,8 +24,8 @@ Thank you for your interest in contributing to Nexus Agent! This document provid
 
 ```bash
 # Fork and clone the repository
-git clone https://github.com/YOUR_USERNAME/nexus-agent.git
-cd nexus-agent
+git clone https://github.com/YOUR_USERNAME/aether.git
+cd aether
 
 # Install dependencies
 npm install
@@ -231,4 +231,4 @@ Contributors will be:
 - Mentioned in CHANGELOG.md
 - Credited in release notes
 
-Thank you for contributing to Nexus Agent! 🚀
+Thank you for contributing to Aether! 🚀

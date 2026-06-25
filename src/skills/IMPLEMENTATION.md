@@ -1,10 +1,10 @@
-# Nexus Skills System - Implementation Complete
+# Aether Skills System - Implementation Complete
 
 **Phase 5: Skills System Implementation**
 
 ## Summary
 
-Successfully implemented a comprehensive skill system for Nexus Agent with 6 core skills as requested, plus infrastructure to support extensibility.
+Successfully implemented a comprehensive skill system for Aether with 6 core skills as requested, plus infrastructure to support extensibility.
 
 ## Delivered Components
 

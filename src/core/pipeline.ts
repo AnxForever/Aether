@@ -39,7 +39,7 @@ export class Pipeline {
       try {
         data = await stage.execute(data);
       } catch (error) {
-        logger.error(`Pipeline stage '${stage.name}' failed:`, error);
+        logger.error(`Pipeline stage '${stage.name}' failed:`, error instanceof Error ? error : new Error(String(error)));
         throw error;
       }
     }
