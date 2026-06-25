@@ -79,7 +79,7 @@ export class SkillCreator {
       name: template.name,
       description: template.description,
       version: '1.0.0',
-      author: 'Nexus Agent',
+      author: 'Aether',
       main: 'index.ts',
       tools: template.tools.map(t => ({
         name: t.name,

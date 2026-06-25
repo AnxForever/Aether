@@ -60,7 +60,7 @@ export class GitHubSkill extends BaseSkill {
       name: 'GitHub',
       description: 'GitHub repository, issue, and PR management using GitHub CLI',
       version: '1.0.0',
-      author: 'Nexus Team',
+      author: 'Aether Team',
       enabled: true,
       requiresAuth: true,
       dependencies: ['gh'],

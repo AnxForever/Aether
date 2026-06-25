@@ -93,7 +93,7 @@ export class SystemSkill extends BaseSkill {
       name: 'System Tools',
       description: 'File operations, process management, and system utilities',
       version: '1.0.0',
-      author: 'Nexus Team',
+      author: 'Aether Team',
       enabled: true,
       requiresAuth: false,
       dependencies: [],

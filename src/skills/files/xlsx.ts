@@ -17,7 +17,7 @@ export class ExcelSkill extends BaseSkill {
       name: 'Excel Processing',
       description: 'Read and write Excel files',
       version: '1.0.0',
-      author: 'Nexus',
+      author: 'Aether',
       enabled: true,
     });
   }

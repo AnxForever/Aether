@@ -316,7 +316,7 @@ export function createWorkflowSkill(workflowIntegration: WorkflowIntegration): S
     name: 'Workflow Automation',
     description: 'Execute automated workflows including code deployment, data processing, and batch operations',
     version: '1.0.0',
-    author: 'Nexus Agent',
+    author: 'Aether',
     enabled: true,
     tools
   };

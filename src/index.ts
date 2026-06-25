@@ -1,5 +1,5 @@
 /**
- * Nexus Agent - Main Entry Point
+ * Aether - Main Entry Point
  *
  * Next-generation AI assistant with enhanced security and capabilities
  */
@@ -25,4 +25,4 @@ export * from './watcher';
 export * from './system';
 
 // Main Agent Class
-export { NexusAgent } from './agent';
+export { AetherAgent } from './agent';

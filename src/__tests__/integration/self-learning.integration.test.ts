@@ -5,13 +5,13 @@
  */
 
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { createNexusAgent, NexusAgent } from '../../agent';
+import { createAetherAgent, AetherAgent } from '../../agent';
 import { randomUUID } from 'crypto';
 import { join } from 'path';
 import { mkdirSync, rmSync } from 'fs';
 
 describe('Self-Learning Integration', () => {
-  let agent: NexusAgent;
+  let agent: AetherAgent;
   const testDataDir = join(process.cwd(), 'test-data', randomUUID());
 
   beforeAll(async () => {
@@ -19,7 +19,7 @@ describe('Self-Learning Integration', () => {
     mkdirSync(testDataDir, { recursive: true });
 
     // Create agent with learning enabled
-    agent = createNexusAgent({
+    agent = createAetherAgent({
       model: 'claude-sonnet-4-20250514',
       provider: 'claude',
       apiKeys: {

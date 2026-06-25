@@ -1,7 +1,7 @@
 /**
  * Aether Web API Server
  *
- * Standalone Express server wrapping NexusAgent.
+ * Standalone Express server wrapping AetherAgent.
  * Zero Electron dependency — deploy anywhere.
  *
  * Routes:
@@ -30,7 +30,7 @@ import { join } from 'path';
 // Load .env
 loadEnv({ path: join(__dirname, '..', '.env') });
 
-import { createNexusAgent, NexusAgent } from '../src/agent';
+import { createAetherAgent, AetherAgent } from '../src/agent';
 import { createLogger } from '../src/utils/logger';
 
 const logger = createLogger('Server');
@@ -137,15 +137,15 @@ setInterval(() => {
 // Agent Initialization
 // ============================================================================
 
-let agent: NexusAgent;
+let agent: AetherAgent;
 
-async function initAgent(): Promise<NexusAgent> {
-  agent = createNexusAgent({
+async function initAgent(): Promise<AetherAgent> {
+  agent = createAetherAgent({
     dataDir: config.dataDir,
     enableLearning: true,
   });
   await agent.initialize();
-  logger.info('NexusAgent initialized');
+  logger.info('AetherAgent initialized');
   return agent;
 }
 

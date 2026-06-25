@@ -1,7 +1,7 @@
 /**
  * i18n Module
  *
- * Internationalization support for Nexus Agent
+ * Internationalization support for Aether
  */
 
 export { I18nManager, getI18nManager, initializeI18n } from './i18n-manager';

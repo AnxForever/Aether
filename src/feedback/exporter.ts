@@ -52,7 +52,7 @@ export class FeedbackExporter extends EventEmitter {
    */
   async export(options: ExportOptions = {}): Promise<string> {
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const outputPath = join(this.outputDir, `nexus-feedback-${timestamp}.zip`);
+    const outputPath = join(this.outputDir, `aether-feedback-${timestamp}.zip`);
 
     logger.info('Starting feedback package export...');
     this.emitProgress('Initializing', 0, 100);
@@ -328,7 +328,7 @@ export class FeedbackExporter extends EventEmitter {
   private async generateNetworkDiagnostics(): Promise<any> {
     return {
       timestamp: Date.now(),
-      userAgent: 'Nexus/1.0',
+      userAgent: 'Aether/1.0',
       platform: process.platform,
       connectivity: 'online'
     };

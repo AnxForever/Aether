@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { getModels, switchModel as switchModelApi } from '../api/client';
 import { useAppStore } from '../stores/app';
-import { Settings, Cpu, HardDrive, Check } from 'lucide-react';
+import { Settings, Cpu, HardDrive, Check, Circle } from 'lucide-react';
 import { createLogger } from '../../../src/utils/logger';
 import Skeleton from '../components/Skeleton';
 
@@ -12,6 +13,33 @@ interface ModelItem {
   name: string;
   provider?: string;
 }
+
+/** Known provider names — all others grouped as "Other" */
+const KNOWN_PROVIDERS = ['Claude', 'OpenAI', 'Gemini', 'MiniMax', 'Moonshot', 'GLM', 'DeepSeek'];
+
+/** Normalise provider string to a display key */
+function normalizeProvider(p?: string): string {
+  if (!p) return 'Other';
+  for (const known of KNOWN_PROVIDERS) {
+    if (p.toLowerCase().includes(known.toLowerCase())) return known;
+  }
+  return 'Other';
+}
+
+/** Simulated connection status per provider — in production this would come from the API */
+function providerConnected(provider: string): boolean {
+  // For now all known providers are considered connected
+  return provider !== 'Other';
+}
+
+const checkVariants = {
+  initial: { scale: 0, opacity: 0 },
+  animate: {
+    scale: [0, 1.25, 1],
+    opacity: [0, 1, 1],
+    transition: { duration: 0.3, ease: 'easeOut' },
+  },
+};
 
 export default function SettingsPage() {
   const currentModel = useAppStore((s) => s.currentModel);
@@ -35,13 +63,32 @@ export default function SettingsPage() {
       });
   }, []);
 
+  // Group models by provider
+  const groups = useMemo(() => {
+    const map = new Map<string, ModelItem[]>();
+    for (const m of models) {
+      const key = normalizeProvider(m.provider);
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(m);
+    }
+    // Order by KNOWN_PROVIDERS, then Others at the end
+    const ordered: { provider: string; items: ModelItem[] }[] = [];
+    for (const k of KNOWN_PROVIDERS) {
+      if (map.has(k)) ordered.push({ provider: k, items: map.get(k)! });
+    }
+    if (map.has('Other')) ordered.push({ provider: 'Other', items: map.get('Other')! });
+    return ordered;
+  }, [models]);
+
+  const selectedInGroup = (items: ModelItem[]) => items.some((m) => currentModel === (m.id || m.name));
+
   return (
     <div className="h-full overflow-y-auto p-6">
       <div className="max-w-2xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-sm bg-accent/10 border border-accent/20 flex items-center justify-center">
-            <Settings size={16} className="text-accent" />
+          <div className="w-10 h-10 rounded-sm bg-accent/10 border border-accent/20 flex items-center justify-center ring-1 ring-accent/10">
+            <Settings size={18} className="text-accent" />
           </div>
           <div>
             <h1 className="font-display text-h1 text-ink">设置</h1>
@@ -68,37 +115,77 @@ export default function SettingsPage() {
                   {error}
                 </p>
               ) : (
-                <>
-              {models.map((m) => {
-                const selected = currentModel === (m.id || m.name);
-                return (
-                  <button
-                    key={m.id || m.name}
-                    onClick={() => { setModel(m.id || m.name); switchModelApi(m.id || m.name).catch((err) => { logger.error('切换模型失败:', err); }); }}
-                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-sm transition-all text-left ${
-                      selected
-                        ? 'bg-accent/8 border border-accent/20'
-                        : 'border border-transparent hover:bg-white/[0.03]'
-                    }`}
-                  >
-                    <div className="min-w-0">
-                      <p className={`font-body text-mono ${selected ? 'text-accent-light' : 'text-ink'}`}>
-                        {m.name || m.id}
-                      </p>
-                      {m.provider ? (
-                        <p className="font-body text-[11px] text-ink-muted mt-0.5">{m.provider}</p>
-                      ) : null}
-                    </div>
-                    {selected ? <Check size={14} className="text-accent shrink-0" /> : null}
-                  </button>
-                );
-              })}
-              {models.length === 0 ? (
-                <p className="font-body text-caption text-ink-muted px-3 py-4 text-center">
-                  暂无模型数据
-                </p>
-              ) : null}
-              </>
+                <div className="space-y-4">
+                  {groups.map((group) => {
+                    const connected = providerConnected(group.provider);
+                    return (
+                      <div key={group.provider}>
+                        {/* Provider group header with connection status */}
+                        <div className="flex items-center gap-2 px-3 pt-1 pb-1">
+                          <span className="font-ui text-[10px] text-ink-muted tracking-widest uppercase">{group.provider}</span>
+                          <div className="flex-1 border-t border-border-subtle" />
+                          <div className="flex items-center gap-1">
+                            <Circle
+                              size={6}
+                              className={connected ? 'text-emerald-400 fill-emerald-400' : 'text-red-400 fill-red-400'}
+                            />
+                            <span className="font-body text-[9px] text-ink-ghost">
+                              {connected ? '已连接' : '未连接'}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Model items */}
+                        {group.items.map((m) => {
+                          const selected = currentModel === (m.id || m.name);
+                          return (
+                            <button
+                              key={m.id || m.name}
+                              onClick={() => {
+                                setModel(m.id || m.name);
+                                switchModelApi(m.id || m.name).catch((err) => {
+                                  logger.error('切换模型失败:', err);
+                                });
+                              }}
+                              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-sm transition-all text-left ${
+                                selected
+                                  ? 'bg-accent/8 border border-accent/20'
+                                  : 'border border-transparent hover:bg-white/[0.03]'
+                              }`}
+                            >
+                              <div className="min-w-0">
+                                <p className={`font-body text-mono ${selected ? 'text-accent-light' : 'text-ink'}`}>
+                                  {m.name || m.id}
+                                </p>
+                                {m.provider ? (
+                                  <p className="font-body text-[11px] text-ink-muted mt-0.5">{m.provider}</p>
+                                ) : null}
+                              </div>
+                              <AnimatePresence mode="wait">
+                                {selected ? (
+                                  <motion.div
+                                    key="check"
+                                    variants={checkVariants}
+                                    initial="initial"
+                                    animate="animate"
+                                    exit="initial"
+                                  >
+                                    <Check size={14} className="text-accent shrink-0" />
+                                  </motion.div>
+                                ) : null}
+                              </AnimatePresence>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    );
+                  })}
+                  {models.length === 0 ? (
+                    <p className="font-body text-caption text-ink-muted px-3 py-4 text-center">
+                      暂无模型数据
+                    </p>
+                  ) : null}
+                </div>
               )}
             </div>
           </div>

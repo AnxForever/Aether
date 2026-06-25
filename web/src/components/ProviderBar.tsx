@@ -1,7 +1,8 @@
-import { memo } from 'react';
+import { memo, useState, useRef, useEffect } from 'react';
 import { useAppStore } from '../stores/app';
 import { switchModel } from '../api/client';
 import { createLogger } from '../../../src/utils/logger';
+import { MoreHorizontal } from 'lucide-react';
 
 const logger = createLogger('ProviderBar');
 
@@ -41,10 +42,12 @@ const ProviderButton = memo(
       >
         {/* Dot + glow */}
         <span
-          className="w-[7px] h-[7px] rounded-full transition-shadow duration-300"
+          className={`rounded-full transition-all duration-300 ${
+            active ? 'w-[9px] h-[9px] animate-pulse-glow' : 'w-[7px] h-[7px]'
+          }`}
           style={{
             backgroundColor: dot,
-            boxShadow: active ? `0 0 6px ${dot}80` : 'none',
+            boxShadow: active ? `0 0 8px ${dot}99` : 'none',
             opacity: active ? 1 : 0.4,
           }}
         />
@@ -75,26 +78,82 @@ const ProviderButton = memo(
 export default function ProviderBar() {
   const currentModel = useAppStore((s) => s.currentModel);
   const setModel = useAppStore((s) => s.setModel);
+  const [overflowOpen, setOverflowOpen] = useState(false);
+  const overflowRef = useRef<HTMLDivElement>(null);
+
+  // Close overflow on outside click
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (overflowRef.current && !overflowRef.current.contains(e.target as Node)) {
+        setOverflowOpen(false);
+      }
+    };
+    if (overflowOpen) document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [overflowOpen]);
 
   const handleSelect = (id: string) => {
     setModel(id);
     switchModel(id).catch((err) => { logger.error('切换模型失败:', err); });
+    setOverflowOpen(false);
   };
+
+  // Visible providers per breakpoint: 2 on <480, 4 on <768, all on >=768
+  const overflowProviders = PROVIDERS.slice(4);
 
   return (
     <div className="w-full border-b border-border-subtle bg-base/80 backdrop-blur-sm">
-      <div className="flex items-center px-4 h-12 gap-1">
-        {PROVIDERS.map((p) => (
-          <ProviderButton
+      <div className="flex items-center px-4 h-12 gap-1 overflow-x-auto scrollbar-none">
+        {PROVIDERS.map((p, i) => (
+          <div
             key={p.id}
-            id={p.id}
-            name={p.name}
-            model={p.model}
-            dot={p.dot}
-            active={currentModel.startsWith(p.id)}
-            onSelect={handleSelect}
-          />
+            className={
+              i >= 4 ? 'hidden sm:flex' :
+              i >= 2 ? 'hidden max-sm:flex sm:flex' :
+              'flex'
+            }
+          >
+            <ProviderButton
+              id={p.id}
+              name={p.name}
+              model={p.model}
+              dot={p.dot}
+              active={currentModel.startsWith(p.id)}
+              onSelect={handleSelect}
+            />
+          </div>
         ))}
+
+        {/* Overflow menu — visible on small screens */}
+        <div className="relative sm:hidden" ref={overflowRef}>
+          <button
+            onClick={() => setOverflowOpen(!overflowOpen)}
+            className="flex items-center px-2 py-1.5 rounded-sm text-ink-muted hover:text-ink hover:bg-white/[0.04] transition-colors"
+            aria-label="更多模型"
+          >
+            <MoreHorizontal size={16} />
+          </button>
+
+          {overflowOpen && (
+            <div className="absolute top-full left-0 mt-1 w-44 glass-elevated rounded-sm shadow-xl animate-fade-in z-50">
+              {overflowProviders.map((p) => (
+                <button
+                  key={p.id}
+                  onClick={() => handleSelect(p.id)}
+                  className={`flex items-center gap-2.5 w-full px-3 py-2 text-caption font-ui transition-colors ${
+                    currentModel.startsWith(p.id)
+                      ? 'text-ink bg-white/[0.04]'
+                      : 'text-ink-secondary hover:text-ink hover:bg-white/[0.03]'
+                  }`}
+                >
+                  <span className="w-[6px] h-[6px] rounded-full shrink-0" style={{ backgroundColor: p.dot }} />
+                  <span>{p.name}</span>
+                  <span className="ml-auto text-[10px] text-ink-muted">{p.model}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { getSkills, toggleSkill } from '../api/client';
 import { Zap, Search, Wrench } from 'lucide-react';
@@ -13,6 +13,7 @@ interface Skill {
   name: string;
   version?: string;
   enabled?: boolean;
+  description?: string;
 }
 
 const containerVariants = {
@@ -28,6 +29,25 @@ const cardVariants = {
   hidden: { opacity: 0, y: 12 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.2 } },
 };
+
+/** Determine skill category from name prefix */
+function categorizeSkill(name: string): string {
+  const lower = name.toLowerCase();
+  if (lower.startsWith('gmail')) return 'Gmail';
+  if (lower.startsWith('github')) return 'GitHub';
+  if (lower.startsWith('google')) return 'Google';
+  if (lower.startsWith('office') || lower.startsWith('excel') || lower.startsWith('word') || lower.startsWith('ppt')) return 'Office';
+  if (lower.startsWith('system') || lower.startsWith('file') || lower.startsWith('shell') || lower.startsWith('fs')) return 'System';
+  if (lower.startsWith('creative') || lower.startsWith('image') || lower.startsWith('draw') || lower.startsWith('write')) return 'Creative';
+  return 'Other';
+}
+
+const CATEGORY_ORDER = ['Gmail', 'GitHub', 'Google', 'Office', 'System', 'Creative', 'Other'];
+
+interface CategoryGroup {
+  category: string;
+  skills: Skill[];
+}
 
 export default function SkillsPage() {
   const [skills, setSkills] = useState<Skill[]>([]);
@@ -67,17 +87,35 @@ export default function SkillsPage() {
     (s) => !search || s.name.toLowerCase().includes(search.toLowerCase())
   );
 
+  // Build category groups
+  const groups = useMemo<CategoryGroup[]>(() => {
+    const map = new Map<string, Skill[]>();
+    for (const s of filtered) {
+      const cat = categorizeSkill(s.name);
+      if (!map.has(cat)) map.set(cat, []);
+      map.get(cat)!.push(s);
+    }
+    return CATEGORY_ORDER
+      .filter((c) => map.has(c))
+      .map((c) => ({ category: c, skills: map.get(c)! }));
+  }, [filtered]);
+
+  const totalActive = activeIds.length;
+
   return (
     <div className="h-full overflow-y-auto p-6">
       <div className="max-w-5xl mx-auto">
         {/* Header */}
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-8 h-8 rounded-sm bg-accent/10 border border-accent/20 flex items-center justify-center">
-            <Zap size={16} className="text-accent" />
+          <div className="w-10 h-10 rounded-sm bg-accent/10 border border-accent/20 flex items-center justify-center ring-1 ring-accent/10">
+            <Zap size={18} className="text-accent" />
           </div>
           <div>
             <h1 className="font-display text-h1 text-ink">技能管理</h1>
-            <p className="font-body text-caption text-ink-muted">{skills.length} 个可用工具</p>
+            <p className="font-body text-caption text-ink-muted">
+              {skills.length} 个可用工具
+              {totalActive > 0 && <span className="ml-2 text-accent">· {totalActive} 个已启用</span>}
+            </p>
           </div>
         </div>
 
@@ -107,39 +145,90 @@ export default function SkillsPage() {
         ) : filtered.length === 0 ? (
           <EmptyState icon={Wrench} title="无匹配技能" description="尝试修改搜索关键词" />
         ) : (
-          <motion.div
-            className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2"
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-          >
-            {filtered.map((skill) => {
-              const active = activeIds.includes(skill.id);
+          <div className="space-y-6">
+            {groups.map((group) => {
+              const featured = group.skills.slice(0, 2);
+              const rest = group.skills.slice(2);
               return (
-                <motion.button
-                  key={skill.id}
-                  variants={cardVariants}
-                  onClick={() => handleToggle(skill)}
-                  className={`card card-glow text-left ${
-                    active ? 'border-accent/30 bg-accent/[0.04]' : ''
-                  }`}
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="font-body text-caption text-ink leading-tight truncate">
-                      {skill.name}
-                    </span>
-                    <span
-                      className="w-[6px] h-[6px] rounded-full shrink-0 transition-colors"
-                      style={{ backgroundColor: active ? '#22c55e' : '#334155' }}
-                    />
+                <div key={group.category}>
+                  {/* Category header */}
+                  <div className="flex items-center gap-2 mb-2.5">
+                    <span className="font-ui text-[10px] text-ink-muted tracking-widest uppercase">{group.category}</span>
+                    <div className="flex-1 border-t border-border-subtle" />
+                    <span className="font-body text-[10px] text-ink-ghost">{group.skills.length} 项</span>
                   </div>
-                  {skill.version && (
-                    <p className="font-body text-[10px] text-ink-ghost mt-1">v{skill.version}</p>
-                  )}
-                </motion.button>
+
+                  <motion.div
+                    className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2"
+                    variants={containerVariants}
+                    initial="hidden"
+                    animate="visible"
+                  >
+                    {featured.map((skill) => {
+                      const active = activeIds.includes(skill.id);
+                      return (
+                        <motion.button
+                          key={skill.id}
+                          variants={cardVariants}
+                          onClick={() => handleToggle(skill)}
+                          className={`card card-glow text-left border-l-[3px] ${active ? 'border-accent/30 bg-accent/[0.04] border-l-accent/40' : 'border-l-accent/0'}`}
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-body text-caption text-ink leading-tight truncate">
+                              {skill.name}
+                            </span>
+                            {active ? (
+                              <span className="font-body text-[9px] text-accent bg-accent/10 px-1.5 py-[1px] rounded-sm whitespace-nowrap shrink-0 leading-tight">
+                                已启用
+                              </span>
+                            ) : (
+                              <span className="w-[6px] h-[6px] rounded-full shrink-0 transition-colors" style={{ backgroundColor: '#334155' }} />
+                            )}
+                          </div>
+                          {skill.description && (
+                            <p className="font-body text-[10px] text-ink-muted mt-1 truncate">{skill.description}</p>
+                          )}
+                          {skill.version && (
+                            <p className="font-body text-[10px] text-ink-ghost mt-1">v{skill.version}</p>
+                          )}
+                        </motion.button>
+                      );
+                    })}
+                    {rest.map((skill) => {
+                      const active = activeIds.includes(skill.id);
+                      return (
+                        <motion.button
+                          key={skill.id}
+                          variants={cardVariants}
+                          onClick={() => handleToggle(skill)}
+                          className={`card card-glow text-left ${active ? 'border-accent/30 bg-accent/[0.04]' : ''}`}
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-body text-caption text-ink leading-tight truncate">
+                              {skill.name}
+                            </span>
+                            {active ? (
+                              <span className="font-body text-[9px] text-accent bg-accent/10 px-1.5 py-[1px] rounded-sm whitespace-nowrap shrink-0 leading-tight">
+                                已启用
+                              </span>
+                            ) : (
+                              <span className="w-[6px] h-[6px] rounded-full shrink-0 transition-colors" style={{ backgroundColor: '#334155' }} />
+                            )}
+                          </div>
+                          {skill.description && (
+                            <p className="font-body text-[10px] text-ink-muted mt-1 truncate">{skill.description}</p>
+                          )}
+                          {skill.version && (
+                            <p className="font-body text-[10px] text-ink-ghost mt-1">v{skill.version}</p>
+                          )}
+                        </motion.button>
+                      );
+                    })}
+                  </motion.div>
+                </div>
               );
             })}
-          </motion.div>
+          </div>
         )}
       </div>
     </div>

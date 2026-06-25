@@ -17,6 +17,20 @@ export default function Sidebar() {
 
   return (
     <div className="flex flex-col h-full py-3">
+      {/* User identity */}
+      <div className="flex items-center gap-2.5 px-4 mb-4">
+        <div className="w-8 h-8 rounded-sm bg-accent/10 flex items-center justify-center border border-accent/20">
+          <span className="text-xs font-bold text-accent font-display">A</span>
+        </div>
+        <div className="flex flex-col">
+          <span className="font-ui text-caption font-medium text-ink">Admin</span>
+          <span className="flex items-center gap-1 text-[10px] text-ink-muted font-ui">
+            <span className="w-[5px] h-[5px] rounded-full bg-success animate-pulse-glow inline-block" />
+            online
+          </span>
+        </div>
+      </div>
+
       {/* Header */}
       <div className="flex items-center justify-between px-4 mb-2">
         <div className="flex items-center gap-2">

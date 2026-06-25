@@ -29,7 +29,7 @@ export class AppleNotesSkill extends BaseSkill {
       name: 'Apple Notes',
       description: 'Integration with macOS Notes.app',
       version: '1.0.0',
-      author: 'Nexus',
+      author: 'Aether',
       enabled: true,
     });
   }

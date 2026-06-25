@@ -21,7 +21,7 @@ export class CreativeSkill extends BaseSkill {
       name: 'Creative Tools',
       description: 'Image generation, text-to-speech, and speech-to-text capabilities',
       version: '1.0.0',
-      author: 'Nexus Team',
+      author: 'Aether Team',
       enabled: true,
       requiresAuth: true,
       dependencies: ['openai', '@google/generative-ai'],

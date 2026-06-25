@@ -141,8 +141,8 @@ Aether is a complete reimplementation of AI agent architecture, built from groun
 ### Encryption
 - **Algorithm**: AES-256-GCM
 - **Key Derivation**: Scrypt (32 bytes)
-- **Format**: `nexus.enc.v1:<iv>:<authTag>:<encrypted>`
-- **Salt**: `nexus-salt` (static, for deterministic keys)
+- **Format**: `aether.enc.v1:<iv>:<authTag>:<encrypted>`
+- **Salt**: `aether-salt` (static, for deterministic keys)
 
 ### Authentication
 - **Gateway Token**: SHA-256 based (64 bytes)

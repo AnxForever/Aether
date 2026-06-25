@@ -1,5 +1,5 @@
 /**
- * Workflow Integration - Connect WorkflowEngine to Nexus Agent
+ * Workflow Integration - Connect WorkflowEngine to Aether
  */
 
 import { EventEmitter } from 'events';

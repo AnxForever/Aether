@@ -1,7 +1,7 @@
 /**
  * Skill System Types
  *
- * Extended skill-specific types for Nexus Agent
+ * Extended skill-specific types for Aether
  */
 
 import { z } from 'zod';

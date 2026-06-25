@@ -55,7 +55,7 @@ export class SandboxedBrowser extends EventEmitter {
     this.window = new BrowserWindow({
       width: 1200,
       height: 800,
-      title: 'Nexus Browser',
+      title: 'Aether Browser',
       webPreferences: {
         nodeIntegration: false,
         contextIsolation: true,
@@ -74,7 +74,7 @@ export class SandboxedBrowser extends EventEmitter {
    * Setup isolated session
    */
   private async setupSession(): Promise<void> {
-    const browserSession = session.fromPartition('persist:nexus-browser', {
+    const browserSession = session.fromPartition('persist:aether-browser', {
       cache: true
     });
 
@@ -111,7 +111,7 @@ export class SandboxedBrowser extends EventEmitter {
 
     const view = new WebContentsView({
       webPreferences: {
-        partition: 'persist:nexus-browser',
+        partition: 'persist:aether-browser',
         nodeIntegration: false,
         contextIsolation: true,
         sandbox: true,

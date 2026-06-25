@@ -91,7 +91,7 @@ export class CollaborationServer extends EventEmitter {
   constructor(private port: number = 8081, validateToken?: (token: string) => boolean) {
     super();
     if (!validateToken) {
-      const preSharedKey = process.env.COLAB_SECRET || crypto.randomBytes(32).toString('hex');
+      const preSharedKey = process.env.COLLAB_SECRET || crypto.randomBytes(32).toString('hex');
       this.validateToken = (token: string) => token === preSharedKey;
       logger.info('Collaboration server using pre-shared key authentication');
     } else {

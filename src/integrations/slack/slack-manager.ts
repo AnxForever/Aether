@@ -218,7 +218,7 @@ export class SlackManager extends EventEmitter<SlackManagerEvents> {
                 type: 'section',
                 text: {
                   type: 'mrkdwn',
-                  text: '*Welcome to Nexus Agent Bot!* 🤖',
+                  text: '*Welcome to Aether Bot!* 🤖',
                 },
               },
               {

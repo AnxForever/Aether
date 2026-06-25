@@ -224,7 +224,7 @@ class MCPServerInstance {
     // 创建 client
     this.client = new Client(
       {
-        name: 'nexus-agent',
+        name: 'aether',
         version: '1.0.0',
       },
       {

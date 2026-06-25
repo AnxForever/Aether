@@ -1,12 +1,32 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Send, StopCircle, Sparkles, Hash } from 'lucide-react';
+import { Send, StopCircle, Hash } from 'lucide-react';
 import { streamChat, newSession } from '../api/client';
 import { useAppStore } from '../stores/app';
 import ChatMessage from '../components/ChatMessage';
 import EmptyState from '../components/EmptyState';
+import SuggestedPrompts from '../components/SuggestedPrompts';
 import { createLogger } from '../../../src/utils/logger';
 
 const logger = createLogger('ChatPage');
+
+const DATE_FORMAT = new Intl.DateTimeFormat('zh-CN', { month: '2-digit', day: '2-digit' });
+
+/** Convert timestamp to date key for grouping */
+function dateKey(ts: number): string {
+  return new Date(ts).toDateString();
+}
+
+function DateSeparator({ ts }: { ts: number }) {
+  return (
+    <div className="flex items-center gap-3 my-6">
+      <div className="flex-1 h-px bg-border-subtle" />
+      <span className="font-ui text-[10px] text-ink-ghost uppercase tracking-widest shrink-0">
+        {DATE_FORMAT.format(new Date(ts))}
+      </span>
+      <div className="flex-1 h-px bg-border-subtle" />
+    </div>
+  );
+}
 
 export default function ChatPage() {
   const messages = useAppStore((s) => s.messages);
@@ -19,6 +39,7 @@ export default function ChatPage() {
   const [input, setInput] = useState('');
   const [streamingContent, setStreamingContent] = useState('');
   const [transientError, setTransientError] = useState<string | null>(null);
+  const [sentPulse, setSentPulse] = useState(false);
   const streamingRef = useRef('');
   const abortRef = useRef<AbortController | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -50,6 +71,10 @@ export default function ChatPage() {
     streamingRef.current = '';
     setStreamingContent('');
     setStreaming(true);
+
+    // Sent pulse animation
+    setSentPulse(true);
+    setTimeout(() => setSentPulse(false), 300);
 
     const controller = streamChat(
       text,
@@ -98,25 +123,46 @@ export default function ChatPage() {
     }
   };
 
+  const handlePromptSelect = (text: string) => {
+    setInput(text);
+    inputRef.current?.focus();
+  };
+
+  // Build message list with date separators
+  const renderMessages = () => {
+    const elements: React.ReactNode[] = [];
+    let lastDateKey: string | null = null;
+
+    for (const msg of messages) {
+      const dk = dateKey(msg.timestamp);
+      if (lastDateKey !== null && dk !== lastDateKey) {
+        elements.push(<DateSeparator key={`sep-${msg.id}`} ts={msg.timestamp} />);
+      }
+      lastDateKey = dk;
+      elements.push(<ChatMessage key={msg.id} msg={msg} />);
+    }
+
+    return elements;
+  };
+
   return (
     <div className="flex flex-col h-full">
       {/* Messages area */}
       <div className="flex-1 overflow-y-auto px-6 py-4 space-y-5">
         {/* Empty state */}
         {messages.length === 0 && !streamingContent ? (
-          <div className="h-full flex items-center justify-center">
+          <div className="flex flex-col items-center pt-24">
             <EmptyState
               icon={Hash}
               title="开始对话"
               description="选择一个 AI 模型，输入消息开始编排。支持 7 个 AI 提供商。"
             />
+            <SuggestedPrompts onSelect={handlePromptSelect} />
           </div>
         ) : null}
 
-        {/* Messages */}
-        {messages.map((msg) => (
-          <ChatMessage key={msg.id} msg={msg} />
-        ))}
+        {/* Messages with date separators */}
+        {messages.length > 0 ? renderMessages() : null}
 
         {/* Streaming bubble */}
         {streamingContent ? (
@@ -152,7 +198,9 @@ export default function ChatPage() {
         <div className="flex items-end gap-2 max-w-[900px] mx-auto">
           {/* Model indicator */}
           <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-2 border border-border-default rounded-sm shrink-0">
-            <span className="w-[5px] h-[5px] rounded-full bg-accent" />
+            <span
+              className={`w-[5px] h-[5px] rounded-full bg-accent ${isStreaming ? 'animate-pulse-glow' : ''}`}
+            />
             <span className="font-ui text-[11px] text-ink-muted uppercase">{currentModel}</span>
           </div>
 
@@ -164,7 +212,7 @@ export default function ChatPage() {
             placeholder="输入消息... (Enter 发送)"
             aria-label="消息输入"
             rows={1}
-            className="field flex-1 resize-none min-h-[44px] max-h-[160px]"
+            className="field flex-1 resize-none min-h-[44px] max-h-[160px] focus:shadow-[0_0_0_3px_rgba(6,182,212,0.1),0_0_12px_rgba(6,182,212,0.08)]"
             disabled={isStreaming}
           />
 
@@ -181,7 +229,7 @@ export default function ChatPage() {
               onClick={handleSend}
               disabled={!input.trim()}
               aria-label="发送消息"
-              className="btn btn-primary p-2.5"
+              className={`btn btn-primary p-2.5 transition-transform duration-75 active:scale-95 ${sentPulse ? 'scale-105' : ''}`}
             >
               <Send size={18} />
             </button>

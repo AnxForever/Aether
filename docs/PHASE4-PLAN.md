@@ -198,7 +198,7 @@
 ### Changed
 - Pipeline 新增 `skill-creation-detection` 阶段
 - Orchestrator 集成 LearningIntegration 和 SkillCreatorIntegration
-- NexusAgent 新增多个管理 API
+- AetherAgent 新增多个管理 API
 
 ### Documentation
 - 新增 PLUGIN-DEVELOPMENT.md

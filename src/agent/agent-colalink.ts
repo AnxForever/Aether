@@ -1,7 +1,7 @@
 /**
  * Agent ColaLink API
  *
- * Extracted from NexusAgent to reduce the God Object.
+ * Extracted from AetherAgent to reduce the God Object.
  * Functions accept a ColaLink host object for access to the ColaLinkManager.
  */
 

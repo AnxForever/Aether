@@ -1,7 +1,7 @@
 /**
- * Nexus Core Types
+ * Aether Core Types
  *
- * Complete type system for Nexus Agent
+ * Complete type system for Aether
  */
 
 // ============================================================================

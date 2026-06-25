@@ -165,7 +165,7 @@ export const helpHandler: CommandHandler = async (context) => {
     success: true,
     data: {
       commands,
-      usage: 'nexus-cli <command> [args] [options]',
+      usage: 'aether-cli <command> [args] [options]',
     },
   };
 };

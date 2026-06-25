@@ -22,7 +22,10 @@ export default function Layout({ children }: { children: ReactNode }) {
         </aside>
 
         {/* Content */}
-        <main className="flex-1 min-w-0 overflow-hidden">{children}</main>
+        <main className="flex-1 min-w-0 overflow-hidden bg-grid relative">
+          <div className="ambient-glow" />
+          <div className="relative z-10 h-full">{children}</div>
+        </main>
       </div>
     </div>
   );

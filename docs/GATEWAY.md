@@ -2,7 +2,7 @@
 
 ## Overview
 
-The API Gateway provides enterprise-grade HTTP access to Nexus Agent with:
+The API Gateway provides enterprise-grade HTTP access to Aether Agent with:
 
 - **JWT Authentication** - Secure token-based auth
 - **Rate Limiting** - Token bucket algorithm (per-user)

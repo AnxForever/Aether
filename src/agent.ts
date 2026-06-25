@@ -1,7 +1,7 @@
 /**
- * Nexus Agent - Main Agent Class
+ * Aether - Main Agent Class
  *
- * High-level API for interacting with Nexus
+ * High-level API for interacting with Aether
  */
 
 import { Orchestrator } from './core/orchestrator';
@@ -112,9 +112,9 @@ import type { Mode, AgentMode } from './modes/mode-manager';
 import * as agentPlugins from './agent/agent-plugins';
 import * as agentColaLink from './agent/agent-colalink';
 
-const logger = createLogger('NexusAgent');
+const logger = createLogger('AetherAgent');
 
-export interface NexusAgentConfig {
+export interface AetherAgentConfig {
   model?: string;
   provider?: string;
   apiKeys?: Record<string, string>;
@@ -245,10 +245,10 @@ export interface NexusAgentConfig {
   };
 }
 
-export class NexusAgent {
+export class AetherAgent {
   private orchestrator: Orchestrator;
   private context: AgentContext;
-  private config: NexusAgentConfig;
+  private config: AetherAgentConfig;
   private pluginLoader: PluginLoader;
   private marketplace: PluginMarketplace;
   private connectorsInitialized = false;
@@ -293,7 +293,7 @@ export class NexusAgent {
   private workQueueManager?: WorkQueueManager;
   private modeManager?: ModeManager;
 
-  constructor(config: NexusAgentConfig) {
+  constructor(config: AetherAgentConfig) {
     this.config = config;
 
     // Initialize orchestrator
@@ -506,7 +506,7 @@ export class NexusAgent {
     // Initialize Telemetry (OpenTelemetry-backed, backward compat)
     if (this.config.telemetry?.enabled !== false) {
       this.telemetrySystem = new TelemetrySystem({
-        serviceName: this.config.telemetry?.serviceName || 'nexus-agent',
+        serviceName: this.config.telemetry?.serviceName || 'aether',
         endpoint: this.config.telemetry?.endpoint,
         enabled: true,
       });
@@ -532,7 +532,7 @@ export class NexusAgent {
     // 1. Observability (OpenTelemetry)
     if (this.config.observability?.enabled !== false) {
       try {
-        const otelServiceName = this.config.observability?.serviceName || 'nexus-agent';
+        const otelServiceName = this.config.observability?.serviceName || 'aether';
         const otelServiceVersion = this.config.observability?.serviceVersion || '1.0.0';
         this.telemetryManager = new TelemetryManager({
           serviceName: otelServiceName,
@@ -2003,8 +2003,8 @@ export class NexusAgent {
 }
 
 /**
- * Create Nexus Agent instance
+ * Create Aether instance
  */
-export function createNexusAgent(config: NexusAgentConfig): NexusAgent {
-  return new NexusAgent(config);
+export function createAetherAgent(config: AetherAgentConfig): AetherAgent {
+  return new AetherAgent(config);
 }

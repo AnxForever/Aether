@@ -1,7 +1,7 @@
 /**
  * Pi-Agent-Core Adapter
  *
- * 将 Nexus-Agent 的现有 Orchestrator 适配到 pi-agent-core 框架
+ * 将 Aether-Agent 的现有 Orchestrator 适配到 pi-agent-core 框架
  */
 
 import {
@@ -38,7 +38,7 @@ export interface PiAdapterConfig {
 /**
  * Pi-Agent 适配器
  *
- * 提供与现有 Nexus Orchestrator 兼容的接口
+ * 提供与现有 Aether Orchestrator 兼容的接口
  */
 export class PiAgentAdapter extends EventEmitter {
   private context: AgentContext;
@@ -385,16 +385,16 @@ export class PiAgentAdapter extends EventEmitter {
 }
 
 /**
- * 将 Nexus 工具转换为 pi-agent-core 工具
+ * 将 Aether 工具转换为 pi-agent-core 工具
  */
-export function convertNexusToolToPiTool(
-  nexusTool: any
+export function convertAetherToolToPiTool(
+  aetherTool: any
 ): AgentTool<any> {
   return {
-    name: nexusTool.name,
-    label: nexusTool.description || nexusTool.name,
-    description: nexusTool.description || '',
-    parameters: nexusTool.parameters || { type: 'object', properties: {} },
+    name: aetherTool.name,
+    label: aetherTool.description || aetherTool.name,
+    description: aetherTool.description || '',
+    parameters: aetherTool.parameters || { type: 'object', properties: {} },
 
     execute: async (
       toolCallId: string,
@@ -402,7 +402,7 @@ export function convertNexusToolToPiTool(
       signal?: AbortSignal
     ): Promise<AgentToolResult<any>> => {
       try {
-        const result = await nexusTool.execute(params, signal);
+        const result = await aetherTool.execute(params, signal);
 
         return {
           content: [

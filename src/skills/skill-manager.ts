@@ -1,7 +1,7 @@
 /**
  * Skill Manager
  *
- * Central management for all Nexus skills
+ * Central management for all Aether skills
  */
 
 import type { Skill, Tool, ToolResult } from '../types';

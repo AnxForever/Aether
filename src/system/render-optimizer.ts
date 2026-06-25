@@ -1,6 +1,6 @@
 /**
 import { createLogger } from './utils/logger';
- * Nexus Render Optimizer
+ * Aether Render Optimizer
  *
  * Manages Electron rendering modes with automatic GPU fallback,
  * performance monitoring, and intelligent degradation.
@@ -533,7 +533,7 @@ export class RenderOptimizer {
       level: 'warning',
       message: this.config.autoFallback.failureCount >= FAILURE_THRESHOLD
         ? 'Compatibility rendering is active after repeated GPU startup failures.'
-        : 'Compatibility rendering is active for this relaunch after a GPU startup failure. Nexus will retry GPU rendering on the next normal launch.'
+        : 'Compatibility rendering is active for this relaunch after a GPU startup failure. Aether will retry GPU rendering on the next normal launch.'
     });
 
     this.saveConfig();

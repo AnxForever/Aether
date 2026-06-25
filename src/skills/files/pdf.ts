@@ -18,7 +18,7 @@ export class PDFSkill extends BaseSkill {
       name: 'PDF Processing',
       description: 'Extract and process PDF files',
       version: '1.0.0',
-      author: 'Nexus',
+      author: 'Aether',
       enabled: true,
     });
   }

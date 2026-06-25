@@ -112,7 +112,7 @@
   // ============================================================
   // API helper (uses exposed electronAPI / nexus)
   // ============================================================
-  const api = window.electronAPI || window.nexus;
+  const api = window.electronAPI || window.aether;
 
   async function callApi(fn, ...args) {
     if (!api || typeof fn !== 'function') {

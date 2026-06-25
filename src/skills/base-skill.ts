@@ -1,7 +1,7 @@
 /**
  * Base Skill Class
  *
- * Abstract base class for all Nexus skills with i18n support
+ * Abstract base class for all Aether skills with i18n support
  */
 
 import type { Skill, Tool, ToolResult } from '../types';

@@ -123,7 +123,7 @@ export function resolveHome(path: string): string {
 /**
  * Get data directory
  */
-export function getDataDir(appName: string = 'nexus'): string {
+export function getDataDir(appName: string = 'aether'): string {
   const home = homedir();
   const platform = process.platform;
 

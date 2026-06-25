@@ -48,7 +48,7 @@ export class ProfileManager {
       // Create new profile
       this.profile = {
         handle: `user_${Date.now()}`,
-        displayName: 'Nexus User',
+        displayName: 'Aether User',
         deviceId: generateUuid(),
         publicKey: generateUuid(), // In production, generate RSA key pair
         createdAt: Date.now(),

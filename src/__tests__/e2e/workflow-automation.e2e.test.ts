@@ -5,19 +5,19 @@
  */
 
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { createNexusAgent, NexusAgent } from '../../agent';
+import { createAetherAgent, AetherAgent } from '../../agent';
 import { randomUUID } from 'crypto';
 import { join } from 'path';
 import { mkdirSync, rmSync } from 'fs';
 
 describe('E2E: Workflow Automation', () => {
-  let agent: NexusAgent;
+  let agent: AetherAgent;
   const testDataDir = join(process.cwd(), 'test-data', randomUUID());
 
   beforeAll(async () => {
     mkdirSync(testDataDir, { recursive: true });
 
-    agent = createNexusAgent({
+    agent = createAetherAgent({
       model: 'claude-sonnet-4-20250514',
       provider: 'claude',
       dataDir: testDataDir,

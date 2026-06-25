@@ -17,7 +17,7 @@ export class WordSkill extends BaseSkill {
       name: 'Word Processing',
       description: 'Create and process Word documents',
       version: '1.0.0',
-      author: 'Nexus',
+      author: 'Aether',
       enabled: true,
     });
   }

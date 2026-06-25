@@ -71,7 +71,7 @@ export class MiniWindowRenderer {
         <input
           type="text"
           class="mini-input"
-          placeholder="Ask Nexus anything..."
+          placeholder="Ask Aether anything..."
           autocomplete="off"
         />
         <div class="mini-actions">

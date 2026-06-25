@@ -30,7 +30,7 @@ export class AppleRemindersSkill extends BaseSkill {
       name: 'Apple Reminders',
       description: 'Integration with macOS Reminders.app',
       version: '1.0.0',
-      author: 'Nexus',
+      author: 'Aether',
       enabled: true,
     });
   }

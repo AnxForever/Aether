@@ -32,7 +32,7 @@ export class AppleCalendarSkill extends BaseSkill {
       name: 'Apple Calendar',
       description: 'Integration with macOS Calendar.app',
       version: '1.0.0',
-      author: 'Nexus',
+      author: 'Aether',
       enabled: true,
     });
   }

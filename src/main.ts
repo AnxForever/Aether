@@ -6,7 +6,7 @@ import { app, BrowserWindow, ipcMain, dialog } from 'electron';
 import { join } from 'path';
 import { IPCHandlerRegistry, createSuccessResponse, createErrorResponse } from './ipc/handlers';
 import { IPC_CHANNELS } from './ipc/protocol';
-import { NexusAgent } from './agent';
+import { AetherAgent } from './agent';
 import { createLogger } from './utils/logger';
 import { OnboardingManager } from './onboarding';
 import { ConfigManager } from './storage/config-manager';
@@ -20,7 +20,7 @@ const logger = createLogger('Main');
 
 let mainWindow: BrowserWindow | null = null;
 let onboardingWindow: BrowserWindow | null = null;
-let agent: NexusAgent | null = null;
+let agent: AetherAgent | null = null;
 let onboardingManager: OnboardingManager | null = null;
 let collaborationLauncher: CollaborationLauncher | null = null;
 let searchEngine: SemanticSearch | null = null;
@@ -115,7 +115,7 @@ function createWindow() {
  * Initialize agent
  */
 async function initializeAgent() {
-  agent = new NexusAgent({
+  agent = new AetherAgent({
     dataDir: app.getPath('userData'),
     deviceId: 'electron-' + require('os').hostname()
   });

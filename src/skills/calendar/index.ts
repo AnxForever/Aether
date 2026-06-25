@@ -42,7 +42,7 @@ export class CalendarSkill extends BaseSkill {
       name: 'Google Calendar',
       description: 'Google Calendar event creation, reading, and management using Calendar API',
       version: '1.0.0',
-      author: 'Nexus Team',
+      author: 'Aether Team',
       enabled: true,
       requiresAuth: true,
       dependencies: ['googleapis'],

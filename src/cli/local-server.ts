@@ -5,7 +5,7 @@
 import express, { Express, Request, Response } from 'express';
 import cors from 'cors';
 import { createServer, Server } from 'http';
-import { NexusAgent } from '../agent';
+import { AetherAgent } from '../agent';
 import { createLogger } from '../utils/logger';
 import { ChatHistory } from '../storage/chat-history';
 import { ConfigManager } from '../storage/config-manager';
@@ -29,12 +29,12 @@ export interface ServerConfig {
 export class LocalServer {
   private app: Express;
   private server?: Server;
-  private agent: NexusAgent;
+  private agent: AetherAgent;
   private config: ServerConfig;
   private chatHistory?: ChatHistory;
   private configManager?: ConfigManager;
 
-  constructor(agent: NexusAgent, config: ServerConfig = { port: 3000, host: 'localhost' }) {
+  constructor(agent: AetherAgent, config: ServerConfig = { port: 3000, host: 'localhost' }) {
     this.agent = agent;
     this.config = config;
     this.app = express();

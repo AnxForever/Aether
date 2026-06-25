@@ -17,7 +17,7 @@ export class PowerPointSkill extends BaseSkill {
       name: 'PowerPoint Processing',
       description: 'Create and process PowerPoint presentations',
       version: '1.0.0',
-      author: 'Nexus',
+      author: 'Aether',
       enabled: true,
     });
   }

@@ -1,5 +1,5 @@
 /**
- * Browser Protocol Handler - Custom protocol support (nexus://)
+ * Browser Protocol Handler - Custom protocol support (aether://)
  */
 
 import { protocol } from 'electron';
@@ -17,7 +17,7 @@ export class ProtocolHandler {
    * Register custom protocols
    */
   static register(): void {
-    // Register nexus:// protocol
+    // Register aether:// protocol
     protocol.registerSchemesAsPrivileged([
       {
         scheme: 'nexus',
@@ -37,7 +37,7 @@ export class ProtocolHandler {
    * Setup protocol handlers
    */
   static async setup(dataDir: string): Promise<void> {
-    // Handle nexus:// URLs
+    // Handle aether:// URLs
     protocol.handle('nexus', async (request) => {
       const url = new URL(request.url);
 
@@ -63,14 +63,14 @@ export class ProtocolHandler {
   }
 
   /**
-   * Handle nexus://home
+   * Handle aether://home
    */
   private static async handleHome(): Promise<Response> {
     const html = `
       <!DOCTYPE html>
       <html>
         <head>
-          <title>Nexus Home</title>
+          <title>Aether Home</title>
           <style>
             body {
               font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -88,12 +88,12 @@ export class ProtocolHandler {
           </style>
         </head>
         <body>
-          <h1>Welcome to Nexus</h1>
+          <h1>Welcome to Aether</h1>
           <div class="card">
             <h2>Quick Links</h2>
             <ul>
-              <li><a href="nexus://settings">Settings</a></li>
-              <li><a href="nexus://help">Help & Documentation</a></li>
+              <li><a href="aether://settings">Settings</a></li>
+              <li><a href="aether://help">Help & Documentation</a></li>
             </ul>
           </div>
         </body>
@@ -106,14 +106,14 @@ export class ProtocolHandler {
   }
 
   /**
-   * Handle nexus://settings
+   * Handle aether://settings
    */
   private static async handleSettings(): Promise<Response> {
     const html = `
       <!DOCTYPE html>
       <html>
         <head>
-          <title>Nexus Settings</title>
+          <title>Aether Settings</title>
           <style>
             body {
               font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -125,7 +125,7 @@ export class ProtocolHandler {
         </head>
         <body>
           <h1>Settings</h1>
-          <p>Manage your Nexus configuration here.</p>
+          <p>Manage your Aether configuration here.</p>
         </body>
       </html>
     `;
@@ -136,14 +136,14 @@ export class ProtocolHandler {
   }
 
   /**
-   * Handle nexus://help
+   * Handle aether://help
    */
   private static async handleHelp(): Promise<Response> {
     const html = `
       <!DOCTYPE html>
       <html>
         <head>
-          <title>Nexus Help</title>
+          <title>Aether Help</title>
           <style>
             body {
               font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -155,7 +155,7 @@ export class ProtocolHandler {
         </head>
         <body>
           <h1>Help & Documentation</h1>
-          <p>Find help and documentation for Nexus.</p>
+          <p>Find help and documentation for Aether.</p>
         </body>
       </html>
     `;
@@ -166,7 +166,7 @@ export class ProtocolHandler {
   }
 
   /**
-   * Handle nexus://skill/{skillId}
+   * Handle aether://skill/{skillId}
    */
   private static async handleSkill(skillId: string): Promise<Response> {
     const html = `

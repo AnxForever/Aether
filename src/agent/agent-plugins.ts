@@ -1,8 +1,8 @@
 /**
  * Agent Plugins API
  *
- * Extracted from NexusAgent to reduce the God Object.
- * Functions accept a NexusAgent-like host object for access to internal state.
+ * Extracted from AetherAgent to reduce the God Object.
+ * Functions accept a AetherAgent-like host object for access to internal state.
  */
 
 import type { Plugin } from '../plugins/plugin-registry';

@@ -23,7 +23,7 @@ export class GmailSkill extends BaseSkill {
       name: 'Gmail',
       description: 'Gmail email reading, sending, and management using Gmail API',
       version: '1.0.0',
-      author: 'Nexus Team',
+      author: 'Aether Team',
       enabled: true,
       requiresAuth: true,
       dependencies: ['googleapis'],

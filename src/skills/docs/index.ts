@@ -20,7 +20,7 @@ export class DocsSkill extends BaseSkill {
       name: 'Google Docs',
       description: 'Google Docs reading, creation, and editing using Docs API',
       version: '1.0.0',
-      author: 'Nexus Team',
+      author: 'Aether Team',
       enabled: true,
       requiresAuth: true,
       dependencies: ['googleapis'],

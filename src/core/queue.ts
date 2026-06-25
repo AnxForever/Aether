@@ -2,7 +2,7 @@
 import { createLogger } from './utils/logger';
  * Queue System - Dual queue for primary and background tasks
  *
- * Based on Cola's steeringQueue and followUpQueue
+ * Based on original steeringQueue and followUpQueue
  */
 
 import { Task, Queue } from '../types';

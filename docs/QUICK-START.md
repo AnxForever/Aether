@@ -67,7 +67,7 @@ const agent = createAetherAgent({
   // Optional
   model: 'claude-sonnet-4-20250514',
   provider: 'claude',
-  dataDir: '~/.nexus',
+  dataDir: '~/.aether',
   deviceId: 'custom-device-id'
 });
 ```
@@ -135,6 +135,6 @@ See `/examples` directory for complete examples:
 
 ## Support
 
-- GitHub: https://github.com/nexus-team/aether
-- Issues: https://github.com/nexus-team/aether/issues
+- GitHub: https://github.com/aether-team/aether
+- Issues: https://github.com/aether-team/aether/issues
 - Docs: https://aether.dev/docs

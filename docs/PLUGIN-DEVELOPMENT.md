@@ -1,6 +1,6 @@
 # Plugin Development Guide
 
-> Complete guide to creating plugins for Nexus Agent
+> Complete guide to creating plugins for Aether Agent
 
 ## Table of Contents
 
@@ -19,7 +19,7 @@
 
 ## Overview
 
-Nexus plugins extend the agent's capabilities by adding new tools, skills, and integrations. Plugins are:
+Aether plugins extend the agent's capabilities by adding new tools, skills, and integrations. Plugins are:
 
 - **Hot-reloadable**: Load/unload without restarting
 - **Isolated**: Run in separate contexts with permission controls
@@ -107,9 +107,9 @@ export const tools = [
   "name": "GitHub Integration",
   "version": "1.2.3",
   "description": "Integrate with GitHub API for repository management",
-  "author": "Nexus Team <team@nexus.dev>",
-  "homepage": "https://github.com/nexus/plugin-github",
-  "repository": "https://github.com/nexus/plugin-github",
+  "author": "Aether Team <team@aether.dev>",
+  "homepage": "https://github.com/aether/plugin-github",
+  "repository": "https://github.com/aether/plugin-github",
   "license": "MIT",
   "main": "index.js",
   "keywords": ["github", "git", "version-control"],
@@ -170,7 +170,7 @@ cat > manifest.json << 'EOF'
   "id": "my-plugin",
   "name": "My First Plugin",
   "version": "1.0.0",
-  "description": "My first Nexus plugin",
+  "description": "My first Aether plugin",
   "author": "Your Name",
   "license": "MIT"
 }
@@ -181,7 +181,7 @@ EOF
 
 ```typescript
 // index.ts
-import { PluginAPI, Tool, ToolResult } from '@nexus/types';
+import { PluginAPI, Tool, ToolResult } from '@aether/types';
 
 /**
  * Initialize plugin
@@ -235,15 +235,15 @@ export const tools: Tool[] = [
 npm run build
 
 # Copy to plugins directory
-cp -r . ~/.nexus/plugins/my-plugin/
+cp -r . ~/.aether/plugins/my-plugin/
 ```
 
-### Step 5: Load in Nexus
+### Step 5: Load in Aether
 
 ```typescript
-import { NexusAgent } from '@nexus/agent';
+import { AetherAgent } from '@aether/agent';
 
-const agent = new NexusAgent({
+const agent = new AetherAgent({
   pluginsDir: './plugins'
 });
 
@@ -566,13 +566,13 @@ npm test -- --coverage
 
 ```bash
 # Login to marketplace
-nexus-cli login
+aether-cli login
 
 # Publish plugin
-nexus-cli publish ./my-plugin
+aether-cli publish ./my-plugin
 
 # Update existing plugin
-nexus-cli publish ./my-plugin --version 1.1.0
+aether-cli publish ./my-plugin --version 1.1.0
 ```
 
 ### Versioning Guidelines
@@ -613,7 +613,7 @@ Follow [Semantic Versioning](https://semver.org/):
 
 ```typescript
 // calculator-plugin/index.ts
-import { PluginAPI, Tool, ToolResult } from '@nexus/types';
+import { PluginAPI, Tool, ToolResult } from '@aether/types';
 
 const PLUGIN_VERSION = '1.0.0';
 
@@ -717,17 +717,17 @@ export const tools: Tool[] = [calculateTool];
 
 - **Example Plugins**: `/plugins/example-plugin/`
 - **API Reference**: `/docs/API.md`
-- **Type Definitions**: `@nexus/types`
-- **Plugin Marketplace**: https://plugins.nexus.dev
-- **Community Discord**: https://discord.gg/nexus
+- **Type Definitions**: `@aether/types`
+- **Plugin Marketplace**: https://plugins.aether.dev
+- **Community Discord**: https://discord.gg/aether
 
 ---
 
 ## Support
 
-- **Issues**: https://github.com/nexus/agent/issues
-- **Discussions**: https://github.com/nexus/agent/discussions
-- **Email**: plugins@nexus.dev
+- **Issues**: https://github.com/aether/agent/issues
+- **Discussions**: https://github.com/aether/agent/discussions
+- **Email**: plugins@aether.dev
 
 ---
 

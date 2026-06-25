@@ -51,7 +51,7 @@ export class CliManager {
   async run(argv: string[] = process.argv): Promise<void> {
     const parsed = CliTool.parseArgs(argv);
 
-    CliTool.banner('Nexus Agent CLI');
+    CliTool.banner('Aether CLI');
 
     // Display command info
     if (parsed.options.verbose) {

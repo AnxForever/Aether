@@ -21,7 +21,7 @@ export class SheetsSkill extends BaseSkill {
       name: 'Google Sheets',
       description: 'Google Sheets reading, writing, and data manipulation using Sheets API',
       version: '1.0.0',
-      author: 'Nexus Team',
+      author: 'Aether Team',
       enabled: true,
       requiresAuth: true,
       dependencies: ['googleapis'],

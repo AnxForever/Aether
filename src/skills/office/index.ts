@@ -30,7 +30,7 @@ export class OfficeSkill extends BaseSkill {
       name: 'Office Documents',
       description: 'PDF, Excel, Word, and PowerPoint file operations',
       version: '1.0.0',
-      author: 'Nexus Team',
+      author: 'Aether Team',
       enabled: true,
       requiresAuth: false,
       dependencies: ['pdf-lib', 'xlsx', 'docx', 'pptxgenjs'],

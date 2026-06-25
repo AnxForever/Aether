@@ -1,7 +1,7 @@
 /**
  * Awareness System - Self-reflection and consciousness
  *
- * Implements Cola's Imprints feature:
+ * Implements Original Imprints feature:
  * - Daily diary generation (automated reflections)
  * - Real-time drafts (conversation highlights)
  * - Daily episodes (conversation summaries)
@@ -12,7 +12,7 @@ import { EventEmitter } from 'events';
 import { writeFile, readFile, mkdir } from 'fs/promises';
 import { join } from 'path';
 import { createLogger } from '../utils/logger';
-import type { NexusAgent } from '../agent';
+import type { AetherAgent } from '../agent';
 import Anthropic from '@anthropic-ai/sdk';
 
 const logger = createLogger('Awareness');
@@ -58,7 +58,7 @@ export interface AwarenessConfig {
  */
 export class AwarenessSystem extends EventEmitter {
   private config: AwarenessConfig;
-  private agent?: NexusAgent;
+  private agent?: AetherAgent;
   private anthropic?: Anthropic;
   private drafts: Imprint[] = [];
 
@@ -70,7 +70,7 @@ export class AwarenessSystem extends EventEmitter {
       diaryEnabled: true,
       diaryCron: '0 21 * * *',
       selfReflectionCron: '30 21 * * *',
-      memoryBankPath: join(process.env.HOME || '~', '.nexus/memory-bank'),
+      memoryBankPath: join(process.env.HOME || '~', '.aether/memory-bank'),
       coverImageTheme: 'botanical',
       ...config
     };
@@ -79,7 +79,7 @@ export class AwarenessSystem extends EventEmitter {
   /**
    * Initialize awareness system
    */
-  async initialize(agent: NexusAgent): Promise<void> {
+  async initialize(agent: AetherAgent): Promise<void> {
     this.agent = agent;
 
     // Initialize Anthropic client for reflection generation

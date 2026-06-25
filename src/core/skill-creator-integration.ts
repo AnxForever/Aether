@@ -125,7 +125,7 @@ export class SkillCreatorIntegration {
       name: template.name,
       description: template.description,
       version: '1.0.0',
-      author: 'Nexus Agent',
+      author: 'Aether',
       tools,
       enabled: true
     };
@@ -163,7 +163,7 @@ export class SkillCreatorIntegration {
   listDynamicSkills(): Skill[] {
     return this.skillRegistry
       .listAll()
-      .filter(skill => skill.author === 'Nexus Agent');
+      .filter(skill => skill.author === 'Aether');
   }
 
   /**
