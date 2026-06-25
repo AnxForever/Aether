@@ -96,7 +96,7 @@ export class GeminiConnector implements Connector {
       const model = this.client.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
       await model.generateContent('test');
       return true;
-    } catch {
+    } catch { /* isAvailable check — expected */
       return false;
     }
   }

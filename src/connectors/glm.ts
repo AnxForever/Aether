@@ -60,7 +60,7 @@ export class GLMConnector implements Connector {
                 content: parsed.choices[0].delta.content
               };
             }
-          } catch {}
+          } catch { /* isAvailable check — expected */ }
         }
       }
     }

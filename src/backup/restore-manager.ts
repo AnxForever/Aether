@@ -96,7 +96,8 @@ export class RestoreManager extends EventEmitter {
                 await readFile(targetPath);
                 logger.warn(`File exists, skipping: ${file.filePath}`);
                 continue;
-              } catch {
+              } catch (error: unknown) {
+                logger.warn('File check failed, proceeding with restore:', error instanceof Error ? error : new Error(String(error)));
                 // File doesn't exist, proceed
               }
             }

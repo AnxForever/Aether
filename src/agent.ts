@@ -338,7 +338,7 @@ export class NexusAgent {
         try {
           await connector.initialize({ apiKey });
           logger.info(`Initialized connector: ${provider}`);
-        } catch (error) {
+        } catch (error: unknown) {
           logger.error(`Failed to initialize ${provider}:`, error as Error);
         }
       }
@@ -379,7 +379,7 @@ export class NexusAgent {
     try {
       await this.awarenessSystem.initialize(this);
       logger.info('Awareness system initialized');
-    } catch (error) {
+    } catch (error: unknown) {
       logger.warn('Awareness system init skipped (no API key)');
     }
 
@@ -412,7 +412,7 @@ export class NexusAgent {
       try {
         await this.mcpServerManager.startServer(this.config.mcp);
         logger.info(`MCP server started: ${this.config.mcp.name}`);
-      } catch (error) {
+      } catch (error: unknown) {
         logger.warn(`MCP server start failed: ${(error as Error).message}`);
       }
     }
@@ -527,7 +527,7 @@ export class NexusAgent {
       this.i18nManager = new I18nManager(this.config.i18n);
       await this.i18nManager.initialize();
       logger.info('i18n manager initialized');
-    } catch (error) {
+    } catch (error: unknown) {
       logger.warn(`i18n init failed: ${(error as Error).message}`);
     }
 
@@ -550,7 +550,7 @@ export class NexusAgent {
         });
         await this.telemetryManager.initialize();
         logger.info('TelemetryManager (OpenTelemetry) initialized');
-      } catch (error) {
+      } catch (error: unknown) {
         logger.warn(`TelemetryManager init skipped: ${(error as Error).message}`);
       }
     }
@@ -576,7 +576,7 @@ export class NexusAgent {
         await this.autoUpdater.initialize();
         logger.info('AutoUpdater initialized');
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.warn(`AutoUpdater init skipped (non-electron env): ${(error as Error).message}`);
     }
 
@@ -589,7 +589,7 @@ export class NexusAgent {
       try {
         await this.gatewayClient.connect();
         logger.info('Gateway client connected');
-      } catch (error) {
+      } catch (error: unknown) {
         logger.warn(`Gateway client connect failed: ${(error as Error).message}`);
       }
     }
@@ -697,7 +697,7 @@ export class NexusAgent {
 
       logger.info(`Plugin loaded successfully: ${plugin.name} v${plugin.version}`);
       return plugin;
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error(`Failed to load plugin ${pluginId}:`, error as Error);
       throw error;
     }
@@ -717,7 +717,7 @@ export class NexusAgent {
       pluginRegistry.unregister(pluginId);
 
       logger.info(`Plugin unloaded: ${pluginId}`);
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error(`Failed to unload plugin ${pluginId}:`, error as Error);
       throw error;
     }
@@ -797,7 +797,7 @@ export class NexusAgent {
       await this.loadPlugin(pluginId);
 
       logger.info(`Plugin installed: ${pluginId}`);
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error(`Failed to install plugin ${pluginId}:`, error as Error);
       throw error;
     }
@@ -819,7 +819,7 @@ export class NexusAgent {
       await this.marketplace.uninstall(pluginId);
 
       logger.info(`Plugin uninstalled: ${pluginId}`);
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error(`Failed to uninstall plugin ${pluginId}:`, error as Error);
       throw error;
     }
@@ -842,7 +842,7 @@ export class NexusAgent {
       await this.loadPlugin(pluginId);
 
       logger.info(`Plugin updated: ${pluginId}`);
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error(`Failed to update plugin ${pluginId}:`, error as Error);
       throw error;
     }
@@ -1240,7 +1240,7 @@ export class NexusAgent {
     if (!this.awarenessSystem) return null;
     try {
       return await this.awarenessSystem.generateDailyDiary();
-    } catch (error) {
+    } catch (error: unknown) {
       logger.warn(`Failed to generate diary: ${(error as Error).message}`);
       return null;
     }
@@ -1251,7 +1251,7 @@ export class NexusAgent {
     if (!this.awarenessSystem) return null;
     try {
       return await this.awarenessSystem.createDraft(content, title);
-    } catch (error) {
+    } catch (error: unknown) {
       logger.warn(`Failed to create draft: ${(error as Error).message}`);
       return null;
     }
@@ -1262,7 +1262,7 @@ export class NexusAgent {
     if (!this.awarenessSystem) return null;
     try {
       return await this.awarenessSystem.generateDailyEpisode();
-    } catch (error) {
+    } catch (error: unknown) {
       logger.warn(`Failed to generate episode: ${(error as Error).message}`);
       return null;
     }
@@ -1994,7 +1994,8 @@ export class NexusAgent {
     try {
       const metrics = this.telemetryManager.getMetrics();
       return { counters: (metrics as any).counters, histograms: (metrics as any).histograms };
-    } catch {
+    } catch (error: unknown) {
+      logger.warn('Failed to get metrics:', error instanceof Error ? error : new Error(String(error)));
       return {};
     }
   }
@@ -2006,7 +2007,8 @@ export class NexusAgent {
       const tracer = this.telemetryManager.getTracer();
       const ctx = tracer.getCurrentContext();
       return ctx ? { traceId: ctx.traceId, spanId: ctx.spanId } : null;
-    } catch {
+    } catch (error: unknown) {
+      logger.warn('Failed to get traces:', error instanceof Error ? error : new Error(String(error)));
       return null;
     }
   }

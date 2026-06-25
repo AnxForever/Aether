@@ -1,5 +1,5 @@
+import { createLogger } from '../utils/logger';
 /**
-import { createLogger } from './utils/logger';
  * Cron Manager
  *
  * Advanced task scheduler using croner with timezone support,
@@ -20,6 +20,8 @@ import { EventEmitter } from 'events';
 import { Cron } from 'croner';
 import * as fs from 'fs';
 import * as path from 'path';
+
+const logger = createLogger('CronManager');
 
 // ============================================================================
 // Type Definitions
@@ -315,7 +317,7 @@ export class CronManager extends EventEmitter {
 
     // Check for overlap
     if (task.preventOverlap && this.runningTasks.has(task.id)) {
-      console.warn(`[CronManager] Task '${task.id}' is already running, skipping`);
+      logger.warn(`Task '${task.id}' is already running, skipping`);
       this.emit('task:skipped', { taskId: task.id, reason: 'overlap' });
       return;
     }
@@ -344,7 +346,7 @@ export class CronManager extends EventEmitter {
       status = 'failed';
       error = err instanceof Error ? err.message : String(err);
 
-      console.error(`[CronManager] Task '${task.id}' failed:`, error);
+      logger.error(`Task '${task.id}' failed: ${error}`);
       this.emit('task:error', { taskId: task.id, error });
 
       // Handle retries
@@ -388,15 +390,15 @@ export class CronManager extends EventEmitter {
     const retryCount = this.retryCounters.get(task.id) || 0;
 
     if (retryCount >= task.maxRetries!) {
-      console.error(`[CronManager] Task '${task.id}' exceeded max retries (${task.maxRetries})`);
+      logger.error(`Task '${task.id}' exceeded max retries (${task.maxRetries})`);
       this.retryCounters.delete(task.id);
       return;
     }
 
     this.retryCounters.set(task.id, retryCount + 1);
 
-    console.log(
-      `[CronManager] Retrying task '${task.id}' (attempt ${retryCount + 1}/${task.maxRetries})`
+    logger.info(
+      `Retrying task '${task.id}' (attempt ${retryCount + 1}/${task.maxRetries})`
     );
 
     this.emit('task:retry', {
@@ -496,7 +498,7 @@ export class CronManager extends EventEmitter {
    */
   async start(): Promise<void> {
     if (this.isStarted) {
-      console.warn('[CronManager] Already started');
+      logger.warn('Already started');
       return;
     }
 
@@ -510,7 +512,7 @@ export class CronManager extends EventEmitter {
     }
 
     this.emit('start');
-    console.log(`[CronManager] Started with ${this.tasks.size} task(s)`);
+    logger.info(`Started with ${this.tasks.size} task(s)`);
   }
 
   /**
@@ -527,20 +529,20 @@ export class CronManager extends EventEmitter {
     // Stop all cron jobs
     for (const [taskId, cronJob] of this.cronJobs.entries()) {
       cronJob.stop();
-      console.log(`[CronManager] Stopped task: ${taskId}`);
+      logger.info(`Stopped task: ${taskId}`);
     }
 
     this.cronJobs.clear();
 
     // Wait for running tasks to complete
     if (this.runningTasks.size > 0) {
-      console.log(`[CronManager] Waiting for ${this.runningTasks.size} running task(s) to complete...`);
+      logger.info(`Waiting for ${this.runningTasks.size} running task(s) to complete...`);
       await Promise.allSettled(Array.from(this.runningTasks.values()));
     }
 
     this.saveState();
     this.emit('stop');
-    console.log('[CronManager] Stopped');
+    logger.info('Stopped');
   }
 
   /**
@@ -592,9 +594,9 @@ export class CronManager extends EventEmitter {
         }
       }
 
-      console.log('[CronManager] State loaded from disk');
+      logger.info('State loaded from disk');
     } catch (error) {
-      console.warn('[CronManager] Failed to load state:', error);
+      logger.warn(`Failed to load state: ${error}`);
     }
   }
 
@@ -631,7 +633,7 @@ export class CronManager extends EventEmitter {
 
       fs.writeFileSync(this.config.stateFilePath, JSON.stringify(state, null, 2), 'utf-8');
     } catch (error) {
-      console.error('[CronManager] Failed to save state:', error);
+      logger.error(`Failed to save state: ${error}`);
     }
   }
 }

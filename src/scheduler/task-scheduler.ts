@@ -5,7 +5,7 @@
 import { createLogger } from '../utils/logger';
 import { EventEmitter } from 'events';
 import Database from 'better-sqlite3';
-import { CronJob } from 'cron';
+import { Cron } from 'croner';
 
 const logger = createLogger('TaskScheduler');
 
@@ -54,7 +54,7 @@ export type TaskHandler = (
 export class TaskScheduler extends EventEmitter {
   private db: Database.Database;
   private handlers: Map<string, TaskHandler> = new Map();
-  private jobs: Map<string, CronJob> = new Map();
+  private jobs: Map<string, Cron> = new Map();
   private runningTasks: Map<string, Promise<any>> = new Map();
 
   constructor(dbPath: string) {
@@ -262,21 +262,20 @@ export class TaskScheduler extends EventEmitter {
     }
 
     try {
-      const job = new CronJob(
+      const job = new Cron(
         task.cronExpression,
+        { protect: true },
         () => {
           this.executeTask(taskId).catch(err => {
             logger.error(`Task execution error: ${taskId}`, err as Error);
           });
-        },
-        null,
-        true
+        }
       );
 
       this.jobs.set(taskId, job);
 
       // Update next run time
-      const nextRun = job.nextDate().toMillis();
+      const nextRun = job.nextRun()?.getTime() ?? 0;
       this.db.prepare('UPDATE scheduled_tasks SET nextRun = ? WHERE id = ?').run(nextRun, taskId);
 
       logger.info(`Job started: ${taskId} - Next run: ${new Date(nextRun).toISOString()}`);
@@ -360,7 +359,7 @@ export class TaskScheduler extends EventEmitter {
         // Update next run time
         const job = this.jobs.get(taskId);
         if (job) {
-          const nextRun = job.nextDate().toMillis();
+          const nextRun = job.nextRun()?.getTime() ?? 0;
           this.db.prepare('UPDATE scheduled_tasks SET nextRun = ? WHERE id = ?').run(nextRun, taskId);
         }
 

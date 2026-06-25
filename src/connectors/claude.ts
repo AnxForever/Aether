@@ -101,7 +101,7 @@ export class ClaudeConnector implements Connector {
         max_tokens: 10
       });
       return true;
-    } catch {
+    } catch { /* isAvailable check — expected */
       return false;
     }
   }

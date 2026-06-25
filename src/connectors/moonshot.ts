@@ -60,7 +60,7 @@ export class MoonshotConnector implements Connector {
                 content: parsed.choices[0].delta.content
               };
             }
-          } catch {}
+          } catch { /* isAvailable check — expected */ }
         }
       }
     }

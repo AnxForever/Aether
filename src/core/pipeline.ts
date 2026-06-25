@@ -42,7 +42,7 @@ export class Pipeline {
     for (const stage of this.stages) {
       try {
         data = await stage.execute(data);
-      } catch (error) {
+      } catch (error: unknown) {
         logger.error(`Pipeline stage '${stage.name}' failed:`, error instanceof Error ? error : new Error(String(error)));
         throw error;
       }
@@ -198,7 +198,7 @@ export class Pipeline {
           success
         });
 
-      } catch (err) {
+      } catch (err: unknown) {
         error = err instanceof Error ? err.message : String(err);
         logger.error(`Tool execution failed: ${toolCall.name}`, err instanceof Error ? err : new Error(String(err)));
         toolResults.push({

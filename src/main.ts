@@ -123,8 +123,8 @@ async function initializeAgent() {
 
     await agent.initialize();
     logger.info('Agent initialized');
-  } catch (error: any) {
-    logger.error('Failed to initialize agent:', error as Error);
+  } catch (error: unknown) {
+    logger.error('Failed to initialize agent:', error instanceof Error ? error : new Error(String(error)));
   }
 }
 
@@ -134,8 +134,17 @@ async function initializeAgent() {
 function initializeOnboarding() {
   try {
     const dataDir = app.getPath('userData');
-    const password = process.env.ENCRYPTION_PASSWORD || 'default-dev-password';
-    const configManager = new ConfigManager(password);
+    const password = process.env.ENCRYPTION_PASSWORD;
+    let devPassword: string | undefined;
+    if (!password) {
+      logger.error('ENCRYPTION_PASSWORD not set — encryption will not work securely');
+      // In production, this should throw. For dev, use a random key
+      const { randomBytes } = require('crypto');
+      devPassword = randomBytes(32).toString('hex');
+      logger.warn('Using random dev password — data will NOT persist across restarts');
+    }
+    const encryptionPassword = password || devPassword!;
+    const configManager = new ConfigManager(encryptionPassword);
 
     onboardingManager = new OnboardingManager(dataDir, configManager);
 
@@ -244,8 +253,8 @@ async function initializeCollaboration() {
 
     await collaborationLauncher.start();
     logger.info('Collaboration services initialized');
-  } catch (error: any) {
-    logger.error('Failed to initialize collaboration:', error as Error);
+  } catch (error: unknown) {
+    logger.error('Failed to initialize collaboration:', error instanceof Error ? error : new Error(String(error)));
   }
 }
 
@@ -260,8 +269,9 @@ function setupIPC() {
     try {
       if (!agent) await initializeAgent();
       return createSuccessResponse(request.id, { started: true });
-    } catch (error: any) {
-      return createErrorResponse(request.id, error.message);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return createErrorResponse(request.id, err.message);
     }
   });
 
@@ -269,8 +279,9 @@ function setupIPC() {
     try {
       await agent?.cleanup();
       return createSuccessResponse(request.id, { stopped: true });
-    } catch (error: any) {
-      return createErrorResponse(request.id, error.message);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return createErrorResponse(request.id, err.message);
     }
   });
 
@@ -293,8 +304,9 @@ function setupIPC() {
         message: response,
         sessionId: agent.getSessionId()
       });
-    } catch (error: any) {
-      return createErrorResponse(request.id, error.message);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return createErrorResponse(request.id, err.message);
     }
   });
 
@@ -320,8 +332,9 @@ function setupIPC() {
       })();
 
       return createSuccessResponse(request.id, { streaming: true });
-    } catch (error: any) {
-      return createErrorResponse(request.id, error.message);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return createErrorResponse(request.id, err.message);
     }
   });
 
@@ -333,8 +346,9 @@ function setupIPC() {
       return createSuccessResponse(request.id, {
         sessionId: agent.getSessionId()
       });
-    } catch (error: any) {
-      return createErrorResponse(request.id, error.message);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return createErrorResponse(request.id, err.message);
     }
   });
 
@@ -344,8 +358,9 @@ function setupIPC() {
       if (!agent) throw new Error('Agent not initialized');
       const settings = await agent.getSettings();
       return createSuccessResponse(request.id, { settings });
-    } catch (error: any) {
-      return createErrorResponse(request.id, error.message);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return createErrorResponse(request.id, err.message);
     }
   });
 
@@ -354,8 +369,9 @@ function setupIPC() {
       if (!agent) throw new Error('Agent not initialized');
       await agent.updateSettings(request.data.settings);
       return createSuccessResponse(request.id, { success: true });
-    } catch (error: any) {
-      return createErrorResponse(request.id, error.message);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return createErrorResponse(request.id, err.message);
     }
   });
 
@@ -372,8 +388,9 @@ function setupIPC() {
         completedSteps: progress.completedSteps,
         totalSteps: progress.totalSteps,
       });
-    } catch (error: any) {
-      return createErrorResponse(request.id, error.message);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return createErrorResponse(request.id, err.message);
     }
   });
 
@@ -382,8 +399,9 @@ function setupIPC() {
       if (!onboardingManager) throw new Error('Onboarding manager not initialized');
       const progress = onboardingManager.getProgress();
       return createSuccessResponse(request.id, progress);
-    } catch (error: any) {
-      return createErrorResponse(request.id, error.message);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return createErrorResponse(request.id, err.message);
     }
   });
 
@@ -393,8 +411,9 @@ function setupIPC() {
       onboardingManager.nextStep();
       const progress = onboardingManager.getProgress();
       return createSuccessResponse(request.id, progress);
-    } catch (error: any) {
-      return createErrorResponse(request.id, error.message);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return createErrorResponse(request.id, err.message);
     }
   });
 
@@ -403,8 +422,9 @@ function setupIPC() {
       if (!onboardingManager) throw new Error('Onboarding manager not initialized');
       const skipped = onboardingManager.skipStep();
       return createSuccessResponse(request.id, { skipped });
-    } catch (error: any) {
-      return createErrorResponse(request.id, error.message);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return createErrorResponse(request.id, err.message);
     }
   });
 
@@ -414,8 +434,9 @@ function setupIPC() {
       const { provider, apiKey } = request.data;
       const validation = await onboardingManager.validateAPIKey(provider, apiKey);
       return createSuccessResponse(request.id, validation);
-    } catch (error: any) {
-      return createErrorResponse(request.id, error.message);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return createErrorResponse(request.id, err.message);
     }
   });
 
@@ -425,8 +446,9 @@ function setupIPC() {
       const { provider, apiKey } = request.data;
       await onboardingManager.saveAPIKey(provider, apiKey);
       return createSuccessResponse(request.id, { success: true });
-    } catch (error: any) {
-      return createErrorResponse(request.id, error.message);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return createErrorResponse(request.id, err.message);
     }
   });
 
@@ -436,8 +458,9 @@ function setupIPC() {
       const { modelId } = request.data;
       await onboardingManager.saveModelSelection(modelId);
       return createSuccessResponse(request.id, { success: true });
-    } catch (error: any) {
-      return createErrorResponse(request.id, error.message);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return createErrorResponse(request.id, err.message);
     }
   });
 
@@ -446,8 +469,9 @@ function setupIPC() {
       if (!onboardingManager) throw new Error('Onboarding manager not initialized');
       await onboardingManager.completeOnboarding(request.data);
       return createSuccessResponse(request.id, { success: true });
-    } catch (error: any) {
-      return createErrorResponse(request.id, error.message);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return createErrorResponse(request.id, err.message);
     }
   });
 
@@ -456,8 +480,9 @@ function setupIPC() {
       if (!onboardingManager) throw new Error('Onboarding manager not initialized');
       await onboardingManager.skipOnboarding();
       return createSuccessResponse(request.id, { success: true });
-    } catch (error: any) {
-      return createErrorResponse(request.id, error.message);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return createErrorResponse(request.id, err.message);
     }
   });
 
@@ -466,8 +491,9 @@ function setupIPC() {
       if (!onboardingManager) throw new Error('Onboarding manager not initialized');
       await onboardingManager.resetOnboarding();
       return createSuccessResponse(request.id, { success: true });
-    } catch (error: any) {
-      return createErrorResponse(request.id, error.message);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return createErrorResponse(request.id, err.message);
     }
   });
 
@@ -477,8 +503,9 @@ function setupIPC() {
       if (!collaborationLauncher) throw new Error('Collaboration not initialized');
       const status = collaborationLauncher.getStatus();
       return createSuccessResponse(request.id, status);
-    } catch (error: any) {
-      return createErrorResponse(request.id, error.message);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return createErrorResponse(request.id, err.message);
     }
   });
 
@@ -488,8 +515,9 @@ function setupIPC() {
       const { name, createdBy, metadata } = request.data;
       const session = collaborationLauncher.createSession(name, createdBy, metadata);
       return createSuccessResponse(request.id, session);
-    } catch (error: any) {
-      return createErrorResponse(request.id, error.message);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return createErrorResponse(request.id, err.message);
     }
   });
 
@@ -498,8 +526,9 @@ function setupIPC() {
       if (!collaborationLauncher) throw new Error('Collaboration not initialized');
       const sessions = collaborationLauncher.getActiveSessions();
       return createSuccessResponse(request.id, { sessions });
-    } catch (error: any) {
-      return createErrorResponse(request.id, error.message);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return createErrorResponse(request.id, err.message);
     }
   });
 
@@ -513,8 +542,9 @@ function setupIPC() {
         results = await searchEngine.fuzzySearch(query, 2, limit);
       }
       return createSuccessResponse(request.id, { results, total: results.length });
-    } catch (error: any) {
-      return createErrorResponse(request.id, error.message);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return createErrorResponse(request.id, err.message);
     }
   });
 
@@ -524,8 +554,9 @@ function setupIPC() {
       const { prefix } = request.data;
       const suggestions = await searchEngine.getSuggestions(prefix, 5);
       return createSuccessResponse(request.id, { suggestions });
-    } catch (error: any) {
-      return createErrorResponse(request.id, error.message);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return createErrorResponse(request.id, err.message);
     }
   });
 
@@ -535,8 +566,9 @@ function setupIPC() {
       const { id, content, metadata } = request.data;
       await searchEngine.index(id, content, metadata || {});
       return createSuccessResponse(request.id, { indexed: true });
-    } catch (error: any) {
-      return createErrorResponse(request.id, error.message);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return createErrorResponse(request.id, err.message);
     }
   });
 
@@ -546,8 +578,9 @@ function setupIPC() {
       if (!miniWindowManager) throw new Error('Mini window not initialized');
       miniWindowManager.show();
       return createSuccessResponse(request.id, { success: true });
-    } catch (error: any) {
-      return createErrorResponse(request.id, error.message);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return createErrorResponse(request.id, err.message);
     }
   });
 
@@ -556,8 +589,9 @@ function setupIPC() {
       if (!miniWindowManager) throw new Error('Mini window not initialized');
       miniWindowManager.hide();
       return createSuccessResponse(request.id, { success: true });
-    } catch (error: any) {
-      return createErrorResponse(request.id, error.message);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return createErrorResponse(request.id, err.message);
     }
   });
 
@@ -566,8 +600,9 @@ function setupIPC() {
       if (!miniWindowManager) throw new Error('Mini window not initialized');
       miniWindowManager.toggle();
       return createSuccessResponse(request.id, { success: true });
-    } catch (error: any) {
-      return createErrorResponse(request.id, error.message);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return createErrorResponse(request.id, err.message);
     }
   });
 
@@ -576,8 +611,9 @@ function setupIPC() {
       if (!searchEngine) throw new Error('Search engine not initialized');
       const history = searchEngine.getSearchHistory(20);
       return createSuccessResponse(request.id, { history });
-    } catch (error: any) {
-      return createErrorResponse(request.id, error.message);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return createErrorResponse(request.id, err.message);
     }
   });
 
@@ -587,8 +623,9 @@ function setupIPC() {
       if (!notificationManager) throw new Error('Notification manager not initialized');
       const notifications = notificationManager.list();
       return createSuccessResponse(request.id, { notifications });
-    } catch (error: any) {
-      return createErrorResponse(request.id, error.message);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return createErrorResponse(request.id, err.message);
     }
   });
 
@@ -597,8 +634,9 @@ function setupIPC() {
       if (!notificationManager) throw new Error('Notification manager not initialized');
       notificationManager.dismiss(request.data.id);
       return createSuccessResponse(request.id, { success: true });
-    } catch (error: any) {
-      return createErrorResponse(request.id, error.message);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return createErrorResponse(request.id, err.message);
     }
   });
 
@@ -607,8 +645,9 @@ function setupIPC() {
       if (!notificationManager) throw new Error('Notification manager not initialized');
       notificationManager.clear();
       return createSuccessResponse(request.id, { success: true });
-    } catch (error: any) {
-      return createErrorResponse(request.id, error.message);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return createErrorResponse(request.id, err.message);
     }
   });
 
@@ -618,8 +657,9 @@ function setupIPC() {
       if (!themeManager) throw new Error('Theme manager not initialized');
       const config = themeManager.getTheme();
       return createSuccessResponse(request.id, { theme: config });
-    } catch (error: any) {
-      return createErrorResponse(request.id, error.message);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return createErrorResponse(request.id, err.message);
     }
   });
 
@@ -628,8 +668,9 @@ function setupIPC() {
       if (!themeManager) throw new Error('Theme manager not initialized');
       await themeManager.updateTheme(request.data.theme);
       return createSuccessResponse(request.id, { success: true });
-    } catch (error: any) {
-      return createErrorResponse(request.id, error.message);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return createErrorResponse(request.id, err.message);
     }
   });
 
@@ -639,8 +680,9 @@ function setupIPC() {
       if (!agent) throw new Error('Agent not initialized');
       const response = await agent.chat(request.data.message, request.data.sessionId);
       return createSuccessResponse(request.id, { response });
-    } catch (error: any) {
-      return createErrorResponse(request.id, error.message);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return createErrorResponse(request.id, err.message);
     }
   });
 
@@ -666,8 +708,9 @@ function setupIPC() {
       if (!agent) throw new Error('Agent not initialized');
       agent.newSession();
       return createSuccessResponse(request.id, { cleared: true });
-    } catch (error: any) {
-      return createErrorResponse(request.id, error.message);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return createErrorResponse(request.id, err.message);
     }
   });
 
@@ -676,8 +719,9 @@ function setupIPC() {
       if (!agent) throw new Error('Agent not initialized');
       agent.newSession();
       return createSuccessResponse(request.id, { sessionId: agent.getSessionId() });
-    } catch (error: any) {
-      return createErrorResponse(request.id, error.message);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return createErrorResponse(request.id, err.message);
     }
   });
 
@@ -689,8 +733,9 @@ function setupIPC() {
         { id: 'coding', name: 'Coding', description: 'Precise code generation mode', icon: '💻' },
       ];
       return createSuccessResponse(request.id, { modes });
-    } catch (error: any) {
-      return createErrorResponse(request.id, error.message);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return createErrorResponse(request.id, err.message);
     }
   });
 
@@ -706,8 +751,9 @@ function setupIPC() {
         }
       }
       return createSuccessResponse(request.id, { mode, switched: true });
-    } catch (error: any) {
-      return createErrorResponse(request.id, error.message);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return createErrorResponse(request.id, err.message);
     }
   });
 
@@ -745,8 +791,9 @@ function setupIPC() {
         freeMemory: os.freemem(),
         uptime: process.uptime(),
       });
-    } catch (error: any) {
-      return createErrorResponse(request.id, error.message);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return createErrorResponse(request.id, err.message);
     }
   });
 
@@ -757,8 +804,9 @@ function setupIPC() {
         electronVersion: process.versions.electron,
         chromeVersion: process.versions.chrome,
       });
-    } catch (error: any) {
-      return createErrorResponse(request.id, error.message);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return createErrorResponse(request.id, err.message);
     }
   });
 
@@ -766,6 +814,10 @@ function setupIPC() {
   handlers.register(IPC_CHANNELS.STORAGE_GET, async (event, request) => {
     try {
       const { key } = request.data;
+      // Validate key: only allow alphanumeric, underscore, hyphen
+      if (!key || typeof key !== 'string' || !/^[a-zA-Z0-9_-]{1,64}$/.test(key)) {
+        return createErrorResponse(request.id, 'Invalid storage key');
+      }
       const { readFileSync, existsSync } = require('fs');
       const { join } = require('path');
       const path = join(app.getPath('userData'), key + '.json');
@@ -774,28 +826,38 @@ function setupIPC() {
         return createSuccessResponse(request.id, { key, data });
       }
       return createSuccessResponse(request.id, { key, data: null });
-    } catch (error: any) {
-      return createErrorResponse(request.id, error.message);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return createErrorResponse(request.id, err.message);
     }
   });
 
   handlers.register(IPC_CHANNELS.STORAGE_SET, async (event, request) => {
     try {
       const { key, data } = request.data;
+      // Validate key: only allow alphanumeric, underscore, hyphen
+      if (!key || typeof key !== 'string' || !/^[a-zA-Z0-9_-]{1,64}$/.test(key)) {
+        return createErrorResponse(request.id, 'Invalid storage key');
+      }
       const { writeFileSync, mkdirSync, existsSync } = require('fs');
       const { join } = require('path');
       const dir = app.getPath('userData');
       if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
       writeFileSync(join(dir, key + '.json'), JSON.stringify(data, null, 2));
       return createSuccessResponse(request.id, { key, saved: true });
-    } catch (error: any) {
-      return createErrorResponse(request.id, error.message);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return createErrorResponse(request.id, err.message);
     }
   });
 
   handlers.register(IPC_CHANNELS.STORAGE_DELETE, async (event, request) => {
     try {
       const { key } = request.data;
+      // Validate key: only allow alphanumeric, underscore, hyphen
+      if (!key || typeof key !== 'string' || !/^[a-zA-Z0-9_-]{1,64}$/.test(key)) {
+        return createErrorResponse(request.id, 'Invalid storage key');
+      }
       const { unlinkSync, existsSync } = require('fs');
       const { join } = require('path');
       const path = join(app.getPath('userData'), key + '.json');
@@ -804,8 +866,9 @@ function setupIPC() {
         return createSuccessResponse(request.id, { key, deleted: true });
       }
       return createSuccessResponse(request.id, { key, deleted: false });
-    } catch (error: any) {
-      return createErrorResponse(request.id, error.message);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return createErrorResponse(request.id, err.message);
     }
   });
 
@@ -819,8 +882,9 @@ function setupIPC() {
         return createSuccessResponse(request.id, { sent: true, response });
       }
       return createErrorResponse(request.id, 'Agent not initialized');
-    } catch (error: any) {
-      return createErrorResponse(request.id, error.message);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return createErrorResponse(request.id, err.message);
     }
   });
 
@@ -829,8 +893,9 @@ function setupIPC() {
       if (!miniWindowManager) throw new Error('Mini window not initialized');
       miniWindowManager.setShortcut(request.data.shortcut || 'CmdOrCtrl+Shift+Space');
       return createSuccessResponse(request.id, { registered: true });
-    } catch (error: any) {
-      return createErrorResponse(request.id, error.message);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return createErrorResponse(request.id, err.message);
     }
   });
 
@@ -842,8 +907,9 @@ function setupIPC() {
         shortcut: 'CmdOrCtrl+Shift+Space',
         enabled: miniWindowManager.getVisibility(),
       });
-    } catch (error: any) {
-      return createErrorResponse(request.id, error.message);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return createErrorResponse(request.id, err.message);
     }
   });
 
@@ -858,8 +924,9 @@ function setupIPC() {
         agent.disablePlugin(skillId);
       }
       return createSuccessResponse(request.id, { skillId, enabled });
-    } catch (error: any) {
-      return createErrorResponse(request.id, error.message);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return createErrorResponse(request.id, err.message);
     }
   });
 
@@ -869,8 +936,9 @@ function setupIPC() {
       if (!agent) throw new Error('Agent not initialized');
       await agent.updateSettings({ model: request.data.modelId });
       return createSuccessResponse(request.id, { modelId: request.data.modelId, set: true });
-    } catch (error: any) {
-      return createErrorResponse(request.id, error.message);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return createErrorResponse(request.id, err.message);
     }
   });
 
@@ -879,9 +947,15 @@ function setupIPC() {
     try {
       if (!agent) throw new Error('Agent not initialized');
       const token = await agent.getOAuthToken(request.data.provider);
-      return createSuccessResponse(request.id, { provider: request.data.provider, token: token || null, authenticated: !!token });
-    } catch (error: any) {
-      return createErrorResponse(request.id, error.message);
+      // DON'T expose full token to renderer
+      return createSuccessResponse(request.id, {
+        provider: request.data.provider,
+        authenticated: !!token,
+        tokenPreview: token ? token.accessToken?.substring(0, 8) + '...' : null,
+      });
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return createErrorResponse(request.id, err.message);
     }
   });
 
@@ -900,8 +974,9 @@ function setupIPC() {
       const { type, path, operation } = request.data;
       const allowed = await agent.checkPermission(type || 'file', path, operation || 'read');
       return createSuccessResponse(request.id, { type, path, operation, granted: allowed });
-    } catch (error: any) {
-      return createErrorResponse(request.id, error.message);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return createErrorResponse(request.id, err.message);
     }
   });
 
@@ -911,8 +986,9 @@ function setupIPC() {
       const { path, operation } = request.data;
       const allowed = await agent.checkPermission('directory', path, operation || 'read');
       return createSuccessResponse(request.id, { path, operation, granted: allowed });
-    } catch (error: any) {
-      return createErrorResponse(request.id, error.message);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return createErrorResponse(request.id, err.message);
     }
   });
 
@@ -923,8 +999,9 @@ function setupIPC() {
         agent.grantPermission('file', request.data.path || '*', request.data.operation || 'read');
       }
       return createSuccessResponse(request.id, { success: true });
-    } catch (error: any) {
-      return createErrorResponse(request.id, error.message);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return createErrorResponse(request.id, err.message);
     }
   });
 
@@ -945,8 +1022,9 @@ function setupIPC() {
         await agent.enqueueJob(request.data.type || 'default', request.data);
       }
       return createSuccessResponse(request.id, { item: { id, ...request.data } });
-    } catch (error: any) {
-      return createErrorResponse(request.id, error.message);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return createErrorResponse(request.id, err.message);
     }
   });
 
@@ -965,12 +1043,13 @@ function setupIPC() {
         tasks = readdirSync(cronDir).filter((f: string) => f.endsWith('.json')).map((f: string) => {
           try {
             return JSON.parse(require('fs').readFileSync(join(cronDir, f), 'utf8'));
-          } catch { return null; }
+          } catch { /* parse error — skip */ return null; }
         }).filter(Boolean);
       }
       return createSuccessResponse(request.id, { tasks, total: tasks.length });
-    } catch (error: any) {
-      return createErrorResponse(request.id, error.message);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return createErrorResponse(request.id, err.message);
     }
   });
 
@@ -981,8 +1060,9 @@ function setupIPC() {
       const path = join(app.getPath('userData'), 'cron', request.data.taskId + '.json');
       if (existsSync(path)) unlinkSync(path);
       return createSuccessResponse(request.id, { deleted: true });
-    } catch (error: any) {
-      return createErrorResponse(request.id, error.message);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return createErrorResponse(request.id, err.message);
     }
   });
 
@@ -999,8 +1079,9 @@ function setupIPC() {
         writeFileSync(path, JSON.stringify(task, null, 2));
       }
       return createSuccessResponse(request.id, { taskId: request.data.taskId, enabled: request.data.enabled });
-    } catch (error: any) {
-      return createErrorResponse(request.id, error.message);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return createErrorResponse(request.id, err.message);
     }
   });
 
@@ -1010,8 +1091,9 @@ function setupIPC() {
       if (!agent) throw new Error('Agent not initialized');
       const plugins = agent.listPlugins();
       return createSuccessResponse(request.id, { plugins, total: plugins.length });
-    } catch (error: any) {
-      return createErrorResponse(request.id, error.message);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return createErrorResponse(request.id, err.message);
     }
   });
 
@@ -1020,8 +1102,9 @@ function setupIPC() {
       if (!agent) throw new Error('Agent not initialized');
       await agent.installPlugin(request.data.pluginId, request.data.version);
       return createSuccessResponse(request.id, { installed: true, pluginId: request.data.pluginId });
-    } catch (error: any) {
-      return createErrorResponse(request.id, error.message);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return createErrorResponse(request.id, err.message);
     }
   });
 
@@ -1030,8 +1113,9 @@ function setupIPC() {
       if (!agent) throw new Error('Agent not initialized');
       await agent.uninstallPlugin(request.data.pluginId);
       return createSuccessResponse(request.id, { uninstalled: true });
-    } catch (error: any) {
-      return createErrorResponse(request.id, error.message);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return createErrorResponse(request.id, err.message);
     }
   });
 
@@ -1040,8 +1124,9 @@ function setupIPC() {
       if (!agent) throw new Error('Agent not initialized');
       const plugin = agent.getPlugin(request.data.pluginId);
       return createSuccessResponse(request.id, { pluginId: request.data.pluginId, manifest: plugin?.manifest || {} });
-    } catch (error: any) {
-      return createErrorResponse(request.id, error.message);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return createErrorResponse(request.id, err.message);
     }
   });
 
@@ -1055,8 +1140,9 @@ function setupIPC() {
       if (!agent) throw new Error('Agent not initialized');
       await agent.updateSettings(request.data.settings);
       return createSuccessResponse(request.id, { saved: true });
-    } catch (error: any) {
-      return createErrorResponse(request.id, error.message);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return createErrorResponse(request.id, err.message);
     }
   });
 
@@ -1082,8 +1168,9 @@ function setupIPC() {
         month: { tokens: 0, requests: 0, cost: 0 },
         stats,
       });
-    } catch (error: any) {
-      return createErrorResponse(request.id, error.message);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return createErrorResponse(request.id, err.message);
     }
   });
 
@@ -1097,8 +1184,9 @@ function setupIPC() {
       if (!agent) throw new Error('Agent not initialized');
       const plugins = agent.listPlugins();
       return createSuccessResponse(request.id, { channels: plugins.map((p: any) => ({ id: p.id, name: p.name, enabled: p.enabled })) });
-    } catch (error: any) {
-      return createErrorResponse(request.id, error.message);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return createErrorResponse(request.id, err.message);
     }
   });
 
@@ -1127,12 +1215,23 @@ function setupIPC() {
   handlers.register(IPC_CHANNELS.FILE_UPLOAD, async (event, request) => {
     try {
       const { path, type } = request.data;
+      if (!path || typeof path !== 'string') {
+        return createErrorResponse(request.id, 'Invalid file path');
+      }
+      // Only allow files within userData or home directory
+      const resolved = require('path').resolve(path);
+      const userData = app.getPath('userData');
+      const homeDir = require('os').homedir();
+      if (!resolved.startsWith(userData) && !resolved.startsWith(homeDir)) {
+        return createErrorResponse(request.id, 'File access denied — path outside allowed directories');
+      }
       const { statSync } = require('fs');
-      const stats = statSync(path);
+      const stats = statSync(resolved);
       const id = 'file_' + Date.now();
-      return createSuccessResponse(request.id, { id, url: 'file://' + path, size: stats.size, type });
-    } catch (error: any) {
-      return createErrorResponse(request.id, error.message);
+      return createSuccessResponse(request.id, { id, url: 'file://' + resolved, size: stats.size, type });
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return createErrorResponse(request.id, err.message);
     }
   });
 
@@ -1154,8 +1253,9 @@ function setupIPC() {
       if (!agent) throw new Error('Agent not initialized');
       const contacts = agent.listColaLinkContacts();
       return createSuccessResponse(request.id, { contacts, total: contacts.length });
-    } catch (error: any) {
-      return createErrorResponse(request.id, error.message);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return createErrorResponse(request.id, err.message);
     }
   });
 
@@ -1164,8 +1264,9 @@ function setupIPC() {
       if (!agent) throw new Error('Agent not initialized');
       agent.addColaLinkContact(request.data);
       return createSuccessResponse(request.id, { added: true });
-    } catch (error: any) {
-      return createErrorResponse(request.id, error.message);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return createErrorResponse(request.id, err.message);
     }
   });
 
@@ -1182,8 +1283,9 @@ function setupIPC() {
       if (!agent) throw new Error('Agent not initialized');
       const msg = await agent.sendColaLinkMessage(request.data.contactId, request.data.message);
       return createSuccessResponse(request.id, { message: msg });
-    } catch (error: any) {
-      return createErrorResponse(request.id, error.message);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return createErrorResponse(request.id, err.message);
     }
   });
 
@@ -1192,8 +1294,9 @@ function setupIPC() {
       if (!agent) throw new Error('Agent not initialized');
       const messages = await agent.getColaLinkHistory(request.data.contactId);
       return createSuccessResponse(request.id, { messages, total: messages.length });
-    } catch (error: any) {
-      return createErrorResponse(request.id, error.message);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return createErrorResponse(request.id, err.message);
     }
   });
 
@@ -1248,8 +1351,9 @@ function setupIPC() {
         mainWindow.setWindowButtonVisibility(visible !== false);
       }
       return createSuccessResponse(request.id, { visible: visible !== false });
-    } catch (error: any) {
-      return createErrorResponse(request.id, error.message);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return createErrorResponse(request.id, err.message);
     }
   });
 
@@ -1264,8 +1368,9 @@ function setupIPC() {
         return createSuccessResponse(request.id, { auth: data });
       }
       return createSuccessResponse(request.id, { auth: null });
-    } catch (error: any) {
-      return createErrorResponse(request.id, error.message);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return createErrorResponse(request.id, err.message);
     }
   });
 
@@ -1281,8 +1386,9 @@ function setupIPC() {
       if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
       writeFileSync(join(dir, 'auth.json'), JSON.stringify(request.data.tokens, null, 2));
       return createSuccessResponse(request.id, { saved: true });
-    } catch (error: any) {
-      return createErrorResponse(request.id, error.message);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return createErrorResponse(request.id, err.message);
     }
   });
 
@@ -1293,8 +1399,9 @@ function setupIPC() {
       const authPath = join(app.getPath('userData'), 'auth.json');
       if (existsSync(authPath)) unlinkSync(authPath);
       return createSuccessResponse(request.id, { loggedOut: true });
-    } catch (error: any) {
-      return createErrorResponse(request.id, error.message);
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      return createErrorResponse(request.id, err.message);
     }
   });
 
