@@ -143,6 +143,23 @@
     }
     autoResizeTextarea();
     updateCharCount();
+    checkAgentStatus();
+    setInterval(checkAgentStatus, 30000); // Check every 30s
+  }
+
+  async function checkAgentStatus() {
+    const dot = document.querySelector('.status-dot');
+    const text = document.querySelector('.status-text');
+    try {
+      const result = await callApi(api.getAgentStatus);
+      if (result) {
+        dot.className = 'status-dot online';
+        text.textContent = 'Connected';
+      }
+    } catch (err) {
+      dot.className = 'status-dot offline';
+      text.textContent = 'Offline';
+    }
   }
 
   // ============================================================

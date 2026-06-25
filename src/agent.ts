@@ -531,6 +531,91 @@ export class NexusAgent {
       logger.warn(`i18n init failed: ${(error as Error).message}`);
     }
 
+    // ============================================================================
+    // 7 Activated Modules
+    // ============================================================================
+
+    // 1. Observability (OpenTelemetry)
+    if (this.config.observability?.enabled !== false) {
+      try {
+        const otelServiceName = this.config.observability?.serviceName || 'nexus-agent';
+        const otelServiceVersion = this.config.observability?.serviceVersion || '1.0.0';
+        this.telemetryManager = new TelemetryManager({
+          serviceName: otelServiceName,
+          serviceVersion: otelServiceVersion,
+          environment: process.env.NODE_ENV || 'development',
+          tracing: { enabled: true },
+          metrics: { enabled: true, interval: 60000 },
+          exporter: { type: 'console' },
+        });
+        await this.telemetryManager.initialize();
+        logger.info('TelemetryManager (OpenTelemetry) initialized');
+      } catch (error) {
+        logger.warn(`TelemetryManager init skipped: ${(error as Error).message}`);
+      }
+    }
+
+    // 2. Sandbox
+    if (this.config.sandbox?.enabled !== false) {
+      this.sandboxExecutor = new SandboxExecutor();
+      this.toolSandbox = new ToolSandbox({
+        timeout: this.config.sandbox?.timeout || 30000,
+        maxMemoryMB: this.config.sandbox?.maxMemoryMB || 512,
+      });
+      logger.info('Sandbox modules initialized');
+    }
+
+    // 3. Updater (electron only — no-op in non-electron env)
+    try {
+      if (this.config.updater?.enabled !== false && typeof process !== 'undefined' && process.versions?.electron) {
+        this.autoUpdater = new AutoUpdater({
+          autoCheck: this.config.updater?.autoCheck !== false,
+          autoDownload: this.config.updater?.autoDownload !== false,
+          updateUrl: this.config.updater?.updateUrl,
+        });
+        await this.autoUpdater.initialize();
+        logger.info('AutoUpdater initialized');
+      }
+    } catch (error) {
+      logger.warn(`AutoUpdater init skipped (non-electron env): ${(error as Error).message}`);
+    }
+
+    // 4. Gateway
+    if (this.config.gateway?.enabled && this.config.gateway.url) {
+      this.gatewayClient = new GatewayClient({
+        url: this.config.gateway.url,
+        apiKey: this.config.gateway.apiKey,
+      });
+      try {
+        await this.gatewayClient.connect();
+        logger.info('Gateway client connected');
+      } catch (error) {
+        logger.warn(`Gateway client connect failed: ${(error as Error).message}`);
+      }
+    }
+
+    // 5. Diagnostics
+    if (this.config.diagnostics?.enabled !== false) {
+      this.networkDiagnostics = new NetworkDiagnostics();
+      this.systemDiagnostics = new SystemDiagnostics();
+      logger.info('Diagnostics modules initialized');
+    }
+
+    // 6. Queue
+    if (this.config.queue?.enabled !== false) {
+      const queueDbPath = this.config.queue?.dbPath || join(agentDataDir, 'work-queue.db');
+      const maxConcurrent = this.config.queue?.maxConcurrent || 3;
+      this.workQueueManager = new WorkQueueManager(queueDbPath, maxConcurrent);
+      logger.info('Work queue manager initialized');
+    }
+
+    // 7. Modes
+    if (this.config.mode?.enabled !== false) {
+      this.modeManager = new ModeManager(this.config.mode?.modsDirectory);
+      await this.modeManager.initialize();
+      logger.info('Mode manager initialized');
+    }
+
     // Lazy-init tools
     this.chartGenerator = new ChartGenerator();
     this.dataTransformer = new DataTransformer();
@@ -560,6 +645,13 @@ export class NexusAgent {
     await this.analyticsClient?.destroy();
     await this.i18nManager?.cleanup();
     this.processManager?.stopAll();
+
+    // 7 activated modules cleanup
+    await this.telemetryManager?.shutdown();
+    this.gatewayClient?.disconnect();
+    this.autoUpdater?.destroy();
+    this.workQueueManager?.stop();
+
     logger.info('Agent cleaned up');
   }
 
@@ -1627,6 +1719,440 @@ export class NexusAgent {
   /** Get MCP server manager instance */
   getMcpServerManager() {
     return this.mcpServerManager;
+  }
+
+  // ============================================================================
+  // Permission Manager API
+  // ============================================================================
+
+  /**
+   * Check if a specific operation is permitted
+   */
+  async checkPermission(
+    type: PermissionType,
+    path: string,
+    operation: PermissionOperation,
+    reason?: string
+  ): Promise<boolean> {
+    if (!this.permissionManager) throw new Error('Permission manager not initialized');
+    return await this.permissionManager.requestPermission(type, path, operation, reason);
+  }
+
+  /**
+   * Grant a permission rule
+   */
+  grantPermission(
+    type: PermissionType,
+    pattern: string,
+    operation: PermissionOperation
+  ): void {
+    if (!this.permissionManager) throw new Error('Permission manager not initialized');
+    this.permissionManager.addRule(type, pattern, operation, 'allow');
+  }
+
+  /**
+   * Revoke a permission rule by pattern
+   */
+  revokePermission(pattern: string): void {
+    if (!this.permissionManager) throw new Error('Permission manager not initialized');
+    this.permissionManager.removeRule(pattern);
+  }
+
+  /**
+   * List all permission rules
+   */
+  listPermissions(): any[] {
+    if (!this.permissionManager) return [];
+    return this.permissionManager.listRules();
+  }
+
+  // ============================================================================
+  // Speech/TTS API
+  // ============================================================================
+
+  /**
+   * Convert text to speech
+   */
+  async textToSpeech(text: string, options?: Partial<TTSConfig>): Promise<SynthesisResult> {
+    if (!this.tts) throw new Error('TTS not initialized');
+    return await this.tts.synthesize(text, options);
+  }
+
+  /**
+   * List available TTS voices
+   */
+  listVoices(): Voice[] {
+    if (!this.tts) return [];
+    return this.tts.getVoices();
+  }
+
+  /**
+   * Get TTS engine status
+   */
+  getSpeechStatus(): { initialized: boolean; voiceCount: number } {
+    return {
+      initialized: this.tts !== undefined,
+      voiceCount: this.tts ? this.tts.getVoices().length : 0,
+    };
+  }
+
+  // ============================================================================
+  // System/Process Manager API
+  // ============================================================================
+
+  /**
+   * Get system information
+   */
+  getSystemInfo(): Record<string, any> {
+    return {
+      platform: process.platform,
+      arch: process.arch,
+      nodeVersion: process.version,
+      pid: process.pid,
+      uptime: process.uptime(),
+      memoryUsage: process.memoryUsage(),
+    };
+  }
+
+  /**
+   * Get list of managed processes
+   */
+  getProcessList(): ManagedProcessInfo[] {
+    if (!this.processManager) return [];
+    return this.processManager.getAllProcesses();
+  }
+
+  /**
+   * Get resource usage info
+   */
+  getResourceUsage(): Record<string, any> {
+    const usage = process.memoryUsage();
+    return {
+      memory: {
+        rss: usage.rss,
+        heapTotal: usage.heapTotal,
+        heapUsed: usage.heapUsed,
+        external: usage.external,
+      },
+      cpu: process.cpuUsage(),
+      uptime: process.uptime(),
+    };
+  }
+
+  /**
+   * Start a managed process
+   */
+  async startProcess(config: ProcessConfig): Promise<void> {
+    if (!this.processManager) throw new Error('Process manager not initialized');
+    await this.processManager.start(config);
+  }
+
+  /**
+   * Stop a managed process
+   */
+  async stopProcess(id: string): Promise<void> {
+    if (!this.processManager) throw new Error('Process manager not initialized');
+    await this.processManager.stop(id);
+  }
+
+  // ============================================================================
+  // Feedback Exporter API
+  // ============================================================================
+
+  /**
+   * Submit feedback package (export diagnostic data)
+   */
+  async submitFeedback(options?: ExportOptions): Promise<string> {
+    if (!this.feedbackExporter) throw new Error('Feedback exporter not initialized');
+    return await this.feedbackExporter.export(options);
+  }
+
+  /**
+   * Get feedback export stats
+   */
+  getFeedbackStats(): Record<string, any> {
+    return {
+      enabled: this.feedbackExporter !== undefined,
+    };
+  }
+
+  /**
+   * List available feedback/export packages
+   */
+  listFeedback(): string[] {
+    if (!this.feedbackExporter) return [];
+    return [];
+  }
+
+  // ============================================================================
+  // Telemetry API
+  // ============================================================================
+
+  /**
+   * Track a telemetry event
+   */
+  trackTelemetryEvent(name: string, attributes?: Record<string, any>): void {
+    if (!this.telemetrySystem) return;
+    this.telemetrySystem.startSpan(name, attributes);
+  }
+
+  /**
+   * Track a telemetry metric
+   */
+  trackTelemetryMetric(name: string, value: number, attributes?: Record<string, any>): void {
+    if (!this.telemetrySystem) return;
+    this.telemetrySystem.gauge(name, value, attributes);
+  }
+
+  /**
+   * Get telemetry system status
+   */
+  getTelemetryStatus(): { enabled: boolean; active: boolean } {
+    return {
+      enabled: this.telemetrySystem !== undefined,
+      active: this.telemetrySystem?.isEnabled() ?? false,
+    };
+  }
+
+  // ============================================================================
+  // Analytics API
+  // ============================================================================
+
+  /**
+   * Track an analytics event
+   */
+  trackAnalyticsEvent(event: string, properties?: Record<string, any>): void {
+    if (!this.analyticsClient) return;
+    this.analyticsClient.track(event, properties);
+  }
+
+  /**
+   * Identify a user for analytics
+   */
+  identifyAnalyticsUser(userId: string, properties?: UserProperties): void {
+    if (!this.analyticsClient) return;
+    this.analyticsClient.identify(userId, properties);
+  }
+
+  /**
+   * Get analytics client status
+   */
+  getAnalyticsStatus(): { enabled: boolean; active: boolean } {
+    return {
+      enabled: this.analyticsClient !== undefined,
+      active: this.analyticsClient?.isEnabled() ?? false,
+    };
+  }
+
+  // ============================================================================
+  // i18n API
+  // ============================================================================
+
+  /**
+   * Set the current language
+   */
+  async setLanguage(locale: SupportedLocale): Promise<void> {
+    if (!this.i18nManager) throw new Error('i18n manager not initialized');
+    await this.i18nManager.changeLanguage(locale);
+  }
+
+  /**
+   * Translate a key
+   */
+  translate(key: string, options?: TranslationOptions): string {
+    if (!this.i18nManager) return key;
+    return this.i18nManager.t(key, options);
+  }
+
+  /**
+   * Get current language
+   */
+  getCurrentLanguage(): SupportedLocale | null {
+    if (!this.i18nManager) return null;
+    return this.i18nManager.getCurrentLocale();
+  }
+
+  /**
+   * List supported languages
+   */
+  listLanguages(): SupportedLocale[] {
+    if (!this.i18nManager) return [];
+    return this.i18nManager.getAvailableLocales();
+  }
+
+  // ============================================================================
+  // 7 Activated Modules API
+  // ============================================================================
+
+  // ---------------------------------------------------------------------------
+  // 1. Observability (OpenTelemetry)
+  // ---------------------------------------------------------------------------
+
+  /** Get current telemetry metrics snapshot */
+  async getMetrics(): Promise<Record<string, any>> {
+    if (!this.telemetryManager) return {};
+    try {
+      const metrics = this.telemetryManager.getMetrics();
+      return { counters: (metrics as any).counters, histograms: (metrics as any).histograms };
+    } catch {
+      return {};
+    }
+  }
+
+  /** Get current trace context */
+  getTraces(): Record<string, any> | null {
+    if (!this.telemetryManager) return null;
+    try {
+      const tracer = this.telemetryManager.getTracer();
+      const ctx = tracer.getCurrentContext();
+      return ctx ? { traceId: ctx.traceId, spanId: ctx.spanId } : null;
+    } catch {
+      return null;
+    }
+  }
+
+  /** Check if observability is enabled */
+  isObservabilityEnabled(): boolean {
+    return this.telemetryManager?.isReady() ?? false;
+  }
+
+  // ---------------------------------------------------------------------------
+  // 2. Sandbox
+  // ---------------------------------------------------------------------------
+
+  /** Execute code in a sandboxed environment */
+  async executeInSandbox(code: string, language: string): Promise<SandboxResult> {
+    if (!this.sandboxExecutor) throw new Error('Sandbox is not initialized');
+    const command = language === 'node' || language === 'javascript' ? 'node' : language;
+    return await this.sandboxExecutor.execute(command, ['-e', code]);
+  }
+
+  /** Get sandbox system status */
+  getSandboxStatus(): { initialized: boolean; platform: string } {
+    if (!this.sandboxExecutor) return { initialized: false, platform: '' };
+    return { initialized: true, platform: (this.sandboxExecutor as any).platform };
+  }
+
+  // ---------------------------------------------------------------------------
+  // 3. Auto Updater
+  // ---------------------------------------------------------------------------
+
+  /** Check for available updates */
+  async checkForUpdates(): Promise<UpdateInfo | null> {
+    if (!this.autoUpdater) throw new Error('AutoUpdater is not initialized (non-electron env)');
+    return await this.autoUpdater.checkForUpdates();
+  }
+
+  /** Get current application version */
+  getCurrentVersion(): string {
+    if (!this.autoUpdater) return process.env.APP_VERSION || '0.0.0';
+    return this.autoUpdater.getCurrentVersion();
+  }
+
+  /** Check if an update is available */
+  isUpdateAvailable(): boolean {
+    if (!this.autoUpdater) return false;
+    return this.autoUpdater.getStatus() === 'available';
+  }
+
+  // ---------------------------------------------------------------------------
+  // 4. Gateway
+  // ---------------------------------------------------------------------------
+
+  /** Authenticate and connect to gateway */
+  async authenticateGateway(): Promise<void> {
+    if (!this.gatewayClient) throw new Error('Gateway is not configured');
+    await this.gatewayClient.connect();
+  }
+
+  /** Get the current gateway connection state */
+  getGatewayToken(): string | null {
+    if (!this.gatewayClient) return null;
+    return this.gatewayClient.getState() === 'connected' ? 'connected' : null;
+  }
+
+  /** Check if gateway is connected */
+  isGatewayConnected(): boolean {
+    return this.gatewayClient?.getState() === 'connected';
+  }
+
+  // ---------------------------------------------------------------------------
+  // 5. Diagnostics
+  // ---------------------------------------------------------------------------
+
+  /** Run full system diagnostics */
+  async runDiagnostics(): Promise<{
+    network: DiagnosticResult | null;
+    system: SystemInfo | null;
+    health: HealthStatus | null;
+  }> {
+    const endpoints = this.config.diagnostics?.apiEndpoints || [];
+    const network = this.networkDiagnostics
+      ? await this.networkDiagnostics.runDiagnostics(endpoints)
+      : null;
+    const system = this.systemDiagnostics ? await this.systemDiagnostics.getSystemInfo() : null;
+    const health = this.systemDiagnostics ? await this.systemDiagnostics.checkHealth() : null;
+    return { network, system, health };
+  }
+
+  /** Get system health status */
+  async getSystemHealth(): Promise<HealthStatus | null> {
+    if (!this.systemDiagnostics) return null;
+    return await this.systemDiagnostics.checkHealth();
+  }
+
+  /** Get a full diagnostic report */
+  async getDiagnosticReport(): Promise<string | null> {
+    if (!this.systemDiagnostics) return null;
+    return await this.systemDiagnostics.generateReport();
+  }
+
+  // ---------------------------------------------------------------------------
+  // 6. Work Queue
+  // ---------------------------------------------------------------------------
+
+  /** Enqueue a job into the work queue */
+  async enqueueJob(
+    type: string,
+    data: any,
+    priority?: WorkPriority,
+    maxRetries?: number
+  ): Promise<string> {
+    if (!this.workQueueManager) throw new Error('Work queue is not initialized');
+    return await this.workQueueManager.addWork(type, data, priority, maxRetries);
+  }
+
+  /** Get job status by ID */
+  async getJobStatus(jobId: string): Promise<WorkItem | null> {
+    if (!this.workQueueManager) return null;
+    return this.workQueueManager.getWork(jobId);
+  }
+
+  /** List jobs in the queue */
+  async listJobs(status?: WorkStatus, limit?: number): Promise<WorkItem[]> {
+    if (!this.workQueueManager) return [];
+    return await this.workQueueManager.listWork(status, limit);
+  }
+
+  // ---------------------------------------------------------------------------
+  // 7. Mode Manager
+  // ---------------------------------------------------------------------------
+
+  /** Set the agent mode (chat or coding) */
+  async setMode(modeName: AgentMode): Promise<void> {
+    if (!this.modeManager) throw new Error('Mode manager is not initialized');
+    await this.modeManager.switchTo(modeName);
+  }
+
+  /** Get the current agent mode */
+  getCurrentMode(): AgentMode {
+    return this.modeManager?.getCurrentMode() ?? 'chat';
+  }
+
+  /** List all available modes */
+  listModes(): Mode[] {
+    if (!this.modeManager) return [];
+    return this.modeManager.listModes();
   }
 }
 
