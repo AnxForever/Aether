@@ -142,6 +142,14 @@ export interface PreloadAPI {
   indexContent: (id: string, content: string, metadata?: any) => Promise<any>;
   getSearchHistory: () => Promise<any>;
 
+  // Notifications
+  listNotifications: () => Promise<any>;
+  dismissNotification: (id: string) => Promise<void>;
+
+  // Themes
+  loadTheme: () => Promise<any>;
+  saveTheme: (config: any) => Promise<void>;
+
   // Events
   onMessage: (callback: EventCallback) => void;
   onStreamChunk: (callback: EventCallback) => void;
@@ -217,6 +225,18 @@ export function createPreloadAPI(client: IPCClient): PreloadAPI {
       client.invoke(IPC_CHANNELS.SEARCH_INDEX, { id, content, metadata }),
     getSearchHistory: () =>
       client.invoke(IPC_CHANNELS.SEARCH_HISTORY, {}),
+
+    // Notifications
+    listNotifications: () =>
+      client.invoke(IPC_CHANNELS.NOTIFICATION_LIST, {}),
+    dismissNotification: (id) =>
+      client.invoke(IPC_CHANNELS.NOTIFICATION_DISMISS, { id }),
+
+    // Themes
+    loadTheme: () =>
+      client.invoke(IPC_CHANNELS.THEMES_LOAD, {}),
+    saveTheme: (config) =>
+      client.invoke(IPC_CHANNELS.THEMES_SAVE, { theme: config }),
 
     // Events
     onMessage: (callback) => client.on(IPC_CHANNELS.EVENT_MESSAGE, callback),

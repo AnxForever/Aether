@@ -169,6 +169,11 @@ export const IPC_CHANNELS = {
   SEARCH_INDEX: 'search:index',
   SEARCH_HISTORY: 'search:history',
 
+  // Notifications
+  NOTIFICATION_LIST: 'notification:list',
+  NOTIFICATION_DISMISS: 'notification:dismiss',
+  NOTIFICATION_CLEAR: 'notification:clear',
+
   // Events (renderer <- main)
   EVENT_MESSAGE: 'event:message',
   EVENT_STREAM_CHUNK: 'event:stream-chunk',

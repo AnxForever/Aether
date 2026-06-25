@@ -13,6 +13,8 @@ import { ConfigManager } from './storage/config-manager';
 import { CollaborationLauncher } from './server/collaboration-launcher';
 import { SemanticSearch } from './search/semantic-search';
 import { MiniWindowManager } from './mini-window/manager';
+import { NotificationManager } from './notification/manager';
+import { ThemeManager } from './themes/manager';
 
 const logger = createLogger('Main');
 
@@ -23,6 +25,8 @@ let onboardingManager: OnboardingManager | null = null;
 let collaborationLauncher: CollaborationLauncher | null = null;
 let searchEngine: SemanticSearch | null = null;
 let miniWindowManager: MiniWindowManager | null = null;
+let notificationManager: NotificationManager | null = null;
+let themeManager: ThemeManager | null = null;
 
 /**
  * Create onboarding window
@@ -181,6 +185,36 @@ function initializeMiniWindow() {
     logger.info('Mini window initialized');
   } catch (error) {
     logger.error('Failed to initialize mini window:', error as Error);
+  }
+}
+
+/**
+ * Initialize notification manager
+ */
+function initializeNotifications() {
+  try {
+    notificationManager = new NotificationManager();
+    // Forward notifications to renderer
+    notificationManager.on('notification-show', (notification) => {
+      mainWindow?.webContents.send('event:notification-show', notification);
+      onboardingWindow?.webContents.send('event:notification-show', notification);
+    });
+    logger.info('Notification manager initialized');
+  } catch (error) {
+    logger.error('Failed to initialize notifications:', error as Error);
+  }
+}
+
+/**
+ * Initialize theme manager
+ */
+async function initializeThemes() {
+  try {
+    themeManager = new ThemeManager(app.getPath('userData'));
+    await themeManager.initialize();
+    logger.info('Theme manager initialized');
+  } catch (error) {
+    logger.error('Failed to initialize themes:', error as Error);
   }
 }
 
@@ -547,6 +581,58 @@ function setupIPC() {
     }
   });
 
+  // Notifications
+  handlers.register(IPC_CHANNELS.NOTIFICATION_LIST, async (event, request) => {
+    try {
+      if (!notificationManager) throw new Error('Notification manager not initialized');
+      const notifications = notificationManager.list();
+      return createSuccessResponse(request.id, { notifications });
+    } catch (error: any) {
+      return createErrorResponse(request.id, error.message);
+    }
+  });
+
+  handlers.register(IPC_CHANNELS.NOTIFICATION_DISMISS, async (event, request) => {
+    try {
+      if (!notificationManager) throw new Error('Notification manager not initialized');
+      notificationManager.dismiss(request.data.id);
+      return createSuccessResponse(request.id, { success: true });
+    } catch (error: any) {
+      return createErrorResponse(request.id, error.message);
+    }
+  });
+
+  handlers.register(IPC_CHANNELS.NOTIFICATION_CLEAR, async (event, request) => {
+    try {
+      if (!notificationManager) throw new Error('Notification manager not initialized');
+      notificationManager.clear();
+      return createSuccessResponse(request.id, { success: true });
+    } catch (error: any) {
+      return createErrorResponse(request.id, error.message);
+    }
+  });
+
+  // Themes
+  handlers.register(IPC_CHANNELS.THEMES_LOAD, async (event, request) => {
+    try {
+      if (!themeManager) throw new Error('Theme manager not initialized');
+      const config = themeManager.getTheme();
+      return createSuccessResponse(request.id, { theme: config });
+    } catch (error: any) {
+      return createErrorResponse(request.id, error.message);
+    }
+  });
+
+  handlers.register(IPC_CHANNELS.THEMES_SAVE, async (event, request) => {
+    try {
+      if (!themeManager) throw new Error('Theme manager not initialized');
+      await themeManager.updateTheme(request.data.theme);
+      return createSuccessResponse(request.id, { success: true });
+    } catch (error: any) {
+      return createErrorResponse(request.id, error.message);
+    }
+  });
+
   handlers.setup();
   logger.info('IPC handlers registered');
 }
@@ -557,7 +643,9 @@ function setupIPC() {
 app.whenReady().then(async () => {
   await initializeAgent();
   await initializeCollaboration();
+  await initializeThemes();
   initializeSearch();
+  initializeNotifications();
   initializeOnboarding();
   initializeMiniWindow();
   setupIPC();
@@ -596,6 +684,7 @@ app.on('window-all-closed', () => {
  */
 app.on('before-quit', async () => {
   logger.info('Application quitting');
+  miniWindowManager?.destroy();
   await collaborationLauncher?.stop();
   await agent?.cleanup();
 });

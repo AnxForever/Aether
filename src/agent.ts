@@ -66,6 +66,7 @@ export class NexusAgent {
   private config: NexusAgentConfig;
   private pluginLoader: PluginLoader;
   private marketplace: PluginMarketplace;
+  private connectorsInitialized = false;
 
   // v2.1 New subsystems
   private colaLinkManager?: ColaLinkManager;
@@ -119,15 +120,17 @@ export class NexusAgent {
    */
   private async initializeConnectors(): Promise<void> {
     if (!this.config.apiKeys) return;
+    if (this.connectorsInitialized) return;
+    this.connectorsInitialized = true;
 
     for (const [provider, apiKey] of Object.entries(this.config.apiKeys)) {
       const connector = connectorRegistry.get(provider as any);
       if (connector) {
         try {
           await connector.initialize({ apiKey });
-          console.info(`[Nexus] Initialized connector: ${provider}`);
+          logger.info(`Initialized connector: ${provider}`);
         } catch (error) {
-          console.error(`[Nexus] Failed to initialize ${provider}:`, error);
+          logger.error(`Failed to initialize ${provider}:`, error as Error);
         }
       }
     }
@@ -715,19 +718,34 @@ export class NexusAgent {
   /** Generate today's diary entry */
   async generateAwarenessDiary(): Promise<Imprint | null> {
     if (!this.awarenessSystem) return null;
-    return await this.awarenessSystem.generateDailyDiary();
+    try {
+      return await this.awarenessSystem.generateDailyDiary();
+    } catch (error) {
+      logger.warn(`Failed to generate diary: ${(error as Error).message}`);
+      return null;
+    }
   }
 
   /** Create a draft (conversation highlight) */
   async createAwarenessDraft(content: string, title?: string): Promise<Imprint | null> {
     if (!this.awarenessSystem) return null;
-    return await this.awarenessSystem.createDraft(content, title);
+    try {
+      return await this.awarenessSystem.createDraft(content, title);
+    } catch (error) {
+      logger.warn(`Failed to create draft: ${(error as Error).message}`);
+      return null;
+    }
   }
 
   /** Generate daily episode summary */
   async generateAwarenessEpisode(): Promise<Imprint | null> {
     if (!this.awarenessSystem) return null;
-    return await this.awarenessSystem.generateDailyEpisode();
+    try {
+      return await this.awarenessSystem.generateDailyEpisode();
+    } catch (error) {
+      logger.warn(`Failed to generate episode: ${(error as Error).message}`);
+      return null;
+    }
   }
 
   /** List all imprints (diaries + drafts + episodes) */

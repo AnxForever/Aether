@@ -132,6 +132,7 @@
   async function init() {
     applyTheme(state.settings.theme);
     bindEvents();
+    await loadThemeFromBackend();
     await loadSettings();
     await loadSessions();
     buildModelDropdown();
@@ -320,6 +321,59 @@
       ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
       : theme;
     document.documentElement.setAttribute('data-theme', resolved);
+    // Also sync to backend
+    if (api && api.saveTheme) {
+      callApi(api.saveTheme, { mode: theme }).catch(() => {});
+    }
+  }
+
+  async function loadThemeFromBackend() {
+    try {
+      const result = await callApi(api.loadTheme);
+      if (result && result.theme && result.theme.mode) {
+        state.settings.theme = result.theme.mode;
+        applyTheme(state.settings.theme);
+        // Update UI
+        el.themeSelect.querySelectorAll('button').forEach(b => {
+          b.classList.toggle('active', b.dataset.theme === state.settings.theme);
+        });
+      }
+    } catch (err) { /* use localStorage fallback */ }
+  }
+
+  // ============================================================
+  // Notifications / Toasts
+  // ============================================================
+  function showToast(title, description, type, duration) {
+    type = type || 'info';
+    duration = duration || 4000;
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = 'toast toast-' + type;
+    const icons = { success: '✓', error: '✕', warning: '⚠', info: 'ℹ' };
+    toast.innerHTML = `
+      <span class="toast-icon">${icons[type] || icons.info}</span>
+      <div class="toast-body">
+        <div class="toast-title">${escapeHtml(title || '')}</div>
+        ${description ? '<div class="toast-desc">' + escapeHtml(description) + '</div>' : ''}
+      </div>
+      <button class="toast-close">&times;</button>
+    `;
+    toast.querySelector('.toast-close').addEventListener('click', () => {
+      toast.style.animation = 'slideOut 0.2s ease-in forwards';
+      setTimeout(() => toast.remove(), 200);
+    });
+    container.appendChild(toast);
+    setTimeout(() => {
+      toast.style.animation = 'slideOut 0.2s ease-in forwards';
+      setTimeout(() => { if (toast.parentElement) toast.remove(); }, 200);
+    }, duration);
+  }
+
+  // Listen for notification events from main process
+  if (api && api.on) {
+    // Try to listen for notification-show events
+    try { api.on('event:notification-show', (n) => showToast(n.title, n.description, n.type, n.duration)); } catch(e) {}
   }
 
   // ============================================================
