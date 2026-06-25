@@ -39,7 +39,7 @@ const checkVariants = {
     opacity: [0, 1, 1],
     transition: { duration: 0.3, ease: 'easeOut' },
   },
-};
+} as const;
 
 export default function SettingsPage() {
   const currentModel = useAppStore((s) => s.currentModel);
@@ -165,7 +165,7 @@ export default function SettingsPage() {
                                 {selected ? (
                                   <motion.div
                                     key="check"
-                                    variants={checkVariants}
+                                    {...(checkVariants as any)}
                                     initial="initial"
                                     animate="animate"
                                     exit="initial"
