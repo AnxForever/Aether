@@ -82,7 +82,13 @@
     z-index: 0;
   }
 
-  /* Button size variants */
+  /* Responsive content container — comfortable reading width for 1440p screens */
+.content-container {
+  @apply w-full mx-auto px-4 sm:px-6 lg:px-8;
+  max-width: 72rem; /* 1152px */
+}
+
+/* Button size variants */
   .btn-sm {
     padding: 0.375rem 0.75rem;
     font-size: 0.75rem;

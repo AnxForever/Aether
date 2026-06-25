@@ -1,4 +1,4 @@
-import { memo, useState, useRef, useEffect } from 'react';
+import { memo, useState, useRef, useEffect, useCallback } from 'react';
 import { useAppStore } from '../stores/app';
 import { switchModel } from '../api/client';
 import { createLogger } from '../../../src/utils/logger';
@@ -37,7 +37,9 @@ const ProviderButton = memo(
             : 'border border-transparent hover:bg-white/[0.02]'
           }
         `}
-        aria-label={`切换到 ${name} ${model}`}
+        role="radio"
+        aria-checked={active}
+        aria-label={`${name} ${model}${active ? '，已选中' : ''}`}
         title={`${name} · ${model}`}
       >
         {/* Dot + glow */}
@@ -100,13 +102,31 @@ export default function ProviderBar() {
 
   // Visible providers per breakpoint: 2 on <480, 4 on <768, all on >=768
   const overflowProviders = PROVIDERS.slice(4);
+  const providerRefs = useRef<(HTMLDivElement | null)[]>([]);
+
+  const handleProviderKeyDown = useCallback((e: React.KeyboardEvent, index: number) => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+      e.preventDefault();
+      const next = (index + 1) % PROVIDERS.length;
+      const el = providerRefs.current[next]?.querySelector('button');
+      el?.focus();
+    }
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      const prev = (index - 1 + PROVIDERS.length) % PROVIDERS.length;
+      const el = providerRefs.current[prev]?.querySelector('button');
+      el?.focus();
+    }
+  }, []);
 
   return (
     <div className="w-full border-b border-border-subtle bg-base/80 backdrop-blur-sm">
-      <div className="flex items-center px-4 h-12 gap-1 overflow-x-auto scrollbar-none">
+      <div className="flex items-center px-4 h-12 gap-1 overflow-x-auto scrollbar-none" role="radiogroup" aria-label="AI 提供商选择">
         {PROVIDERS.map((p, i) => (
           <div
             key={p.id}
+            ref={(el) => { providerRefs.current[i] = el; }}
+            onKeyDown={(e) => handleProviderKeyDown(e, i)}
             className={
               i >= 4 ? 'hidden sm:flex' :
               i >= 2 ? 'hidden max-sm:flex sm:flex' :

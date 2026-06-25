@@ -115,7 +115,7 @@ export default function SettingsPage() {
                   {error}
                 </p>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-4" role="listbox" aria-label="选择 AI 模型">
                   {groups.map((group) => {
                     const connected = providerConnected(group.provider);
                     return (
@@ -141,6 +141,8 @@ export default function SettingsPage() {
                           return (
                             <button
                               key={m.id || m.name}
+                              role="option"
+                              aria-selected={selected}
                               onClick={() => {
                                 setModel(m.id || m.name);
                                 switchModelApi(m.id || m.name).catch((err) => {

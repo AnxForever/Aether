@@ -1,4 +1,5 @@
-import { NavLink } from 'react-router-dom';
+import { useState, useCallback } from 'react';
+import { NavLink, useLocation } from 'react-router-dom';
 import { MessageSquare, Zap, Workflow, Settings, LogOut, Plus, PanelLeftClose } from 'lucide-react';
 import { useAppStore } from '../stores/app';
 import { newSession } from '../api/client';
@@ -14,6 +15,27 @@ export default function Sidebar() {
   const logout = useAppStore((s) => s.logout);
   const clearMessages = useAppStore((s) => s.clearMessages);
   const toggleSidebar = useAppStore((s) => s.toggleSidebar);
+  const location = useLocation();
+  const [navFocusIndex, setNavFocusIndex] = useState<number | null>(null);
+
+  const handleNavKeyDown = useCallback((e: React.KeyboardEvent, index: number) => {
+    if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
+      e.preventDefault();
+      const next = (index + 1) % navItems.length;
+      setNavFocusIndex(next);
+      document.querySelector<HTMLAnchorElement>(`[data-nav-index="${next}"]`)?.focus();
+    }
+    if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+      e.preventDefault();
+      const prev = (index - 1 + navItems.length) % navItems.length;
+      setNavFocusIndex(prev);
+      document.querySelector<HTMLAnchorElement>(`[data-nav-index="${prev}"]`)?.focus();
+    }
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      document.querySelector<HTMLAnchorElement>(`[data-nav-index="${index}"]`)?.click();
+    }
+  }, []);
 
   return (
     <div className="flex flex-col h-full py-3">
@@ -57,23 +79,30 @@ export default function Sidebar() {
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 px-2 space-y-0.5">
-        {navItems.map(({ to, icon: Icon, label }) => (
-          <NavLink
-            key={to}
-            to={to}
-            className={({ isActive }) =>
-              `flex items-center gap-2.5 px-3 py-2 rounded-sm transition-colors font-ui text-sm ${
-                isActive
-                  ? 'bg-accent/10 text-accent border border-accent/20'
-                  : 'text-ink-secondary hover:text-ink hover:bg-white/[0.03] border border-transparent'
-              }`
-            }
-          >
-            <Icon size={15} />
-            <span>{label}</span>
-          </NavLink>
-        ))}
+      <nav className="flex-1 px-2 space-y-0.5" role="navigation" aria-label="主导航">
+        {navItems.map(({ to, icon: Icon, label }, index) => {
+          const isActive = location.pathname === to || location.pathname.startsWith(to + '/');
+          return (
+            <NavLink
+              key={to}
+              to={to}
+              data-nav-index={index}
+              aria-current={isActive ? 'page' : undefined}
+              tabIndex={navFocusIndex === null ? 0 : navFocusIndex === index ? 0 : -1}
+              onKeyDown={(e) => handleNavKeyDown(e, index)}
+              className={({ isActive: active }) =>
+                `flex items-center gap-2.5 px-3 py-2 rounded-sm transition-colors font-ui text-sm ${
+                  active
+                    ? 'bg-accent/10 text-accent border border-accent/20'
+                    : 'text-ink-secondary hover:text-ink hover:bg-white/[0.03] border border-transparent'
+                }`
+              }
+            >
+              <Icon size={15} />
+              <span>{label}</span>
+            </NavLink>
+          );
+        })}
       </nav>
 
       {/* Footer */}

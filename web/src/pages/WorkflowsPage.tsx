@@ -115,6 +115,7 @@ export default function WorkflowsPage() {
               return (
                 <div
                   key={wf.id}
+                  aria-busy={isRunning}
                   className={`card card-glow flex items-center justify-between gap-4 animate-fade-in border-l-[3px] rounded-l-sm ${typeStyle.border} ${isRunning ? 'animate-pulse' : ''}`}
                 >
                   <div className="flex items-center gap-3 min-w-0">

@@ -121,6 +121,13 @@ export default function ChatPage() {
       e.preventDefault();
       handleSend();
     }
+    if (e.key === 'Escape') {
+      if (isStreaming) {
+        handleStop();
+      } else {
+        inputRef.current?.blur();
+      }
+    }
   };
 
   const handlePromptSelect = (text: string) => {
@@ -148,7 +155,7 @@ export default function ChatPage() {
   return (
     <div className="flex flex-col h-full">
       {/* Messages area */}
-      <div className="flex-1 overflow-y-auto px-6 py-4 space-y-5">
+      <div className="flex-1 overflow-y-auto px-6 py-4 space-y-5" role="log" aria-live="polite" aria-label="消息列表">
         {/* Empty state */}
         {messages.length === 0 && !streamingContent ? (
           <div className="flex flex-col items-center pt-24">
@@ -166,7 +173,7 @@ export default function ChatPage() {
 
         {/* Streaming bubble */}
         {streamingContent ? (
-          <div className="animate-slide-up">
+          <div className="animate-slide-up" role="status" aria-live="polite" aria-label="AI 正在响应">
             <div className="flex items-center gap-2 mb-1.5">
               <span className="w-[6px] h-[6px] rounded-full bg-accent animate-pulse-glow" />
               <span className="font-ui text-[11px] text-ink-muted uppercase tracking-wide">
@@ -184,6 +191,10 @@ export default function ChatPage() {
         ) : null}
 
         <div ref={bottomRef} />
+          {/* Screen reader announcements */}
+          <div className="sr-only" aria-live="assertive" aria-atomic="true">
+            {isStreaming ? 'AI 正在响应' : streamingContent ? '响应完成' : ''}
+          </div>
           {transientError ? (
             <div className="px-4 py-2 text-center">
               <p className="font-body text-sm text-danger bg-danger/5 px-3 py-1.5 rounded-sm border border-danger/15 inline-block">

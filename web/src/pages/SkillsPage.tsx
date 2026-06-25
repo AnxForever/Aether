@@ -171,6 +171,8 @@ export default function SkillsPage() {
                           key={skill.id}
                           variants={cardVariants}
                           onClick={() => handleToggle(skill)}
+                          role="switch"
+                          aria-checked={active}
                           className={`card card-glow text-left border-l-[3px] ${active ? 'border-accent/30 bg-accent/[0.04] border-l-accent/40' : 'border-l-accent/0'}`}
                         >
                           <div className="flex items-center justify-between gap-2">
@@ -201,6 +203,8 @@ export default function SkillsPage() {
                           key={skill.id}
                           variants={cardVariants}
                           onClick={() => handleToggle(skill)}
+                          role="switch"
+                          aria-checked={active}
                           className={`card card-glow text-left ${active ? 'border-accent/30 bg-accent/[0.04]' : ''}`}
                         >
                           <div className="flex items-center justify-between gap-2">
