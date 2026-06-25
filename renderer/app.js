@@ -403,16 +403,59 @@
       return;
     }
 
-    for (const session of filtered) {
-      const item = document.createElement('div');
-      item.className = 'session-item' + (session.id === state.currentSessionId ? ' active' : '');
-      item.innerHTML = `
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-        <span class="session-title">${escapeHtml(session.title || 'New Chat')}</span>
-      `;
-      item.addEventListener('click', () => loadSession(session.id));
-      el.sessionsList.appendChild(item);
+    // Group by time
+    const groups = groupSessionsByTime(filtered);
+    for (const [label, sessions] of Object.entries(groups)) {
+      const header = document.createElement('div');
+      header.className = 'session-group-header';
+      header.textContent = label;
+      el.sessionsList.appendChild(header);
+
+      for (const session of sessions) {
+        const item = document.createElement('div');
+        item.className = 'session-item' + (session.id === state.currentSessionId ? ' active' : '');
+        item.innerHTML = `
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          <span class="session-title">${escapeHtml(session.title || 'New Chat')}</span>
+          ${session.updatedAt ? '<span class="session-meta">' + timeAgo(session.updatedAt) + '</span>' : ''}
+        `;
+        item.addEventListener('click', () => loadSession(session.id));
+        el.sessionsList.appendChild(item);
+      }
     }
+  }
+
+  function groupSessionsByTime(sessions) {
+    const now = Date.now();
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const yesterday = new Date(today); yesterday.setDate(yesterday.getDate() - 1);
+    const weekAgo = new Date(today); weekAgo.setDate(weekAgo.getDate() - 7);
+
+    const groups = { Today: [], Yesterday: [], 'This Week': [], Older: [] };
+    for (const s of sessions) {
+      const t = (s.updatedAt || s.createdAt || 0);
+      if (t >= today.getTime()) groups['Today'].push(s);
+      else if (t >= yesterday.getTime()) groups['Yesterday'].push(s);
+      else if (t >= weekAgo.getTime()) groups['This Week'].push(s);
+      else groups['Older'].push(s);
+    }
+    // Remove empty groups
+    for (const key of Object.keys(groups)) {
+      if (groups[key].length === 0) delete groups[key];
+    }
+    return groups;
+  }
+
+  function timeAgo(ts) {
+    const diff = Date.now() - ts;
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return 'just now';
+    if (mins < 60) return mins + 'm ago';
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return hours + 'h ago';
+    const days = Math.floor(hours / 24);
+    if (days < 7) return days + 'd ago';
+    return new Date(ts).toLocaleDateString();
   }
 
   let searchTimeout = null;
@@ -691,6 +734,12 @@
     `;
     el.messages.appendChild(typingEl);
     scrollToBottom();
+
+    // Auto-title: if this is a new session (no messages yet), use first line as title
+    if (state.messages.length === 0 && state.currentSessionId && api && api.renameSession) {
+      const title = text.split('\n')[0].substring(0, 40) + (text.length > 40 ? '...' : '');
+      callApi(api.renameSession, state.currentSessionId, title).then(() => loadSessions()).catch(() => {});
+    }
 
     state.isStreaming = true;
     el.sendBtn.classList.add('hidden');

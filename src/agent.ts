@@ -36,6 +36,10 @@ import { ComplexityAnalyzer } from './analysis/complexity-analyzer';
 import { DependencyAnalyzer } from './analysis/dependency-analyzer';
 import { MCPServerManager } from './mcp/mcp-server-manager';
 import type { MCPServerConfig } from './mcp/mcp-server-manager';
+import { SlackManager } from './integrations/slack/slack-manager';
+import type { SlackManagerConfig } from './integrations/slack/types';
+import { SentryManager } from './monitoring/sentry-manager';
+import type { SentryConfig } from './monitoring/types';
 
 const logger = createLogger('NexusAgent');
 
@@ -58,6 +62,17 @@ export interface NexusAgentConfig {
   browser?: PlaywrightBrowserConfig;
   /** MCP server config */
   mcp?: MCPServerConfig;
+  /** Slack integration config */
+  slack?: {
+    enabled?: boolean;
+    token?: string;
+    signingSecret?: string;
+  };
+  /** Monitoring config */
+  monitoring?: {
+    sentryDsn?: string;
+    enabled?: boolean;
+  };
 }
 
 export class NexusAgent {
@@ -81,6 +96,8 @@ export class NexusAgent {
   private complexityAnalyzer?: ComplexityAnalyzer;
   private dependencyAnalyzer?: DependencyAnalyzer;
   private mcpServerManager?: MCPServerManager;
+  private slackManager?: SlackManager;
+  private sentryManager?: SentryManager;
 
   constructor(config: NexusAgentConfig) {
     this.config = config;
@@ -208,6 +225,26 @@ export class NexusAgent {
       }
     }
 
+    // Initialize Slack Manager
+    if (this.config.slack?.enabled && this.config.slack.token) {
+      const slackConfig: SlackManagerConfig = {
+        botToken: this.config.slack.token,
+        signingSecret: this.config.slack.signingSecret || '',
+        socketMode: false,
+      };
+      this.slackManager = new SlackManager(slackConfig);
+      await this.slackManager.initialize();
+      logger.info('Slack manager initialized');
+    }
+
+    // Initialize Sentry Manager
+    const sentryDsn = this.config.monitoring?.sentryDsn || process.env.SENTRY_DSN;
+    if (sentryDsn && this.config.monitoring?.enabled !== false) {
+      this.sentryManager = new SentryManager({ dsn: sentryDsn });
+      this.sentryManager.initialize();
+      logger.info('Sentry manager initialized');
+    }
+
     // Lazy-init tools
     this.chartGenerator = new ChartGenerator();
     this.dataTransformer = new DataTransformer();
@@ -225,6 +262,8 @@ export class NexusAgent {
     this.playwrightBrowser?.close();
     this.voiceManager?.close();
     this.mcpServerManager?.stopAll();
+    this.slackManager?.destroy();
+    await this.sentryManager?.close();
     logger.info('Agent cleaned up');
   }
 
@@ -709,6 +748,99 @@ export class NexusAgent {
   /** Get ColaLink system health */
   isColaLinkActive(): boolean {
     return this.colaLinkManager !== undefined;
+  }
+
+  // ============================================================================
+  // Slack Integration API
+  // ============================================================================
+
+  /**
+   * Connect to Slack with a bot token
+   */
+  async connectSlack(token: string): Promise<void> {
+    if (this.slackManager) {
+      await this.slackManager.stop();
+      this.slackManager.destroy();
+    }
+    const slackConfig: SlackManagerConfig = {
+      botToken: token,
+      signingSecret: '',
+      socketMode: false,
+    };
+    this.slackManager = new SlackManager(slackConfig);
+    await this.slackManager.initialize();
+    logger.info('Slack connected');
+  }
+
+  /**
+   * Disconnect from Slack
+   */
+  async disconnectSlack(): Promise<void> {
+    if (!this.slackManager) return;
+    await this.slackManager.stop();
+    this.slackManager.destroy();
+    this.slackManager = undefined;
+    logger.info('Slack disconnected');
+  }
+
+  /**
+   * Send a message to a Slack channel
+   */
+  async sendSlackMessage(channel: string, text: string): Promise<void> {
+    if (!this.slackManager) throw new Error('Slack is not connected');
+    await this.slackManager.getClient().chat.postMessage({ channel, text });
+  }
+
+  /**
+   * List available Slack channels
+   */
+  async listSlackChannels(): Promise<any[]> {
+    if (!this.slackManager) return [];
+    const result = await this.slackManager.getClient().conversations.list();
+    return (result.channels || []) as any[];
+  }
+
+  /**
+   * Check if Slack is connected
+   */
+  isSlackConnected(): boolean {
+    return this.slackManager?.isReady() ?? false;
+  }
+
+  // ============================================================================
+  // Monitoring API (Sentry)
+  // ============================================================================
+
+  /**
+   * Capture an error to Sentry
+   */
+  captureError(error: Error, context?: Record<string, any>): void {
+    if (!this.sentryManager) return;
+    this.sentryManager.captureException(error, { context });
+  }
+
+  /**
+   * Capture a message to Sentry
+   */
+  captureMessage(message: string, level?: string): void {
+    if (!this.sentryManager) return;
+    this.sentryManager.captureMessage(message, { severity: level as any });
+  }
+
+  /**
+   * Set Sentry user context
+   */
+  setSentryUser(user: { id: string; email?: string }): void {
+    if (!this.sentryManager) return;
+    this.sentryManager.setUser(user);
+  }
+
+  /**
+   * Get performance metrics from Sentry
+   */
+  getPerformanceMetrics(): Record<string, any> | null {
+    if (!this.sentryManager) return null;
+    return this.sentryManager.getPerformanceMetrics();
   }
 
   // ============================================================================
