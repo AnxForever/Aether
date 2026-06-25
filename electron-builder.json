@@ -1,7 +1,7 @@
 {
-  "appId": "com.nexus.agent",
-  "productName": "Nexus Agent",
-  "copyright": "Copyright © 2024 Nexus Team",
+  "appId": "com.aether.app",
+  "productName": "Aether",
+  "copyright": "Copyright © 2024 AnxForever",
   "directories": {
     "output": "release",
     "buildResources": "build"
@@ -59,14 +59,14 @@
     ],
     "icon": "build/icon.png",
     "category": "Utility",
-    "maintainer": "nexus-team@example.com"
+    "maintainer": "AnxForever <130662349+AnxForever@users.noreply.github.com>"
   },
   "nsis": {
     "oneClick": false,
     "allowToChangeInstallationDirectory": true,
     "createDesktopShortcut": true,
     "createStartMenuShortcut": true,
-    "shortcutName": "Nexus Agent"
+    "shortcutName": "Aether"
   },
   "dmg": {
     "contents": [
@@ -88,7 +88,7 @@
   },
   "publish": {
     "provider": "github",
-    "owner": "nexus-team",
-    "repo": "nexus-agent"
+    "owner": "AnxForever",
+    "repo": "Aether"
   }
 }

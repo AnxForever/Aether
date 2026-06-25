@@ -10,11 +10,17 @@ import { Pipeline } from './pipeline';
 import { CycleManager } from './cycle-manager';
 import { connectorRegistry } from '../connectors';
 import { randomUUID } from 'crypto';
+import { LearningIntegration } from './learning-integration';
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('Orchestrator');
 
 export interface OrchestratorConfig {
   defaultModel: string;
   defaultProvider: string;
   maxConcurrentCycles: number;
+  dataDir?: string;
+  enableLearning?: boolean;
 }
 
 export class Orchestrator extends EventEmitter {
@@ -22,12 +28,26 @@ export class Orchestrator extends EventEmitter {
   private cycleManager: CycleManager;
   private config: OrchestratorConfig;
   private activeCycles: Map<string, Cycle> = new Map();
+  private learningIntegration?: LearningIntegration;
 
   constructor(config: OrchestratorConfig) {
     super();
     this.config = config;
     this.pipeline = new Pipeline();
     this.cycleManager = new CycleManager();
+
+    // Initialize learning integration if enabled
+    if (config.enableLearning !== false && config.dataDir) {
+      this.learningIntegration = new LearningIntegration({
+        dataDir: config.dataDir,
+        enablePersistence: true,
+        autoApplyImprovements: true,
+        learningCycleInterval: 3600000 // 1 hour
+      });
+
+      this.learningIntegration.start();
+      logger.info('Learning integration enabled');
+    }
   }
 
   /**
@@ -53,12 +73,20 @@ export class Orchestrator extends EventEmitter {
       const result = await this.pipeline.execute({
         cycle,
         config: this.config,
-        connectorRegistry
+        connectorRegistry,
+        learningIntegration: this.learningIntegration
       });
 
       // Update cycle status
       cycle.status = 'completed';
       cycle.endTime = Date.now();
+
+      // Record to learning system
+      if (this.learningIntegration) {
+        await this.learningIntegration.recordCycle(cycle, result).catch(err => {
+          logger.error('Failed to record cycle to learning system:', err);
+        });
+      }
 
       this.emit('cycle:complete', cycle);
 
@@ -66,6 +94,13 @@ export class Orchestrator extends EventEmitter {
     } catch (error) {
       cycle.status = 'failed';
       cycle.endTime = Date.now();
+
+      // Record failure to learning system
+      if (this.learningIntegration) {
+        await this.learningIntegration.recordCycle(cycle, null, error as Error).catch(err => {
+          logger.error('Failed to record failure to learning system:', err);
+        });
+      }
 
       this.emit('cycle:error', { cycle, error });
 
@@ -155,5 +190,71 @@ export class Orchestrator extends EventEmitter {
    */
   isProcessing(): boolean {
     return this.activeCycles.size > 0;
+  }
+
+  /**
+   * Get learning integration
+   */
+  getLearningIntegration(): LearningIntegration | undefined {
+    return this.learningIntegration;
+  }
+
+  /**
+   * Record user feedback
+   */
+  async recordUserFeedback(
+    sessionId: string,
+    messageId: string,
+    rating: number,
+    comment?: string,
+    correctedResponse?: string
+  ): Promise<string | null> {
+    if (!this.learningIntegration) {
+      logger.warn('User feedback received but learning is not enabled');
+      return null;
+    }
+
+    return await this.learningIntegration.recordUserFeedback(
+      sessionId,
+      messageId,
+      rating,
+      comment,
+      correctedResponse
+    );
+  }
+
+  /**
+   * Get learning statistics
+   */
+  async getLearningStats(): Promise<any> {
+    if (!this.learningIntegration) {
+      return null;
+    }
+
+    return {
+      feedbackLoop: this.learningIntegration.getFeedbackLoopStats(),
+      currentCycle: this.learningIntegration.getCurrentCycle(),
+      averageSatisfaction: await this.learningIntegration.getAverageSatisfaction()
+    };
+  }
+
+  /**
+   * Generate learning report
+   */
+  async generateLearningReport(timeRange: { start: number; end: number }): Promise<string | null> {
+    if (!this.learningIntegration) {
+      return null;
+    }
+
+    return await this.learningIntegration.generateReport(timeRange);
+  }
+
+  /**
+   * Cleanup resources
+   */
+  async cleanup(): Promise<void> {
+    if (this.learningIntegration) {
+      this.learningIntegration.stop();
+    }
   }
 }

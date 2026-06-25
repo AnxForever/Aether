@@ -1,5 +1,4 @@
 /**
-import { createLogger } from './utils/logger';
  * Skill Manager
  *
  * Central management for all Nexus skills
@@ -8,6 +7,9 @@ import { createLogger } from './utils/logger';
 import type { Skill, Tool, ToolResult } from '../types';
 import type { SkillContext } from './types';
 import { BaseSkill } from './base-skill';
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('SkillManager');
 
 export class SkillManager {
   private skills: Map<string, BaseSkill>;

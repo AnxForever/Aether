@@ -5,9 +5,9 @@
 
 <h1>Aether</h1>
 
-**Local-first Multi-AI Orchestration Desktop App**
+**Spotify for AI — Switch between 7 AI models instantly**
 
-*Switch between 7 AI providers instantly. No cloud lock-in. 105+ tools built-in.*
+*Your conversations, your rules. All data stays local, encrypted, and under your control.*
 
 <p>
   <a href="https://github.com/AnxForever/Aether/stargazers"><img src="https://img.shields.io/github/stars/AnxForever/Aether?style=social" alt="GitHub stars"></a>
@@ -25,9 +25,9 @@
 
 <p>
   <a href="#-quick-start">Quick Start</a> •
+  <a href="#-why-aether">Why Aether</a> •
   <a href="#-features">Features</a> •
   <a href="docs/ARCHITECTURE.md">Architecture</a> •
-  <a href="#-documentation">Docs</a> •
   <a href="CONTRIBUTING.md">Contributing</a>
 </p>
 
@@ -37,15 +37,84 @@
 
 ## 🎯 Why Aether?
 
-**Tired of vendor lock-in?** Aether gives you full control over your AI workflow.
+**Like Spotify lets you switch between songs, Aether lets you switch between AI brains.**
 
-- 🏠 **Local-first** — Your conversations stay on your machine, not someone else's cloud
-- 🔌 **Multi-provider freedom** — Switch between Claude, GPT-4, Gemini, and 4 more with one click
-- 🛠️ **Batteries included** — 105+ tools for Gmail, GitHub, Google Workspace, Office automation
-- 🖥️ **Desktop native** — Fast, responsive Electron app (not another web UI)
-- 🔒 **Enterprise security** — AES-256-GCM encryption, zero telemetry
+Pick the best AI for each task:
+- 📝 **Claude** for writing and analysis
+- 💻 **GPT-4** for code generation
+- 📄 **Gemini** for long documents (1M context)
+- 🇨🇳 **GLM/MiniMax** for Chinese content
 
-**Perfect for**: Developers, power users, and teams who want full control over their AI stack.
+### Three Core Principles
+
+1. 🏠 **Local-first** — Your conversations stay on your machine, encrypted, never sent to our servers
+2. 🔌 **No vendor lock-in** — Switch between 7 AI providers with one click, compare responses side-by-side
+3. 🛠️ **Batteries included** — 105+ tools ready to use: Gmail, GitHub, Google Workspace, Office automation
+
+### Perfect For
+
+✅ Developers who need AI for code + docs + communication  
+✅ Power users tired of ChatGPT rate limits  
+✅ Teams who want full control over their AI stack  
+✅ Privacy-conscious users who don't trust cloud storage  
+
+❌ Casual users who only use ChatGPT web version occasionally
+
+---
+
+## 🎬 Use Cases
+
+<table>
+<tr>
+<td width="50%">
+
+### 📊 Compare AI Responses
+Ask the same question to Claude, GPT-4, and Gemini. Pick the best answer.
+
+**Example**: "Explain quantum computing"
+- Claude: Clear analogies
+- GPT-4: Technical depth
+- Gemini: Visual examples
+
+</td>
+<td width="50%">
+
+### 🔄 Task-Specific Models
+Use the right AI for each job.
+
+**Code review** → GPT-4 (best at code)  
+**Blog post** → Claude (best at writing)  
+**Chinese docs** → GLM (native Chinese)  
+**Long PDFs** → Gemini (1M context)
+
+</td>
+</tr>
+<tr>
+<td>
+
+### 🔒 Privacy-First Workflow
+All conversations stored locally, encrypted with AES-256-GCM.
+
+- No cloud dependency
+- No telemetry tracking
+- Export anytime (Markdown/JSON)
+- Full audit trail
+
+</td>
+<td>
+
+### 🛠️ Automate Everything
+105+ built-in tools:
+
+- Send emails via Gmail
+- Update Google Sheets
+- Create GitHub issues
+- Convert HEIC to JPEG
+- Search across conversations
+
+</td>
+</tr>
+</table>
 
 ---
 

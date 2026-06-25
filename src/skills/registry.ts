@@ -1,9 +1,11 @@
 /**
-import { createLogger } from './utils/logger';
  * Skill Registry - Central skill management
  */
 
 import { Skill, Tool } from '../types';
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('SkillRegistry');
 
 export class SkillRegistry {
   private skills: Map<string, Skill> = new Map();

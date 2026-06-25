@@ -1,5 +1,4 @@
 /**
-import { createLogger } from './utils/logger';
  * Skill Loader - Load skills from filesystem
  */
 
@@ -7,6 +6,9 @@ import { Skill } from '../types';
 import { skillRegistry } from './registry';
 import { readdir, readFile } from 'fs/promises';
 import { join } from 'path';
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('SkillLoader');
 
 export interface SkillManifest {
   id: string;
@@ -39,7 +41,8 @@ export class SkillLoader {
 
       logger.info(`[SkillLoader] Loaded ${skillRegistry.listAll().length} skills`);
     } catch (error) {
-      logger.error('[SkillLoader] Failed to load skills:', error);
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error('[SkillLoader] Failed to load skills:', err);
     }
   }
 
@@ -71,7 +74,8 @@ export class SkillLoader {
 
       skillRegistry.register(skill);
     } catch (error) {
-      logger.error(`[SkillLoader] Failed to load skill '${skillId}':`, error);
+      const err = error instanceof Error ? error : new Error(String(error));
+      logger.error(`[SkillLoader] Failed to load skill '${skillId}':`, err);
     }
   }
 

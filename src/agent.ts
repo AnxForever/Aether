@@ -16,6 +16,7 @@ export interface NexusAgentConfig {
   apiKeys?: Record<string, string>;
   dataDir?: string;
   deviceId?: string;
+  enableLearning?: boolean;
 }
 
 export class NexusAgent {
@@ -30,7 +31,9 @@ export class NexusAgent {
     this.orchestrator = new Orchestrator({
       defaultModel: config.model || 'claude-sonnet-4-20250514',
       defaultProvider: config.provider || 'claude',
-      maxConcurrentCycles: 10
+      maxConcurrentCycles: 10,
+      dataDir: config.dataDir || './data',
+      enableLearning: config.enableLearning !== false
     });
 
     // Initialize context
@@ -79,7 +82,41 @@ export class NexusAgent {
    * Cleanup resources
    */
   async cleanup(): Promise<void> {
-    // Cleanup resources if needed
+    await this.orchestrator.cleanup();
+  }
+
+  /**
+   * Record user feedback on a message
+   */
+  async recordFeedback(
+    messageId: string,
+    rating: number,
+    comment?: string,
+    correctedResponse?: string
+  ): Promise<string | null> {
+    return await this.orchestrator.recordUserFeedback(
+      this.context.sessionId,
+      messageId,
+      rating,
+      comment,
+      correctedResponse
+    );
+  }
+
+  /**
+   * Get learning statistics
+   */
+  async getLearningStats(): Promise<any> {
+    return await this.orchestrator.getLearningStats();
+  }
+
+  /**
+   * Generate learning report
+   */
+  async generateLearningReport(days: number = 7): Promise<string | null> {
+    const end = Date.now();
+    const start = end - (days * 24 * 60 * 60 * 1000);
+    return await this.orchestrator.generateLearningReport({ start, end });
   }
 
   /**

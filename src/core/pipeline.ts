@@ -15,6 +15,7 @@ export interface PipelineContext {
   config: any;
   connectorRegistry: any;
   skillRegistry?: any; // Optional skill registry for tool execution
+  learningIntegration?: any; // Optional learning integration
 }
 
 export class Pipeline {
@@ -98,7 +99,7 @@ export class Pipeline {
    * Stage 3: Tool execution (if needed)
    */
   private async toolExecutionStage(context: any): Promise<any> {
-    const { aiResponse, skillRegistry } = context;
+    const { aiResponse, skillRegistry, learningIntegration } = context;
 
     // Check for tool calls
     if (!aiResponse.toolCalls || aiResponse.toolCalls.length === 0) {
@@ -115,6 +116,10 @@ export class Pipeline {
 
     // Execute each tool call
     for (const toolCall of aiResponse.toolCalls) {
+      const startTime = Date.now();
+      let success = false;
+      let error: string | undefined;
+
       try {
         logger.info(`Executing tool: ${toolCall.name}`, { args: toolCall.arguments });
 
@@ -122,11 +127,12 @@ export class Pipeline {
         const tool = skillRegistry.findTool(toolCall.name);
 
         if (!tool) {
-          logger.error(`Tool not found: ${toolCall.name}`);
+          error = `Tool '${toolCall.name}' not found`;
+          logger.error(error);
           toolResults.push({
             id: toolCall.id,
             result: null,
-            error: `Tool '${toolCall.name}' not found`
+            error
           });
           continue;
         }
@@ -139,6 +145,9 @@ export class Pipeline {
           env: process.env as Record<string, string>
         });
 
+        success = !result.error;
+        error = result.error;
+
         toolResults.push({
           id: toolCall.id,
           result: result.data,
@@ -146,16 +155,30 @@ export class Pipeline {
         });
 
         logger.info(`Tool execution completed: ${toolCall.name}`, {
-          success: !result.error
+          success
         });
 
-      } catch (error) {
-        logger.error(`Tool execution failed: ${toolCall.name}`, error instanceof Error ? error : new Error(String(error)));
+      } catch (err) {
+        error = err instanceof Error ? err.message : String(err);
+        logger.error(`Tool execution failed: ${toolCall.name}`, err instanceof Error ? err : new Error(String(err)));
         toolResults.push({
           id: toolCall.id,
           result: null,
-          error: error instanceof Error ? error.message : String(error)
+          error
         });
+      } finally {
+        // Record skill usage to learning system
+        if (learningIntegration) {
+          const responseTime = Date.now() - startTime;
+          learningIntegration.recordSkillUsage(
+            toolCall.name,
+            success,
+            responseTime,
+            error
+          ).catch((err: Error) => {
+            logger.error('Failed to record skill usage:', err);
+          });
+        }
       }
     }
 
