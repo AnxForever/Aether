@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { useAppStore } from '../stores/app';
 import { switchModel } from '../api/client';
 import { createLogger } from '../../../src/utils/logger';
@@ -14,64 +15,86 @@ const PROVIDERS = [
   { id: 'deepseek', name: 'DeepSeek', model: 'V3', color: 'bg-provider-deepseek', dot: '#6366f1' },
 ];
 
+interface ProviderButtonProps {
+  id: string;
+  name: string;
+  model: string;
+  dot: string;
+  active: boolean;
+  onSelect: (id: string) => void;
+}
+
+const ProviderButton = memo(
+  function ProviderButton({ id, name, model, dot, active, onSelect }: ProviderButtonProps) {
+    return (
+      <button
+        onClick={() => onSelect(id)}
+        className={`
+          group flex items-center gap-2 px-3 py-1.5 rounded-sm transition-all duration-300
+          ${active
+            ? 'bg-white/[0.04] border border-white/[0.08]'
+            : 'border border-transparent hover:bg-white/[0.02]'
+          }
+        `}
+        aria-label={`切换到 ${name} ${model}`}
+        title={`${name} · ${model}`}
+      >
+        {/* Dot + glow */}
+        <span
+          className="w-[7px] h-[7px] rounded-full transition-shadow duration-300"
+          style={{
+            backgroundColor: dot,
+            boxShadow: active ? `0 0 6px ${dot}80` : 'none',
+            opacity: active ? 1 : 0.4,
+          }}
+        />
+
+        {/* Name */}
+        <span
+          className={`font-display text-[13px] font-medium transition-colors duration-300 ${
+            active ? 'text-ink' : 'text-ink-muted'
+          }`}
+        >
+          {name}
+        </span>
+
+        {/* Model badge */}
+        <span
+          className={`text-[10px] font-ui transition-all duration-300 ${
+            active ? 'text-ink-secondary opacity-100' : 'opacity-0 group-hover:opacity-60 text-ink-muted'
+          }`}
+        >
+          {model}
+        </span>
+      </button>
+    );
+  },
+  (prev, next) => prev.id === next.id && prev.active === next.active,
+);
+
 export default function ProviderBar() {
   const currentModel = useAppStore((s) => s.currentModel);
   const setModel = useAppStore((s) => s.setModel);
 
-  const isActive = (id: string) => currentModel.startsWith(id);
+  const handleSelect = (id: string) => {
+    setModel(id);
+    switchModel(id).catch((err) => { logger.error('切换模型失败:', err); });
+  };
 
   return (
     <div className="w-full border-b border-border-subtle bg-base/80 backdrop-blur-sm">
       <div className="flex items-center px-4 h-12 gap-1">
-        {PROVIDERS.map((p) => {
-          const active = isActive(p.id);
-          return (
-            <button
-              key={p.id}
-              onClick={() => {
-                setModel(p.id);
-                switchModel(p.id).catch((err) => { logger.error('切换模型失败:', err); });
-              }}
-              className={`
-                group flex items-center gap-2 px-3 py-1.5 rounded-sm transition-all duration-300
-                ${active
-                  ? 'bg-white/[0.04] border border-white/[0.08]'
-                  : 'border border-transparent hover:bg-white/[0.02]'
-                }
-              `}
-              aria-label={`切换到 ${p.name} ${p.model}`}
-              title={`${p.name} · ${p.model}`}
-            >
-              {/* Dot + glow */}
-              <span
-                className="w-[7px] h-[7px] rounded-full transition-shadow duration-300"
-                style={{
-                  backgroundColor: p.dot,
-                  boxShadow: active ? `0 0 6px ${p.dot}80` : 'none',
-                  opacity: active ? 1 : 0.4,
-                }}
-              />
-
-              {/* Name */}
-              <span
-                className={`font-display text-[13px] font-medium transition-colors duration-300 ${
-                  active ? 'text-ink' : 'text-ink-muted'
-                }`}
-              >
-                {p.name}
-              </span>
-
-              {/* Model badge */}
-              <span
-                className={`text-[10px] font-ui transition-all duration-300 ${
-                  active ? 'text-ink-secondary opacity-100' : 'opacity-0 group-hover:opacity-60 text-ink-muted'
-                }`}
-              >
-                {p.model}
-              </span>
-            </button>
-          );
-        })}
+        {PROVIDERS.map((p) => (
+          <ProviderButton
+            key={p.id}
+            id={p.id}
+            name={p.name}
+            model={p.model}
+            dot={p.dot}
+            active={currentModel.startsWith(p.id)}
+            onSelect={handleSelect}
+          />
+        ))}
       </div>
     </div>
   );

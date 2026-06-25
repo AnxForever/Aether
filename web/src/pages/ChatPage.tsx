@@ -3,13 +3,19 @@ import { Send, StopCircle, Sparkles, Hash } from 'lucide-react';
 import { streamChat, newSession } from '../api/client';
 import { useAppStore } from '../stores/app';
 import ChatMessage from '../components/ChatMessage';
+import EmptyState from '../components/EmptyState';
 import { createLogger } from '../../../src/utils/logger';
 
 const logger = createLogger('ChatPage');
 
 export default function ChatPage() {
-  const { messages, addMessage, isStreaming, setStreaming, sessionId, setSessionId, currentModel } =
-    useAppStore();
+  const messages = useAppStore((s) => s.messages);
+  const addMessage = useAppStore((s) => s.addMessage);
+  const isStreaming = useAppStore((s) => s.isStreaming);
+  const setStreaming = useAppStore((s) => s.setStreaming);
+  const sessionId = useAppStore((s) => s.sessionId);
+  const setSessionId = useAppStore((s) => s.setSessionId);
+  const currentModel = useAppStore((s) => s.currentModel);
   const [input, setInput] = useState('');
   const [streamingContent, setStreamingContent] = useState('');
   const [transientError, setTransientError] = useState<string | null>(null);
@@ -97,31 +103,15 @@ export default function ChatPage() {
       {/* Messages area */}
       <div className="flex-1 overflow-y-auto px-6 py-4 space-y-5">
         {/* Empty state */}
-        {messages.length === 0 && !streamingContent && (
-          <div className="flex flex-col items-center justify-center h-full text-center">
-            <div className="w-12 h-12 mb-4 rounded-sm bg-accent/10 border border-accent/20 flex items-center justify-center">
-              <Hash size={24} className="text-accent" />
-            </div>
-            <h2 className="font-display text-h1 text-ink mb-1.5">开始对话</h2>
-            <p className="font-body text-caption text-ink-muted max-w-xs leading-relaxed">
-              选择一个 AI 模型，输入消息开始编排。支持 7 个 AI 提供商。
-            </p>
-            <div className="flex gap-1.5 mt-4">
-              {['claude', 'openai', 'gemini', 'glm', 'deepseek'].map((p) => (
-                <span
-                  key={p}
-                  className="w-[5px] h-[5px] rounded-full opacity-40"
-                  style={{
-                    backgroundColor: {
-                      claude: '#f59e0b', openai: '#10b981', gemini: '#4285f4',
-                      glm: '#06b6d4', deepseek: '#6366f1',
-                    }[p],
-                  }}
-                />
-              ))}
-            </div>
+        {messages.length === 0 && !streamingContent ? (
+          <div className="h-full flex items-center justify-center">
+            <EmptyState
+              icon={Hash}
+              title="开始对话"
+              description="选择一个 AI 模型，输入消息开始编排。支持 7 个 AI 提供商。"
+            />
           </div>
-        )}
+        ) : null}
 
         {/* Messages */}
         {messages.map((msg) => (
@@ -129,7 +119,7 @@ export default function ChatPage() {
         ))}
 
         {/* Streaming bubble */}
-        {streamingContent && (
+        {streamingContent ? (
           <div className="animate-slide-up">
             <div className="flex items-center gap-2 mb-1.5">
               <span className="w-[6px] h-[6px] rounded-full bg-accent animate-pulse-glow" />
@@ -145,16 +135,16 @@ export default function ChatPage() {
               </p>
             </div>
           </div>
-        )}
+        ) : null}
 
         <div ref={bottomRef} />
-          {transientError && (
+          {transientError ? (
             <div className="px-4 py-2 text-center">
               <p className="font-body text-caption text-danger bg-danger/5 px-3 py-1.5 rounded-sm border border-danger/15 inline-block">
                 请求失败: {transientError}
               </p>
             </div>
-          )}
+          ) : null}
       </div>
 
       {/* Input bar */}

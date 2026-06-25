@@ -11,7 +11,9 @@ const navItems = [
 ];
 
 export default function Sidebar() {
-  const { logout, clearMessages, toggleSidebar } = useAppStore();
+  const logout = useAppStore((s) => s.logout);
+  const clearMessages = useAppStore((s) => s.clearMessages);
+  const toggleSidebar = useAppStore((s) => s.toggleSidebar);
 
   return (
     <div className="flex flex-col h-full py-3">

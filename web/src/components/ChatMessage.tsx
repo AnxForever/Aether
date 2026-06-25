@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { useAppStore } from '../stores/app';
 
 interface MessageData {
@@ -10,26 +11,27 @@ interface MessageData {
 
 const TIME = new Intl.DateTimeFormat('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
-export default function ChatMessage({ msg }: { msg: MessageData }) {
+function ChatMessage({ msg }: { msg: MessageData }) {
   const currentModel = useAppStore((s) => s.currentModel);
   const isUser = msg.role === 'user';
+  const providerColor = getProviderColor(msg.model || currentModel);
 
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} animate-slide-up`}>
       <div className={`max-w-[72%] min-w-[20%] ${isUser ? 'order-1' : ''}`}>
         {/* Meta bar */}
         <div className={`flex items-center gap-2 mb-1.5 ${isUser ? 'justify-end' : 'justify-start'}`}>
-          {!isUser && (
+          {!isUser ? (
             <>
               <span
                 className="w-[6px] h-[6px] rounded-full"
-                style={{ backgroundColor: getProviderColor(msg.model || currentModel) }}
+                style={{ backgroundColor: providerColor }}
               />
               <span className="font-ui text-[11px] text-ink-muted uppercase tracking-wide">
                 {msg.model || 'AI'}
               </span>
             </>
-          )}
+          ) : null}
           <span className="font-body text-[10px] text-ink-ghost tabular-nums">
             {TIME.format(new Date(msg.timestamp))}
           </span>
@@ -52,6 +54,8 @@ export default function ChatMessage({ msg }: { msg: MessageData }) {
   );
 }
 
+export default memo(ChatMessage, (prev, next) => prev.msg.id === next.msg.id);
+
 const PROVIDER_COLORS: Record<string, string> = {
   claude: '#f59e0b',
   openai: '#10b981',
@@ -64,6 +68,7 @@ const PROVIDER_COLORS: Record<string, string> = {
 
 function getProviderColor(provider: string): string {
   const lower = provider.toLowerCase();
+  if (PROVIDER_COLORS[lower]) return PROVIDER_COLORS[lower];
   for (const prefix of Object.keys(PROVIDER_COLORS)) {
     if (lower.startsWith(prefix)) return PROVIDER_COLORS[prefix];
   }

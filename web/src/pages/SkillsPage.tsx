@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { getSkills, toggleSkill } from '../api/client';
-import { Zap, Search, Loader2, Wrench } from 'lucide-react';
+import { Zap, Search, Wrench } from 'lucide-react';
 import { createLogger } from '../../../src/utils/logger';
+import Skeleton from '../components/Skeleton';
+import EmptyState from '../components/EmptyState';
 
 const logger = createLogger('SkillsPage');
 
@@ -11,6 +14,20 @@ interface Skill {
   version?: string;
   enabled?: boolean;
 }
+
+const containerVariants = {
+  hidden: {},
+  visible: {
+    transition: {
+      staggerChildren: 0.03,
+    },
+  },
+};
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 12 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.2 } },
+};
 
 export default function SkillsPage() {
   const [skills, setSkills] = useState<Skill[]>([]);
@@ -76,8 +93,10 @@ export default function SkillsPage() {
         </div>
 
         {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 size={24} className="animate-spin text-ink-muted" />
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <Skeleton key={i} className="h-20 w-full rounded-md" />
+            ))}
           </div>
         ) : error ? (
           <div className="flex items-center justify-center py-20">
@@ -85,15 +104,23 @@ export default function SkillsPage() {
               {error}
             </p>
           </div>
+        ) : filtered.length === 0 ? (
+          <EmptyState icon={Wrench} title="无匹配技能" description="尝试修改搜索关键词" />
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+          <motion.div
+            className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2"
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+          >
             {filtered.map((skill) => {
               const active = activeIds.includes(skill.id);
               return (
-                <button
+                <motion.button
                   key={skill.id}
+                  variants={cardVariants}
                   onClick={() => handleToggle(skill)}
-                  className={`card text-left hover:border-white/[0.10] transition-all ${
+                  className={`card card-glow text-left ${
                     active ? 'border-accent/30 bg-accent/[0.04]' : ''
                   }`}
                 >
@@ -109,10 +136,10 @@ export default function SkillsPage() {
                   {skill.version && (
                     <p className="font-body text-[10px] text-ink-ghost mt-1">v{skill.version}</p>
                   )}
-                </button>
+                </motion.button>
               );
             })}
-          </div>
+          </motion.div>
         )}
       </div>
     </div>

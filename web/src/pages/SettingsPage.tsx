@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { getModels, switchModel as switchModelApi } from '../api/client';
 import { useAppStore } from '../stores/app';
-import { Settings, Cpu, HardDrive, Check, Loader2 } from 'lucide-react';
+import { Settings, Cpu, HardDrive, Check } from 'lucide-react';
 import { createLogger } from '../../../src/utils/logger';
+import Skeleton from '../components/Skeleton';
 
 const logger = createLogger('SettingsPage');
 
@@ -13,7 +14,8 @@ interface ModelItem {
 }
 
 export default function SettingsPage() {
-  const { currentModel, setModel } = useAppStore();
+  const currentModel = useAppStore((s) => s.currentModel);
+  const setModel = useAppStore((s) => s.setModel);
   const [models, setModels] = useState<ModelItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -56,8 +58,10 @@ export default function SettingsPage() {
           <div className="card p-1.5">
             <div className="space-y-0.5">
               {loading ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 size={18} className="animate-spin text-ink-muted" />
+                <div className="space-y-0.5 p-3">
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <Skeleton key={i} className="h-10 w-full rounded-sm" />
+                  ))}
                 </div>
               ) : error ? (
                 <p className="font-body text-caption text-danger bg-danger/5 px-3 py-4 text-center rounded-sm border border-danger/15">
@@ -81,19 +85,19 @@ export default function SettingsPage() {
                       <p className={`font-body text-mono ${selected ? 'text-accent-light' : 'text-ink'}`}>
                         {m.name || m.id}
                       </p>
-                      {m.provider && (
+                      {m.provider ? (
                         <p className="font-body text-[11px] text-ink-muted mt-0.5">{m.provider}</p>
-                      )}
+                      ) : null}
                     </div>
-                    {selected && <Check size={14} className="text-accent shrink-0" />}
+                    {selected ? <Check size={14} className="text-accent shrink-0" /> : null}
                   </button>
                 );
               })}
-              {models.length === 0 && (
+              {models.length === 0 ? (
                 <p className="font-body text-caption text-ink-muted px-3 py-4 text-center">
                   暂无模型数据
                 </p>
-              )}
+              ) : null}
               </>
               )}
             </div>

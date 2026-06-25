@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { getWorkflows, runWorkflow } from '../api/client';
-import { Workflow, Play, Loader2 } from 'lucide-react';
+import { Workflow, Play } from 'lucide-react';
 import { createLogger } from '../../../src/utils/logger';
+import Skeleton from '../components/Skeleton';
+import EmptyState from '../components/EmptyState';
 
 const logger = createLogger('WorkflowsPage');
 
@@ -57,8 +59,10 @@ export default function WorkflowsPage() {
 
         {/* Loading */}
         {loading ? (
-          <div className="flex items-center justify-center py-24">
-            <Loader2 size={22} className="animate-spin text-ink-muted" />
+          <div className="space-y-2">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Skeleton key={i} className="h-16 w-full rounded-md" />
+            ))}
           </div>
         ) : error ? (
           <div className="flex items-center justify-center py-24">
@@ -68,14 +72,12 @@ export default function WorkflowsPage() {
           </div>
         ) : (
           <div className="space-y-2">
-            {workflows.length === 0 && !loading && (
-              <div className="flex flex-col items-center justify-center py-24 text-center">
-                <p className="font-body text-caption text-ink-muted">暂无工作流</p>
-              </div>
-            )}
+            {workflows.length === 0 && !loading ? (
+              <EmptyState icon={Workflow} title="暂无工作流" description="创建您第一个自动化工作流" />
+            ) : null}
 
             {workflows.map((wf) => (
-              <div key={wf.id} className="card flex items-center justify-between gap-4 animate-fade-in">
+              <div key={wf.id} className="card card-glow flex items-center justify-between gap-4 animate-fade-in">
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="w-9 h-9 rounded-sm bg-accent/8 border border-accent/15 flex items-center justify-center shrink-0">
                     <Workflow size={15} className="text-accent/70" />
@@ -96,7 +98,7 @@ export default function WorkflowsPage() {
                   className="btn btn-primary text-sm shrink-0"
                 >
                   {running === wf.id ? (
-                    <Loader2 size={14} className="animate-spin" />
+                    <span className="w-4 h-4 rounded-full border-2 border-accent/30 border-t-accent animate-spin" />
                   ) : (
                     <Play size={14} />
                   )}
