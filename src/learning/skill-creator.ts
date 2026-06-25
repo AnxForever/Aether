@@ -144,11 +144,11 @@ ${template.tools
 ];
 
 export function initialize(api: any) {
-  console.log('Skill initialized: ${template.name}');
+  logger.info('Skill initialized: ${template.name}');
 }
 
 export function cleanup() {
-  console.log('Skill cleanup: ${template.name}');
+  logger.info('Skill cleanup: ${template.name}');
 }
 `;
   }

@@ -244,6 +244,7 @@ export class CreativeSkill extends BaseSkill {
           Authorization: `Bearer ${apiKey}`,
         },
         body: JSON.stringify({ model, prompt, n: 1, size, response_format: 'url' }),
+        signal: AbortSignal.timeout(60000),
       });
 
       if (!response.ok) {
@@ -260,7 +261,7 @@ export class CreativeSkill extends BaseSkill {
       const result: { url: string; filePath?: string } = { url: imageUrl };
 
       if (outputPath) {
-        const imageResponse = await fetch(imageUrl);
+        const imageResponse = await fetch(imageUrl, { signal: AbortSignal.timeout(60000) });
         const buffer = Buffer.from(await imageResponse.arrayBuffer());
         await writeFile(outputPath, buffer);
         result.filePath = outputPath;
@@ -324,6 +325,7 @@ export class CreativeSkill extends BaseSkill {
           Authorization: `Bearer ${apiKey}`,
         },
         body: formData,
+        signal: AbortSignal.timeout(60000),
       });
 
       if (!response.ok) {
@@ -340,7 +342,7 @@ export class CreativeSkill extends BaseSkill {
       const result: { url: string; filePath?: string } = { url: imageUrl };
 
       if (outputPath) {
-        const imageResponse = await fetch(imageUrl);
+        const imageResponse = await fetch(imageUrl, { signal: AbortSignal.timeout(60000) });
         const buffer = Buffer.from(await imageResponse.arrayBuffer());
         await writeFile(outputPath, buffer);
         result.filePath = outputPath;
@@ -391,6 +393,7 @@ export class CreativeSkill extends BaseSkill {
           Authorization: `Bearer ${apiKey}`,
         },
         body: formData,
+        signal: AbortSignal.timeout(60000),
       });
 
       if (!response.ok) {
@@ -409,7 +412,7 @@ export class CreativeSkill extends BaseSkill {
       if (outputDir) {
         const files: string[] = [];
         for (let i = 0; i < images.length; i++) {
-          const imageResponse = await fetch(images[i].url);
+          const imageResponse = await fetch(images[i].url, { signal: AbortSignal.timeout(60000) });
           const buffer = Buffer.from(await imageResponse.arrayBuffer());
           const filePath = resolve(outputDir, `variation_${i}_${Date.now()}.png`);
           await writeFile(filePath, buffer);
@@ -465,6 +468,7 @@ export class CreativeSkill extends BaseSkill {
           speed,
           response_format: 'mp3',
         }),
+        signal: AbortSignal.timeout(60000),
       });
 
       if (!response.ok) {
@@ -532,6 +536,7 @@ export class CreativeSkill extends BaseSkill {
           Authorization: `Bearer ${apiKey}`,
         },
         body: formData,
+        signal: AbortSignal.timeout(60000),
       });
 
       if (!response.ok) {
@@ -588,6 +593,7 @@ export class CreativeSkill extends BaseSkill {
           Authorization: `Bearer ${apiKey}`,
         },
         body: formData,
+        signal: AbortSignal.timeout(60000),
       });
 
       if (!response.ok) {

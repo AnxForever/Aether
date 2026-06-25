@@ -1,5 +1,8 @@
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('LocaleLoader');
+
 /**
-import { createLogger } from './utils/logger';
  * Locale Loader
  *
  * Handles loading and watching locale files
@@ -49,7 +52,7 @@ export class LocaleLoader {
           const content = await fs.promises.readFile(filePath, 'utf-8');
           this.resources[locale][namespace] = JSON.parse(content);
         } catch (error) {
-          console.warn(`[LocaleLoader] Failed to load ${locale}/${namespace}.json:`, error);
+          logger.warn(`Failed to load ${locale}/${namespace}.json:`, error as Error);
           this.resources[locale][namespace] = {};
         }
       }
@@ -68,7 +71,7 @@ export class LocaleLoader {
       const content = await fs.promises.readFile(filePath, 'utf-8');
       return JSON.parse(content);
     } catch (error) {
-      console.error(`[LocaleLoader] Failed to load ${locale}/${namespace}.json:`, error);
+      logger.error(`Failed to load ${locale}/${namespace}.json:`, error as Error);
       return {};
     }
   }
@@ -94,7 +97,7 @@ export class LocaleLoader {
           localeDir,
           async (err: Error | null, events: watcher.Event[]) => {
             if (err) {
-              console.error(`[LocaleLoader] Watch error for ${locale}:`, err);
+              logger.error(`Watch error for ${locale}:`, err as Error);
               return;
             }
 
@@ -102,7 +105,7 @@ export class LocaleLoader {
               if (event.type === 'update' || event.type === 'create') {
                 const filename = path.basename(event.path, '.json');
                 if (this.config.namespaces.includes(filename as I18nNamespace)) {
-                  console.log(`[LocaleLoader] Detected change: ${locale}/${filename}.json`);
+                  logger.info(`Detected change: ${locale}/${filename}.json`);
 
                   // Reload the changed file
                   const newContent = await this.loadLocaleFile(locale, filename as I18nNamespace);
@@ -125,7 +128,7 @@ export class LocaleLoader {
 
         this.watchers.push(subscription);
       } catch (error) {
-        console.error(`[LocaleLoader] Failed to watch ${localeDir}:`, error);
+        logger.error(`Failed to watch ${localeDir}:`, error as Error);
       }
     }
   }
@@ -138,7 +141,7 @@ export class LocaleLoader {
       try {
         await watcher.unsubscribe();
       } catch (error) {
-        console.error('[LocaleLoader] Failed to unsubscribe watcher:', error);
+        logger.error('Failed to unsubscribe watcher:', error as Error);
       }
     }
     this.watchers = [];

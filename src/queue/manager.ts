@@ -143,7 +143,10 @@ export class WorkQueueManager extends EventEmitter {
     while (true) {
       // Check if we can start more workers
       if (this.runningWorkers.size >= this.maxConcurrent) {
+        // Wait for at least one worker to complete, with a microtask defer
+        // to prevent starvation when all promises have already settled
         await Promise.race(Array.from(this.runningWorkers.values()));
+        await new Promise(resolve => setTimeout(resolve, 0));
         continue;
       }
 

@@ -90,7 +90,7 @@ export class I18nManager extends EventEmitter<I18nEvents> implements I18nManager
       }
 
       this.emit('initialized');
-      console.log(`[I18nManager] Initialized with locale: ${this.currentLocale}`);
+      logger.info(`Initialized with locale: ${this.currentLocale}`);
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
       this.emit('error', err);
@@ -109,9 +109,9 @@ export class I18nManager extends EventEmitter<I18nEvents> implements I18nManager
       i18next.addResourceBundle(locale, namespace, newContent, true, true);
 
       this.emit('resourcesLoaded', locale, namespace);
-      console.log(`[I18nManager] Hot reloaded: ${locale}/${namespace}`);
+      logger.info(`Hot reloaded: ${locale}/${namespace}`);
     } catch (error) {
-      console.error(`[I18nManager] Failed to hot reload ${locale}/${namespace}:`, error);
+      logger.error(`Failed to hot reload ${locale}/${namespace}:`, error as Error);
     }
   }
 
@@ -138,7 +138,7 @@ export class I18nManager extends EventEmitter<I18nEvents> implements I18nManager
       await i18next.changeLanguage(locale);
       this.currentLocale = locale;
       this.emit('languageChanged', locale);
-      console.log(`[I18nManager] Language changed to: ${locale}`);
+      logger.info(`Language changed to: ${locale}`);
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
       this.emit('error', err);

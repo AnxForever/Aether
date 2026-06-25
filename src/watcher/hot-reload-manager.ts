@@ -1,5 +1,8 @@
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('HotReloadManager');
+
 /**
-import { createLogger } from './utils/logger';
  * Hot Reload Manager
  *
  * Manages hot reload functionality for skills, plugins, and configurations.
@@ -71,7 +74,7 @@ export class HotReloadManager extends EventEmitter {
    */
   start(): void {
     if (this.isActive) {
-      console.warn('[HotReloadManager] Already active');
+      logger.warn('Already active');
       return;
     }
 
@@ -189,7 +192,7 @@ export class HotReloadManager extends EventEmitter {
 
     // Prevent concurrent reloads
     if (this.reloadInProgress) {
-      console.warn('[HotReloadManager] Reload already in progress, skipping batch');
+      logger.warn('Reload already in progress, skipping batch');
       return;
     }
 
@@ -206,14 +209,12 @@ export class HotReloadManager extends EventEmitter {
         await this.options.onReload(batch.changes);
       }
 
-      console.log(
-        `[HotReloadManager] Reloaded ${batch.changes.length} file(s):`
-      );
+      logger.info(`Reloaded ${batch.changes.length} file(s):`);
       for (const change of batch.changes) {
-        console.log(`  - ${change.type}: ${change.relativePath}`);
+        logger.info(`  - ${change.type}: ${change.relativePath}`);
       }
     } catch (error) {
-      console.error('[HotReloadManager] Reload failed:', error);
+      logger.error('Reload failed:', error as Error);
       this.emit('error', error);
 
       // Call error handler if provided

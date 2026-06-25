@@ -1,5 +1,8 @@
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('ConnectorRegistry');
+
 /**
-import { createLogger } from './utils/logger';
  * Connector Registry
  *
  * Central registry for all AI provider connectors
@@ -49,7 +52,7 @@ export class ConnectorRegistry {
         const models = await connector.listModels();
         allModels.push(...models);
       } catch (error) {
-        console.error(`Failed to list models for ${provider}:`, error);
+        logger.error(`Failed to list models for ${provider}:`, error as Error);
       }
     }
 

@@ -819,7 +819,12 @@ function setupIPC() {
       const path = join(app.getPath('userData'), key + '.json');
       try {
         await access(path);
-        const data = JSON.parse(await readFile(path, 'utf8'));
+        let data;
+        try {
+          data = JSON.parse(await readFile(path, 'utf8'));
+        } catch {
+          data = null;
+        }
         return createSuccessResponse(request.id, { key, data });
       } catch (error: unknown) {
         if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
@@ -1385,7 +1390,12 @@ function setupIPC() {
       const authPath = join(app.getPath('userData'), 'auth.json');
       try {
         await access(authPath);
-        const data = JSON.parse(await readFile(authPath, 'utf8'));
+        let data;
+        try {
+          data = JSON.parse(await readFile(authPath, 'utf8'));
+        } catch {
+          data = null;
+        }
         return createSuccessResponse(request.id, { auth: data });
       } catch (error: unknown) {
         if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;

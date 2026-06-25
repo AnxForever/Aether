@@ -1,5 +1,8 @@
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('TaskQueue');
+
 /**
-import { createLogger } from './utils/logger';
  * Queue System - Dual queue for primary and background tasks
  *
  * Based on original steeringQueue and followUpQueue
@@ -102,7 +105,7 @@ export class DualQueueSystem {
     try {
       await task.handler();
     } catch (error) {
-      console.error('Task execution failed:', error);
+      logger.error('Task execution failed:', error as Error);
     }
 
     this.isProcessing = false;

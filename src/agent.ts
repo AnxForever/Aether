@@ -1496,7 +1496,7 @@ export class AetherAgent {
       throw new Error('Local server is not configured. Set cli.enabled in config.');
     }
     const actualPort = port || this.config.cli?.port || 3000;
-    if (actualPort !== (this.localServer as any)['config'].port) {
+    if (actualPort !== (this.localServer as any).config?.port) {
       await this.localServer.stop();
       this.localServer = new LocalServer(this, {
         port: actualPort,
@@ -1521,7 +1521,7 @@ export class AetherAgent {
    */
   getLocalServerStatus(): { running: boolean; port?: number } {
     if (!this.localServer) return { running: false };
-    return { running: true, port: (this.localServer as any)['config'].port };
+    return { running: true, port: (this.localServer as any).config?.port };
   }
 
   // ============================================================================

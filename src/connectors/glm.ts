@@ -30,7 +30,8 @@ export class GLMConnector implements Connector {
         messages: req.messages,
         temperature: req.temperature,
         stream: true
-      })
+      }),
+      signal: AbortSignal.timeout(30000),
     });
 
     if (!response.ok || !response.body) {

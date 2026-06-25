@@ -1,17 +1,11 @@
-/**
-import { createLogger } from './utils/logger';
- * File Watcher System
- *
- * Cross-platform file monitoring using @parcel/watcher with hot reload support.
- * Provides event-driven file change detection with automatic error recovery.
- *
- * @module watcher/file-watcher
- */
-
 import { EventEmitter } from 'events';
 import * as parcelWatcher from '@parcel/watcher';
 import { relative, normalize } from 'path';
 import { existsSync, statSync } from 'fs';
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('FileWatcher');
+
 import type {
   FileChangeEvent,
   FileChangeType,
@@ -19,6 +13,15 @@ import type {
   WatcherState,
   IFileWatcher,
 } from '../types/watcher.js';
+
+/**
+ * File Watcher System
+ *
+ * Cross-platform file monitoring using @parcel/watcher with hot reload support.
+ * Provides event-driven file change detection with automatic error recovery.
+ *
+ * @module watcher/file-watcher
+ */
 
 /**
  * Default ignore patterns
@@ -163,7 +166,7 @@ export class FileWatcher extends EventEmitter implements IFileWatcher {
           await subscription.unsubscribe();
           this.subscriptions.delete(path);
         } catch (error) {
-          console.error(`[FileWatcher] Failed to unsubscribe from ${path}:`, error);
+          logger.error(`Failed to unsubscribe from ${path}:`, error as Error);
         }
       }
     );
@@ -180,7 +183,7 @@ export class FileWatcher extends EventEmitter implements IFileWatcher {
     const normalizedPath = normalize(path);
 
     if (this.subscriptions.has(normalizedPath)) {
-      console.warn(`[FileWatcher] Path already watched: ${normalizedPath}`);
+      logger.warn(`Path already watched: ${normalizedPath}`);
       return;
     }
 
@@ -212,7 +215,7 @@ export class FileWatcher extends EventEmitter implements IFileWatcher {
     const subscription = this.subscriptions.get(normalizedPath);
 
     if (!subscription) {
-      console.warn(`[FileWatcher] Path not watched: ${normalizedPath}`);
+      logger.warn(`Path not watched: ${normalizedPath}`);
       return;
     }
 
@@ -228,7 +231,7 @@ export class FileWatcher extends EventEmitter implements IFileWatcher {
 
       this.options.paths = paths.filter((p) => p !== normalizedPath);
     } catch (error) {
-      console.error(`[FileWatcher] Failed to remove path ${normalizedPath}:`, error);
+      logger.error(`Failed to remove path ${normalizedPath}:`, error as Error);
       throw error;
     }
   }
@@ -363,7 +366,7 @@ export class FileWatcher extends EventEmitter implements IFileWatcher {
     watchRoot: string,
     error: Error
   ): Promise<void> {
-    console.error(`[FileWatcher] Error watching ${watchRoot}:`, error);
+    logger.error(`Error watching ${watchRoot}:`, error as Error);
 
     this.emit('error', error);
 
@@ -377,9 +380,7 @@ export class FileWatcher extends EventEmitter implements IFileWatcher {
     const attempts = this.retryAttempts.get(watchRoot) || 0;
 
     if (attempts >= this.options.maxRetries!) {
-      console.error(
-        `[FileWatcher] Max retries (${this.options.maxRetries}) exceeded for ${watchRoot}`
-      );
+      logger.error(`Max retries (${this.options.maxRetries}) exceeded for ${watchRoot}`);
       this._state = 'error';
       return;
     }
@@ -388,8 +389,8 @@ export class FileWatcher extends EventEmitter implements IFileWatcher {
     this.retryAttempts.set(watchRoot, attempts + 1);
 
     // Retry after delay
-    console.log(
-      `[FileWatcher] Retrying ${watchRoot} (attempt ${attempts + 1}/${
+    logger.info(
+      `Retrying ${watchRoot} (attempt ${attempts + 1}/${
         this.options.maxRetries
       })...`
     );
@@ -397,7 +398,7 @@ export class FileWatcher extends EventEmitter implements IFileWatcher {
     setTimeout(() => {
       if (this._state !== 'closed') {
         this.watchPath(watchRoot).catch((err) => {
-          console.error(`[FileWatcher] Retry failed for ${watchRoot}:`, err);
+          logger.error(`Retry failed for ${watchRoot}:`, err as Error);
         });
       }
     }, this.options.retryDelayMs);

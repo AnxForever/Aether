@@ -1,21 +1,15 @@
+import * as fs from 'fs';
+import * as path from 'path';
+import { app } from 'electron';
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('RenderOptimizer');
+
 /**
-import { createLogger } from './utils/logger';
  * Aether Render Optimizer
  *
  * Manages Electron rendering modes with automatic GPU fallback,
  * performance monitoring, and intelligent degradation.
- *
- * Features:
- * - GPU capability detection
- * - Automatic fallback on repeated failures
- * - Performance metrics tracking (FPS, memory)
- * - Multiple rendering modes (gpu/software/hybrid)
- * - Persistent configuration
- */
-
-import * as fs from 'fs';
-import * as path from 'path';
-import { app } from 'electron';
 
 // ============================================================================
 // Type Definitions
@@ -181,7 +175,7 @@ export class RenderOptimizer {
         'utf-8'
       );
     } catch (error) {
-      console.error('[RenderOptimizer] Failed to save config:', error);
+      logger.error('Failed to save config:', error as Error);
     }
   }
 
@@ -399,15 +393,15 @@ export class RenderOptimizer {
     if (mode === 'software') {
       // Disable GPU acceleration completely
       app.disableHardwareAcceleration();
-      console.log('[RenderOptimizer] Hardware acceleration disabled');
+      logger.info('Hardware acceleration disabled');
     } else if (mode === 'hybrid') {
       // Use GPU for some tasks, software for others
       app.commandLine.appendSwitch('disable-gpu-vsync');
       app.commandLine.appendSwitch('disable-gpu-shader-disk-cache');
-      console.log('[RenderOptimizer] Hybrid rendering mode enabled');
+      logger.info('Hybrid rendering mode enabled');
     } else if (mode === 'gpu') {
       // Full GPU acceleration (default, no switches needed)
-      console.log('[RenderOptimizer] Full GPU acceleration enabled');
+      logger.info('Full GPU acceleration enabled');
     }
 
     // Additional performance switches
@@ -430,7 +424,7 @@ export class RenderOptimizer {
 
     this.rendererReadyTimer = setTimeout(() => {
       if (!this.isRendererReady) {
-        console.error('[RenderOptimizer] Renderer did not report ready within timeout');
+        logger.error('Renderer did not report ready within timeout');
         onTimeout();
       }
     }, RENDERER_READY_TIMEOUT_MS);
@@ -495,7 +489,7 @@ export class RenderOptimizer {
       return;
     }
 
-    console.error(`[RenderOptimizer] Renderer failure in GPU mode: ${reason}`);
+    logger.error(`Renderer failure in GPU mode: ${reason}`);
 
     // Record failure
     if (this.config.lastLaunch) {
@@ -509,7 +503,7 @@ export class RenderOptimizer {
    * Request relaunch in software mode
    */
   relaunchInSoftwareMode(reason: string): void {
-    console.log(`[RenderOptimizer] Relaunching in software mode: ${reason}`);
+    logger.info(`Relaunching in software mode: ${reason}`);
 
     // Update config with failure reason
     if (this.config.lastLaunch) {

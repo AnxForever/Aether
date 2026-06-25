@@ -2,6 +2,9 @@ import { IncomingMessage, ServerResponse } from 'http';
 import { EventEmitter } from 'events';
 import * as http from 'http';
 import * as https from 'https';
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('RequestRouter');
 
 /**
  * Upstream Service Configuration
@@ -177,6 +180,13 @@ export class RequestRouter extends EventEmitter {
 
         // Stream response body
         proxyRes.pipe(res);
+        proxyRes.on('error', (err) => {
+          if (!res.headersSent) {
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Proxy response error', message: err.message }));
+          }
+          logger.error('Proxy response error:', err);
+        });
       }
     );
 
@@ -199,6 +209,10 @@ export class RequestRouter extends EventEmitter {
 
     // Forward request body
     req.pipe(proxyReq);
+    req.on('error', (err) => {
+      logger.error('Proxy request error:', err);
+      proxyReq.destroy(err);
+    });
   }
 
   /**
