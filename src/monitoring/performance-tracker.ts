@@ -1,6 +1,8 @@
-/**
 import { createLogger } from '@/utils/logger';
+
 const logger = createLogger('PerformanceTracker');
+
+/**
  * Performance Tracker - Transaction and span tracking with Sentry
  */
 

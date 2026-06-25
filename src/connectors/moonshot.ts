@@ -2,8 +2,11 @@
  * Moonshot Connector - Moonshot AI (Kimi)
  */
 
-import { request } from 'undici';
+import { request as undiciRequest } from 'undici';
 import { Connector, ConnectorConfig, ConnectorRequest, ConnectorResponse, StreamChunk, ModelConfig } from '../types/connector';
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('Connector:Moonshot');
 
 export class MoonshotConnector implements Connector {
   readonly provider = 'moonshot';
@@ -16,83 +19,99 @@ export class MoonshotConnector implements Connector {
     };
   }
 
-  async *streamResponse(req: ConnectorRequest): AsyncIterable<StreamChunk> {
+  async *streamResponse(request: ConnectorRequest): AsyncIterable<StreamChunk> {
     if (!this.config) throw new Error('Connector not initialized');
+    logger.info('Sending request to {provider}', { model: request.model, provider: this.provider });
 
-    const response = await fetch(`${this.config.baseURL}/chat/completions`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${this.config.apiKey}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        model: req.model,
-        messages: req.messages,
-        temperature: req.temperature,
-        stream: true
-      }),
-      signal: AbortSignal.timeout(30000),
-    });
+    try {
+      const response = await fetch(`${this.config.baseURL}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.config.apiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: request.model,
+          messages: request.messages,
+          temperature: request.temperature,
+          stream: true
+        }),
+        signal: AbortSignal.timeout(30000),
+      });
 
-    if (!response.ok || !response.body) {
-      throw new Error(`Moonshot API error: ${response.status}`);
-    }
+      if (!response.ok || !response.body) {
+        throw new Error(`Moonshot API error: ${response.status}`);
+      }
 
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
 
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
 
-      const chunk = decoder.decode(value);
-      const lines = chunk.split('\n').filter(line => line.trim());
+        const chunk = decoder.decode(value);
+        const lines = chunk.split('\n').filter(line => line.trim());
 
-      for (const line of lines) {
-        if (line.startsWith('data: ')) {
-          const data = line.slice(6);
-          if (data === '[DONE]') continue;
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+            if (data === '[DONE]') continue;
 
-          try {
-            const parsed = JSON.parse(data);
-            if (parsed.choices?.[0]?.delta?.content) {
-              yield {
-                type: 'text',
-                content: parsed.choices[0].delta.content
-              };
-            }
-          } catch { /* isAvailable check — expected */ }
+            try {
+              const parsed = JSON.parse(data);
+              if (parsed.choices?.[0]?.delta?.content) {
+                yield {
+                  type: 'text',
+                  content: parsed.choices[0].delta.content
+                };
+              }
+            } catch { /* isAvailable check — expected */ }
+          }
         }
       }
+
+      logger.info('Response received from {provider}', { finishReason: 'streaming', provider: this.provider });
+    } catch (error) {
+      logger.error('API request failed for {provider}', error instanceof Error ? error : new Error(String(error)));
+      throw error;
     }
   }
 
-  async getResponse(req: ConnectorRequest): Promise<ConnectorResponse> {
+  async getResponse(request: ConnectorRequest): Promise<ConnectorResponse> {
     if (!this.config) throw new Error('Connector not initialized');
+    logger.info('Sending request to {provider}', { model: request.model, provider: this.provider });
 
-    const response = await request(`${this.config.baseURL}/chat/completions`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${this.config.apiKey}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        model: req.model,
-        messages: req.messages,
-        temperature: req.temperature
-      })
-    });
+    try {
+      const response = await undiciRequest(`${this.config.baseURL}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.config.apiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: request.model,
+          messages: request.messages,
+          temperature: request.temperature
+        })
+      });
 
-    const data = await response.body.json() as any;
+      const data = await response.body.json() as any;
 
-    return {
-      content: data.choices[0].message.content,
-      finishReason: 'stop',
-      usage: {
-        inputTokens: data.usage?.prompt_tokens || 0,
-        outputTokens: data.usage?.completion_tokens || 0
-      }
-    };
+      logger.info('Response received from {provider}', { finishReason: 'stop', provider: this.provider });
+
+      return {
+        content: data.choices[0].message.content,
+        finishReason: 'stop',
+        usage: {
+          inputTokens: data.usage?.prompt_tokens || 0,
+          outputTokens: data.usage?.completion_tokens || 0
+        }
+      };
+    } catch (error) {
+      logger.error('API request failed for {provider}', error instanceof Error ? error : new Error(String(error)));
+      throw error;
+    }
   }
 
   async listModels(): Promise<ModelConfig[]> {

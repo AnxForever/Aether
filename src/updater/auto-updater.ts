@@ -1,13 +1,3 @@
-/**
-import { createLogger } from './utils/logger';
- * Auto Updater
- *
- * Handles application updates using electron-updater.
- * Supports automatic updates, manual checks, and rollback.
- *
- * @module updater/auto-updater
- */
-
 import { EventEmitter } from 'events';
 import { app } from 'electron';
 import { autoUpdater as electronUpdater } from 'electron-updater';

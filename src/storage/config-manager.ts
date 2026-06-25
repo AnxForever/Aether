@@ -13,6 +13,9 @@
 import { createCipheriv, createDecipheriv, scryptSync, randomBytes } from 'crypto';
 import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { AuthConfig, AgentSettings, AIProvider } from '../types';
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('ConfigManager');
 
 const ENCRYPTION_ALGORITHM = 'aes-256-gcm';
 const SCRYPT_N = 16384;
@@ -91,6 +94,7 @@ export class ConfigManager {
 
   loadAuthConfig(filePath: string): AuthConfig {
     if (!existsSync(filePath)) {
+      logger.debug('Auth config loaded');
       return {
         apiKeys: {} as Record<AIProvider, string>,
         tokens: {},
@@ -99,6 +103,7 @@ export class ConfigManager {
 
     const encryptedContent = readFileSync(filePath, 'utf8');
     const decrypted = this.decrypt(encryptedContent);
+    logger.debug('Auth config loaded');
     return JSON.parse(decrypted) as AuthConfig;
   }
 
@@ -106,12 +111,14 @@ export class ConfigManager {
     const plaintext = JSON.stringify(config, null, 2);
     const encrypted = this.encrypt(plaintext);
     writeFileSync(filePath, encrypted, 'utf8');
+    logger.debug('Auth config saved');
   }
 
   setApiKey(filePath: string, provider: AIProvider, apiKey: string): void {
     const config = this.loadAuthConfig(filePath);
     config.apiKeys[provider] = apiKey;
     this.saveAuthConfig(filePath, config);
+    logger.info('API key updated for provider: {provider}', { provider });
   }
 
   getApiKey(filePath: string, provider: AIProvider): string | undefined {
@@ -123,6 +130,7 @@ export class ConfigManager {
     const config = this.loadAuthConfig(filePath);
     delete config.apiKeys[provider];
     this.saveAuthConfig(filePath, config);
+    logger.info('API key removed for provider: {provider}', { provider });
   }
 
   setToken(filePath: string, key: string, token: string): void {

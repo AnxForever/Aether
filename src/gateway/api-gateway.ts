@@ -10,6 +10,9 @@ import {
   RequestRouter,
   RequestRouterConfig,
 } from './request-router';
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('APIGateway');
 
 /**
  * API Gateway Configuration
@@ -171,6 +174,7 @@ export class APIGateway extends EventEmitter {
 
     this.stats.totalRequests++;
     this.emit('request:received', method, path);
+    logger.info('{method} {url}', { method, url: path });
 
     // SECURITY: Set request timeout to prevent slow attacks
     req.setTimeout(this.config.requestTimeout, () => {
@@ -237,6 +241,7 @@ export class APIGateway extends EventEmitter {
       this.emitRequestCompleted(res.statusCode, startTime);
     } catch (error) {
       this.stats.failedRequests++;
+      logger.error('Request failed: {method} {url}', error instanceof Error ? error : new Error(String(error)), { method, url: path });
       this.handleError(res, error);
       this.emitRequestCompleted(res.statusCode, startTime);
     }
@@ -323,25 +328,25 @@ export class APIGateway extends EventEmitter {
   private setupEventListeners(): void {
     // Auth middleware events
     this.authMiddleware.on('auth:success', (userId, path) => {
-      // Optional: Add detailed logging
+      logger.debug('Auth success: {userId} accessing {path}', { userId, path });
     });
 
     this.authMiddleware.on('auth:failure', (reason, path) => {
-      // Optional: Add detailed logging
+      logger.debug('Auth failure: {reason} for {path}', { reason, path });
     });
 
     // Rate limiter events
     this.rateLimiter.on('limit:exceeded', (identifier) => {
-      // Optional: Add detailed logging
+      logger.debug('Rate limit exceeded for {identifier}', { identifier });
     });
 
     // Router events
     this.router.on('route:not_found', (path) => {
-      // Optional: Add detailed logging
+      logger.debug('Route not found: {path}', { path });
     });
 
     this.router.on('proxy:error', (service, error) => {
-      // Optional: Add detailed logging
+      logger.error('Proxy error for service {service}: {error}', undefined, { service, error });
     });
   }
 
@@ -363,6 +368,8 @@ export class APIGateway extends EventEmitter {
    */
   private handleError(res: ServerResponse, error: unknown): void {
     const message = error instanceof Error ? error.message : 'Unknown error';
+
+    logger.error('Error response sent: {status}', undefined, { status: 500, message });
 
     if (!res.headersSent) {
       res.writeHead(500, { 'Content-Type': 'application/json' });

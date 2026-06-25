@@ -8,7 +8,7 @@ import { chromium, firefox, webkit, type Browser, type Page, type BrowserContext
 import { createLogger } from '../utils/logger';
 import { EventEmitter } from 'events';
 
-const logger = createLogger('PlaywrightBrowser');
+const logger = createLogger('Browser:Playwright');
 
 /**
  * 浏览器类型

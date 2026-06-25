@@ -6,7 +6,7 @@ import { BrowserWindow, WebContentsView, session } from 'electron';
 import { createLogger } from '../utils/logger';
 import { EventEmitter } from 'events';
 
-const logger = createLogger('Browser');
+const logger = createLogger('Browser:Sandboxed');
 
 /**
  * Browser tab

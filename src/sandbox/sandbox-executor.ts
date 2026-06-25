@@ -1,10 +1,10 @@
 /**
  * Sandbox Executor - Cross-platform process isolation
  *
- * 提供跨平台的进程沙箱执行环境：
- * - Windows: Job Object 隔离
- * - Linux: cgroup + namespace 隔离
- * - macOS: 基础进程限制
+ * Provides cross-platform process sandbox execution:
+ * - Windows: Job Object isolation
+ * - Linux: cgroup + namespace isolation
+ * - macOS: Basic process limits
  */
 
 import { spawn, type ChildProcess } from 'child_process';
@@ -15,47 +15,47 @@ import { platform } from 'os';
 const logger = createLogger('SandboxExecutor');
 
 /**
- * 沙箱配置
+ * Sandbox configuration
  */
 export interface SandboxConfig {
-  /** 最大执行时间（毫秒） */
+  /** Maximum execution time (ms) */
   timeout?: number;
-  /** 最大内存限制（MB） */
+  /** Maximum memory limit (MB) */
   maxMemoryMB?: number;
-  /** 最大 CPU 使用率（%） */
+  /** Maximum CPU usage (%) */
   maxCpuPercent?: number;
-  /** 允许的网络访问 */
+  /** Allowed network access */
   allowNetwork?: boolean;
-  /** 工作目录 */
+  /** Working directory */
   workingDirectory?: string;
-  /** 环境变量 */
+  /** Environment variables */
   env?: Record<string, string>;
-  /** 允许的文件路径（白名单） */
+  /** Allowed file paths (whitelist) */
   allowedPaths?: string[];
 }
 
 /**
- * 执行结果
+ * Execution result
  */
 export interface SandboxResult {
-  /** 退出码 */
+  /** Exit code */
   exitCode: number | null;
-  /** 标准输出 */
+  /** Standard output */
   stdout: string;
-  /** 标准错误 */
+  /** Standard error */
   stderr: string;
-  /** 执行时长（毫秒） */
+  /** Execution duration (ms) */
   duration: number;
-  /** 是否超时 */
+  /** Whether timed out */
   timedOut: boolean;
-  /** 是否被终止 */
+  /** Whether killed */
   killed: boolean;
-  /** 错误信息 */
+  /** Error message */
   error?: string;
 }
 
 /**
- * 沙箱执行器
+ * Sandbox executor
  */
 export class SandboxExecutor extends EventEmitter {
   private platform: string;
@@ -67,7 +67,7 @@ export class SandboxExecutor extends EventEmitter {
   }
 
   /**
-   * 在沙箱中执行命令
+   * Execute command in sandbox
    */
   async execute(
     command: string,
@@ -79,7 +79,7 @@ export class SandboxExecutor extends EventEmitter {
     logger.info(`Executing in sandbox: ${command} ${args.join(' ')}`);
 
     try {
-      // 根据平台选择实现
+      // Choose implementation based on platform
       switch (this.platform) {
         case 'win32':
           return await this.executeWindows(command, args, config, startTime);
@@ -106,7 +106,7 @@ export class SandboxExecutor extends EventEmitter {
   }
 
   /**
-   * Windows 实现 - Job Object 隔离
+   * Windows implementation - Job Object isolation
    */
   private async executeWindows(
     command: string,
@@ -114,15 +114,15 @@ export class SandboxExecutor extends EventEmitter {
     config: SandboxConfig,
     startTime: number
   ): Promise<SandboxResult> {
-    // TODO: 使用 koffi FFI 调用 Windows Job Object API
-    // 当前使用基础实现
+    // TODO: use koffi FFI to call Windows Job Object API
+    // Currently using basic implementation
     logger.warn('Windows Job Object isolation not yet implemented, using basic execution');
 
     return this.executeBasic(command, args, config, startTime);
   }
 
   /**
-   * Linux 实现 - cgroup + namespace 隔离
+   * Linux implementation - cgroup + namespace isolation
    */
   private async executeLinux(
     command: string,
@@ -130,16 +130,16 @@ export class SandboxExecutor extends EventEmitter {
     config: SandboxConfig,
     startTime: number
   ): Promise<SandboxResult> {
-    // Linux: 使用 systemd-run 创建临时 cgroup
+    // Linux: use systemd-run to create a temporary cgroup
     if (config.maxMemoryMB || config.maxCpuPercent) {
       const systemdArgs = ['systemd-run', '--user', '--scope', '--quiet'];
 
-      // 内存限制
+      // Memory limit
       if (config.maxMemoryMB) {
         systemdArgs.push(`-p`, `MemoryMax=${config.maxMemoryMB}M`);
       }
 
-      // CPU 限制
+      // CPU limit
       if (config.maxCpuPercent) {
         const cpuQuota = Math.floor(config.maxCpuPercent * 1000);
         systemdArgs.push(`-p`, `CPUQuota=${cpuQuota}%`);
@@ -159,7 +159,7 @@ export class SandboxExecutor extends EventEmitter {
   }
 
   /**
-   * macOS 实现 - 基础进程限制
+   * macOS implementation - basic process limits
    */
   private async executeMacOS(
     command: string,
@@ -167,12 +167,12 @@ export class SandboxExecutor extends EventEmitter {
     config: SandboxConfig,
     startTime: number
   ): Promise<SandboxResult> {
-    // macOS: 使用 ulimit 或 launchctl
+    // macOS: use ulimit or launchctl
     return this.executeBasic(command, args, config, startTime);
   }
 
   /**
-   * 基础实现 - 跨平台兼容
+   * Basic implementation - cross-platform compatible
    */
   private async executeBasic(
     command: string,
@@ -185,7 +185,7 @@ export class SandboxExecutor extends EventEmitter {
       let timedOut = false;
       let killed = false;
 
-      // Spawn 进程
+      // Spawn process
       const child: ChildProcess = spawn(command, args, {
         cwd: config.workingDirectory,
         env: {
@@ -195,7 +195,7 @@ export class SandboxExecutor extends EventEmitter {
         shell: false,
       });
 
-      // 收集输出
+      // Collect output
       let stdout = '';
       let stderr = '';
 
@@ -215,13 +215,13 @@ export class SandboxExecutor extends EventEmitter {
         });
       }
 
-      // 超时处理
+      // Timeout handling
       const timer = setTimeout(() => {
         timedOut = true;
         killed = true;
         child.kill('SIGTERM');
 
-        // 强制终止
+        // Force kill
         setTimeout(() => {
           if (!child.killed) {
             child.kill('SIGKILL');
@@ -229,7 +229,7 @@ export class SandboxExecutor extends EventEmitter {
         }, 5000);
       }, timeout);
 
-      // 进程退出
+      // Process exit
       child.on('exit', (code, signal) => {
         clearTimeout(timer);
 
@@ -249,7 +249,7 @@ export class SandboxExecutor extends EventEmitter {
         });
       });
 
-      // 错误处理
+      // Error handling
       child.on('error', (error) => {
         clearTimeout(timer);
 
@@ -269,10 +269,10 @@ export class SandboxExecutor extends EventEmitter {
   }
 
   /**
-   * 检查命令是否被允许
+   * Check if command is allowed
    */
   isCommandAllowed(command: string, config: SandboxConfig): boolean {
-    // 危险命令黑名单
+    // Dangerous command blacklist
     const blacklist = [
       'rm',
       'del',
@@ -297,14 +297,14 @@ export class SandboxExecutor extends EventEmitter {
   }
 
   /**
-   * 检查路径是否被允许
+   * Check if path is allowed
    */
   isPathAllowed(path: string, config: SandboxConfig): boolean {
     if (!config.allowedPaths || config.allowedPaths.length === 0) {
       return true;
     }
 
-    // 检查路径是否在白名单内
+    // Check if path is in the whitelist
     for (const allowedPath of config.allowedPaths) {
       if (path.startsWith(allowedPath)) {
         return true;
@@ -317,7 +317,7 @@ export class SandboxExecutor extends EventEmitter {
 }
 
 /**
- * 工具沙箱 - 用于工具调用的高层封装
+ * Tool sandbox - high-level wrapper for tool invocation
  */
 export class ToolSandbox {
   private executor: SandboxExecutor;
@@ -335,7 +335,7 @@ export class ToolSandbox {
   }
 
   /**
-   * 执行工具命令
+   * Execute tool command
    */
   async executeToolCommand(
     command: string,
@@ -347,15 +347,15 @@ export class ToolSandbox {
       ...config,
     };
 
-    // 安全检查
+    // Security check
     if (!this.executor.isCommandAllowed(command, mergedConfig)) {
       throw new Error(`Command not allowed: ${command}`);
     }
 
-    // 执行
+    // Execute
     const result = await this.executor.execute(command, args, mergedConfig);
 
-    // 日志
+    // Logging
     logger.info(`Tool command executed: ${command}`, {
       exitCode: result.exitCode,
       duration: result.duration,
@@ -366,7 +366,7 @@ export class ToolSandbox {
   }
 
   /**
-   * 为事件监听器
+   * Attach event listener
    */
   on(
     event: 'stdout' | 'stderr',
@@ -377,7 +377,7 @@ export class ToolSandbox {
   }
 
   /**
-   * 移除事件监听器
+   * Remove event listener
    */
   off(
     event: 'stdout' | 'stderr',

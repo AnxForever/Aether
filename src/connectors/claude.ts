@@ -4,6 +4,9 @@
 
 import Anthropic from '@anthropic-ai/sdk';
 import { Connector, ConnectorConfig, ConnectorRequest, ConnectorResponse, StreamChunk, ModelConfig } from '../types/connector';
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('Connector:Claude');
 
 export class ClaudeConnector implements Connector {
   readonly provider = 'claude';
@@ -20,51 +23,68 @@ export class ClaudeConnector implements Connector {
 
   async *streamResponse(request: ConnectorRequest): AsyncIterable<StreamChunk> {
     if (!this.client) throw new Error('Connector not initialized');
+    logger.info('Sending request to {provider}', { model: request.model, provider: this.provider });
 
-    const stream = await this.client.messages.stream({
-      model: request.model,
-      messages: request.messages.map(m => ({
-        role: m.role === 'user' ? 'user' : 'assistant',
-        content: m.content
-      })),
-      temperature: request.temperature,
-      max_tokens: request.maxTokens || 4096,
-      stream: true
-    });
+    try {
+      const stream = await this.client.messages.stream({
+        model: request.model,
+        messages: request.messages.map(m => ({
+          role: m.role === 'user' ? 'user' : 'assistant',
+          content: m.content
+        })),
+        temperature: request.temperature,
+        max_tokens: request.maxTokens || 4096,
+        stream: true
+      });
 
-    for await (const chunk of stream) {
-      if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
-        yield {
-          type: 'text',
-          content: chunk.delta.text
-        };
+      for await (const chunk of stream) {
+        if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
+          yield {
+            type: 'text',
+            content: chunk.delta.text
+          };
+        }
       }
+
+      logger.info('Response received from {provider}', { finishReason: 'streaming', provider: this.provider });
+    } catch (error) {
+      logger.error('API request failed for {provider}', error instanceof Error ? error : new Error(String(error)));
+      throw error;
     }
   }
 
   async getResponse(request: ConnectorRequest): Promise<ConnectorResponse> {
     if (!this.client) throw new Error('Connector not initialized');
+    logger.info('Sending request to {provider}', { model: request.model, provider: this.provider });
 
-    const response = await this.client.messages.create({
-      model: request.model,
-      messages: request.messages.map(m => ({
-        role: m.role === 'user' ? 'user' : 'assistant',
-        content: m.content
-      })),
-      temperature: request.temperature,
-      max_tokens: request.maxTokens || 4096
-    });
+    try {
+      const response = await this.client.messages.create({
+        model: request.model,
+        messages: request.messages.map(m => ({
+          role: m.role === 'user' ? 'user' : 'assistant',
+          content: m.content
+        })),
+        temperature: request.temperature,
+        max_tokens: request.maxTokens || 4096
+      });
 
-    const content = response.content[0];
+      const content = response.content[0];
+      const finishReason = response.stop_reason === 'end_turn' ? 'stop' : 'length';
 
-    return {
-      content: content.type === 'text' ? content.text : '',
-      finishReason: response.stop_reason === 'end_turn' ? 'stop' : 'length',
-      usage: {
-        inputTokens: response.usage.input_tokens,
-        outputTokens: response.usage.output_tokens
-      }
-    };
+      logger.info('Response received from {provider}', { finishReason, provider: this.provider });
+
+      return {
+        content: content.type === 'text' ? content.text : '',
+        finishReason,
+        usage: {
+          inputTokens: response.usage.input_tokens,
+          outputTokens: response.usage.output_tokens
+        }
+      };
+    } catch (error) {
+      logger.error('API request failed for {provider}', error instanceof Error ? error : new Error(String(error)));
+      throw error;
+    }
   }
 
   async listModels(): Promise<ModelConfig[]> {

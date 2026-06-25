@@ -1,8 +1,8 @@
 /**
  * Sherpa-ONNX ASR - Multi-language Speech Recognition
  *
- * 使用 sherpa-onnx 的 SenseVoice 模型进行多语言语音识别
- * 支持：中文、英文、日文、韩文等多种语言
+ * Uses sherpa-onnx's SenseVoice model for multi-language speech recognition
+ * Supports: Chinese, English, Japanese, Korean and more
  */
 
 import { createLogger } from '../utils/logger';
@@ -13,35 +13,35 @@ import { join } from 'path';
 const logger = createLogger('SherpaASR');
 
 /**
- * ASR 配置
+ * ASR configuration
  */
 export interface SherpaASRConfig {
-  /** 模型路径 */
+  /** Model path */
   modelPath: string;
-  /** 采样率 */
+  /** Sample rate */
   sampleRate?: number;
-  /** 语言（auto, zh, en, ja, ko, etc.） */
+  /** Language (auto, zh, en, ja, ko, etc.) */
   language?: string;
-  /** 是否启用 VAD */
+  /** Whether to enable VAD */
   enableVAD?: boolean;
 }
 
 /**
- * 识别结果
+ * Recognition result
  */
 export interface ASRResult {
-  /** 识别文本 */
+  /** Recognized text */
   text: string;
-  /** 语言 */
+  /** Language */
   language: string;
-  /** 置信度 */
+  /** Confidence */
   confidence: number;
-  /** 时间戳（毫秒） */
+  /** Timestamp (milliseconds) */
   timestamp: number;
 }
 
 /**
- * Sherpa-ONNX ASR 引擎
+ * Sherpa-ONNX ASR engine
  */
 export class SherpaASR extends EventEmitter {
   private config: Required<SherpaASRConfig>;
@@ -59,7 +59,7 @@ export class SherpaASR extends EventEmitter {
   }
 
   /**
-   * 初始化 ASR 引擎
+   * Initialize ASR engine
    */
   async initialize(): Promise<void> {
     if (this.initialized) {
@@ -70,18 +70,18 @@ export class SherpaASR extends EventEmitter {
     try {
       logger.info('Initializing Sherpa-ONNX ASR');
 
-      // 动态加载 sherpa-onnx-node
-      // Note: sherpa-onnx-node 需要通过 npm 安装
+      // Dynamically load sherpa-onnx-node
+      // Note: sherpa-onnx-node needs to be installed via npm
       // const sherpa = require('sherpa-onnx-node');
 
-      // 创建识别器配置
+      // Create recognizer config
       const recognizerConfig = {
         modelPath: this.config.modelPath,
         sampleRate: this.config.sampleRate,
         enableVAD: this.config.enableVAD,
       };
 
-      // TODO: 实际初始化
+      // TODO: actual initialization
       // this.recognizer = sherpa.createRecognizer(recognizerConfig);
 
       this.initialized = true;
@@ -95,7 +95,7 @@ export class SherpaASR extends EventEmitter {
   }
 
   /**
-   * 识别音频文件
+   * Recognize audio file
    */
   async recognizeFile(audioPath: string): Promise<ASRResult> {
     if (!this.initialized) {
@@ -105,10 +105,10 @@ export class SherpaASR extends EventEmitter {
     try {
       logger.info(`Recognizing audio file: ${audioPath}`);
 
-      // 读取音频文件
+      // Read audio file
       const audioBuffer = readFileSync(audioPath);
 
-      // TODO: 实际识别
+      // TODO: actual recognition
       // const result = this.recognizer.recognize(audioBuffer);
 
       const result: ASRResult = {
@@ -129,7 +129,7 @@ export class SherpaASR extends EventEmitter {
   }
 
   /**
-   * 识别音频流
+   * Recognize audio stream
    */
   async recognizeStream(audioStream: Buffer): Promise<ASRResult> {
     if (!this.initialized) {
@@ -137,7 +137,7 @@ export class SherpaASR extends EventEmitter {
     }
 
     try {
-      // TODO: 实际流式识别
+      // TODO: actual stream recognition
       // const result = this.recognizer.recognizeStream(audioStream);
 
       const result: ASRResult = {
@@ -157,7 +157,7 @@ export class SherpaASR extends EventEmitter {
   }
 
   /**
-   * 设置语言
+   * Set language
    */
   setLanguage(language: string): void {
     this.config.language = language;
@@ -165,7 +165,7 @@ export class SherpaASR extends EventEmitter {
   }
 
   /**
-   * 关闭 ASR 引擎
+   * Close ASR engine
    */
   async close(): Promise<void> {
     if (!this.initialized) {
@@ -174,7 +174,7 @@ export class SherpaASR extends EventEmitter {
 
     logger.info('Closing Sherpa-ONNX ASR');
 
-    // TODO: 实际清理
+    // TODO: actual cleanup
     // if (this.recognizer) {
     //   this.recognizer.close();
     //   this.recognizer = undefined;

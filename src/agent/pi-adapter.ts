@@ -1,7 +1,7 @@
 /**
  * Pi-Agent-Core Adapter
  *
- * 将 Aether-Agent 的现有 Orchestrator 适配到 pi-agent-core 框架
+ * Adapts the existing Aether-Agent Orchestrator to the pi-agent-core framework
  */
 
 import {
@@ -24,7 +24,7 @@ import { EventEmitter } from 'events';
 const logger = createLogger('PiAdapter');
 
 /**
- * Pi-Agent 适配器配置
+ * Pi-Agent adapter configuration
  */
 export interface PiAdapterConfig {
   systemPrompt: string;
@@ -36,9 +36,9 @@ export interface PiAdapterConfig {
 }
 
 /**
- * Pi-Agent 适配器
+ * Pi-Agent adapter
  *
- * 提供与现有 Aether Orchestrator 兼容的接口
+ * Provides an interface compatible with the existing Aether Orchestrator
  */
 export class PiAgentAdapter extends EventEmitter {
   private context: AgentContext;
@@ -48,35 +48,35 @@ export class PiAgentAdapter extends EventEmitter {
   constructor(config: PiAdapterConfig) {
     super();
 
-    // 初始化 context
+    // Initialize context
     this.context = {
       systemPrompt: config.systemPrompt,
       messages: [],
       tools: config.tools,
     };
 
-    // 初始化 agent loop config
+    // Initialize agent loop config
     this.config = {
       model: config.model,
       maxTokens: config.maxTokens,
       temperature: config.temperature,
 
-      // 消息转换：AgentMessage[] -> Message[]
+      // Message conversion: AgentMessage[] -> Message[]
       convertToLlm: async (messages: AgentMessage[]): Promise<Message[]> => {
         return messages.filter(this.isLlmMessage) as Message[];
       },
 
-      // API key 解析
+      // API key resolution
       getApiKey: config.getApiKey,
 
-      // 工具执行模式：并行
+      // Tool execution mode: parallel
       toolExecution: 'parallel',
 
-      // 工具调用前钩子：权限检查
+      // Pre-tool-call hook: permission check
       beforeToolCall: async (context: BeforeToolCallContext) => {
         logger.debug(`Tool call before: ${context.toolCall.name}`, context.toolCall.arguments);
 
-        // 触发权限检查事件
+        // Trigger permission check event
         const allowed = await this.checkToolPermission(
           context.toolCall.name,
           context.toolCall.arguments as Record<string, any> | undefined
@@ -92,19 +92,19 @@ export class PiAgentAdapter extends EventEmitter {
         return undefined;
       },
 
-      // 工具调用后钩子：结果处理
+      // Post-tool-call hook: result handling
       afterToolCall: async (context: AfterToolCallContext) => {
         logger.debug(`Tool call after: ${context.toolCall.name}`, {
           isError: context.isError,
         });
 
-        // 可以在这里修改工具结果
+        // Tool results can be modified here
         return undefined;
       },
 
-      // 每轮结束后检查是否应该停止
+      // Check whether to stop after each turn
       shouldStopAfterTurn: async (context: ShouldStopAfterTurnContext) => {
-        // 检查 token 限制
+        // Check token limit
         if (this.context.messages.length > 100) {
           logger.warn('Message limit reached, stopping agent');
           return true;
@@ -113,14 +113,14 @@ export class PiAgentAdapter extends EventEmitter {
         return false;
       },
 
-      // 转向消息（用户中断）
+      // Steering messages (user interruption)
       getSteeringMessages: async () => {
-        // 检查是否有待处理的用户消息
+        // Check for pending user messages
         const pending = await this.getPendingUserMessages();
         return pending;
       },
 
-      // 后续消息（agent 完成后继续）
+      // Follow-up messages (continue after agent completion)
       getFollowUpMessages: async () => {
         return [];
       },
@@ -130,23 +130,23 @@ export class PiAgentAdapter extends EventEmitter {
   }
 
   /**
-   * 执行 agent prompt
+   * Execute agent prompt
    */
   async execute(prompt: string): Promise<AgentMessage[]> {
     logger.info('Starting agent execution');
 
-    // 创建用户消息
+    // Create user message
     const userMessage: AgentMessage = {
       role: 'user',
       content: [{ type: 'text', text: prompt }],
       timestamp: Date.now(),
     };
 
-    // 创建 abort controller
+    // Create abort controller
     this.abortController = new AbortController();
 
     try {
-      // 启动 agent loop
+      // Start agent loop
       const stream = agentLoop(
         [userMessage],
         this.context,
@@ -154,15 +154,15 @@ export class PiAgentAdapter extends EventEmitter {
         this.abortController.signal
       );
 
-      // 处理事件流
+      // Process event stream
       for await (const event of stream) {
         this.handleAgentEvent(event);
       }
 
-      // 获取结果
+      // Get result
       const result = await stream.result();
 
-      // 更新 context
+      // Update context
       this.context.messages.push(...result);
 
       logger.info(`Agent execution completed, ${result.length} messages`);
@@ -177,7 +177,7 @@ export class PiAgentAdapter extends EventEmitter {
   }
 
   /**
-   * 继续执行（从上次中断处）
+   * Continue execution (from last interruption)
    */
   async continue(): Promise<AgentMessage[]> {
     logger.info('Continuing agent execution');
@@ -220,7 +220,7 @@ export class PiAgentAdapter extends EventEmitter {
   }
 
   /**
-   * 中止当前执行
+   * Abort current execution
    */
   abort(): void {
     if (this.abortController) {
@@ -230,7 +230,7 @@ export class PiAgentAdapter extends EventEmitter {
   }
 
   /**
-   * 添加工具
+   * Add tool
    */
   addTool(tool: AgentTool<any>): void {
     if (!this.context.tools) {
@@ -241,7 +241,7 @@ export class PiAgentAdapter extends EventEmitter {
   }
 
   /**
-   * 移除工具
+   * Remove tool
    */
   removeTool(toolName: string): void {
     if (this.context.tools) {
@@ -251,14 +251,14 @@ export class PiAgentAdapter extends EventEmitter {
   }
 
   /**
-   * 获取消息历史
+   * Get message history
    */
   getMessages(): AgentMessage[] {
     return [...this.context.messages];
   }
 
   /**
-   * 清空消息历史
+   * Clear message history
    */
   clearMessages(): void {
     this.context.messages = [];
@@ -266,7 +266,7 @@ export class PiAgentAdapter extends EventEmitter {
   }
 
   /**
-   * 更新系统提示词
+   * Update system prompt
    */
   updateSystemPrompt(prompt: string): void {
     this.context.systemPrompt = prompt;
@@ -274,7 +274,7 @@ export class PiAgentAdapter extends EventEmitter {
   }
 
   /**
-   * 处理 agent 事件
+   * Handle agent event
    */
   private handleAgentEvent(event: AgentEvent): void {
     switch (event.type) {
@@ -340,40 +340,40 @@ export class PiAgentAdapter extends EventEmitter {
   }
 
   /**
-   * 检查工具权限
+   * Check tool permission
    */
   private async checkToolPermission(
     toolName: string,
     args: any
   ): Promise<boolean> {
-    // 触发权限检查事件，等待外部处理
+    // Trigger permission check event, wait for external handling
     return new Promise(resolve => {
       this.emit('permission-check', { toolName, args }, (allowed: boolean) => {
         resolve(allowed);
       });
 
-      // 默认超时 30 秒后允许
+      // Default: allow after 30 second timeout
       setTimeout(() => resolve(true), 30000);
     });
   }
 
   /**
-   * 获取待处理的用户消息
+   * Get pending user messages
    */
   private async getPendingUserMessages(): Promise<AgentMessage[]> {
-    // 触发事件获取待处理消息
+    // Trigger event to get pending messages
     return new Promise(resolve => {
       this.emit('get-pending-messages', (messages: AgentMessage[]) => {
         resolve(messages);
       });
 
-      // 默认返回空数组
+      // Default: return empty array
       setTimeout(() => resolve([]), 100);
     });
   }
 
   /**
-   * 判断是否是 LLM 消息
+   * Check if message is an LLM message
    */
   private isLlmMessage(message: AgentMessage): message is Message {
     return (
@@ -385,7 +385,7 @@ export class PiAgentAdapter extends EventEmitter {
 }
 
 /**
- * 将 Aether 工具转换为 pi-agent-core 工具
+ * Convert Aether tool to pi-agent-core tool
  */
 export function convertAetherToolToPiTool(
   aetherTool: any

@@ -1,8 +1,8 @@
 /**
  * Silero VAD - Voice Activity Detection
  *
- * 使用 Silero VAD 模型检测语音活动
- * 用于过滤静音片段，提升 ASR 效率
+ * Uses Silero VAD model for voice activity detection
+ * Filters silence segments to improve ASR efficiency
  */
 
 import { createLogger } from '../utils/logger';
@@ -11,49 +11,49 @@ import { EventEmitter } from 'events';
 const logger = createLogger('SileroVAD');
 
 /**
- * VAD 配置
+ * VAD configuration
  */
 export interface SileroVADConfig {
-  /** 模型路径 */
+  /** Model path */
   modelPath: string;
-  /** 采样率 */
+  /** Sample rate */
   sampleRate?: number;
-  /** 语音阈值 (0-1) */
+  /** Voice threshold (0-1) */
   threshold?: number;
-  /** 最小语音持续时间（毫秒） */
+  /** Minimum speech duration (ms) */
   minSpeechDuration?: number;
-  /** 最小静音持续时间（毫秒） */
+  /** Minimum silence duration (ms) */
   minSilenceDuration?: number;
 }
 
 /**
- * VAD 结果
+ * VAD result
  */
 export interface VADResult {
-  /** 是否检测到语音 */
+  /** Whether speech is detected */
   isSpeech: boolean;
-  /** 置信度 */
+  /** Confidence */
   confidence: number;
-  /** 开始时间（毫秒） */
+  /** Start time (ms) */
   startTime: number;
-  /** 结束时间（毫秒） */
+  /** End time (ms) */
   endTime: number;
 }
 
 /**
- * 语音片段
+ * Speech segment
  */
 export interface SpeechSegment {
-  /** 音频数据 */
+  /** Audio data */
   audio: Buffer;
-  /** 开始时间 */
+  /** Start time */
   startTime: number;
-  /** 结束时间 */
+  /** End time */
   endTime: number;
 }
 
 /**
- * Silero VAD 引擎
+ * Silero VAD engine
  */
 export class SileroVAD extends EventEmitter {
   private config: Required<SileroVADConfig>;
@@ -72,7 +72,7 @@ export class SileroVAD extends EventEmitter {
   }
 
   /**
-   * 初始化 VAD 引擎
+   * Initialize VAD engine
    */
   async initialize(): Promise<void> {
     if (this.initialized) {
@@ -83,11 +83,11 @@ export class SileroVAD extends EventEmitter {
     try {
       logger.info('Initializing Silero VAD');
 
-      // 动态加载 @silero/vad
-      // Note: @silero/vad 需要通过 npm 安装
+      // Dynamically load @silero/vad
+      // Note: @silero/vad needs to be installed via npm
       // const { VoiceActivityDetector } = require('@silero/vad');
 
-      // 创建 VAD 实例
+      // Create VAD instance
       // this.vad = new VoiceActivityDetector({
       //   modelPath: this.config.modelPath,
       //   sampleRate: this.config.sampleRate,
@@ -105,7 +105,7 @@ export class SileroVAD extends EventEmitter {
   }
 
   /**
-   * 检测音频中的语音活动
+   * Detect voice activity in audio
    */
   async detect(audioBuffer: Buffer): Promise<VADResult[]> {
     if (!this.initialized) {
@@ -115,10 +115,10 @@ export class SileroVAD extends EventEmitter {
     try {
       logger.debug(`Detecting speech in ${audioBuffer.length} bytes`);
 
-      // TODO: 实际检测
+      // TODO: actual detection
       // const results = this.vad.detect(audioBuffer);
 
-      // Mock 结果
+      // Mock result
       const results: VADResult[] = [
         {
           isSpeech: true,
@@ -139,7 +139,7 @@ export class SileroVAD extends EventEmitter {
   }
 
   /**
-   * 提取语音片段
+   * Extract speech segments
    */
   async extractSpeechSegments(audioBuffer: Buffer): Promise<SpeechSegment[]> {
     const vadResults = await this.detect(audioBuffer);
@@ -151,12 +151,12 @@ export class SileroVAD extends EventEmitter {
         continue;
       }
 
-      // 计算字节偏移
+      // Calculate byte offset
       const bytesPerMs = (this.config.sampleRate * 2) / 1000; // 16-bit PCM
       const startByte = Math.floor(result.startTime * bytesPerMs);
       const endByte = Math.floor(result.endTime * bytesPerMs);
 
-      // 提取片段
+      // Extract segment
       const segmentAudio = audioBuffer.slice(startByte, endByte);
 
       segments.push({
@@ -173,7 +173,7 @@ export class SileroVAD extends EventEmitter {
   }
 
   /**
-   * 设置阈值
+   * Set threshold
    */
   setThreshold(threshold: number): void {
     if (threshold < 0 || threshold > 1) {
@@ -185,7 +185,7 @@ export class SileroVAD extends EventEmitter {
   }
 
   /**
-   * 关闭 VAD 引擎
+   * Close VAD engine
    */
   async close(): Promise<void> {
     if (!this.initialized) {
@@ -194,7 +194,7 @@ export class SileroVAD extends EventEmitter {
 
     logger.info('Closing Silero VAD');
 
-    // TODO: 实际清理
+    // TODO: actual cleanup
     // if (this.vad) {
     //   this.vad.close();
     //   this.vad = undefined;

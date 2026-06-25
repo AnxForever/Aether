@@ -4,6 +4,9 @@
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { Connector, ConnectorConfig, ConnectorRequest, ConnectorResponse, StreamChunk, ModelConfig } from '../types/connector';
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('Connector:Gemini');
 
 export class GeminiConnector implements Connector {
   readonly provider = 'gemini';
@@ -15,54 +18,70 @@ export class GeminiConnector implements Connector {
 
   async *streamResponse(request: ConnectorRequest): AsyncIterable<StreamChunk> {
     if (!this.client) throw new Error('Connector not initialized');
+    logger.info('Sending request to {provider}', { model: request.model, provider: this.provider });
 
-    const model = this.client.getGenerativeModel({ model: request.model });
+    try {
+      const model = this.client.getGenerativeModel({ model: request.model });
 
-    const chat = model.startChat({
-      history: request.messages.slice(0, -1).map(m => ({
-        role: m.role === 'user' ? 'user' : 'model',
-        parts: [{ text: m.content }]
-      }))
-    });
+      const chat = model.startChat({
+        history: request.messages.slice(0, -1).map(m => ({
+          role: m.role === 'user' ? 'user' : 'model',
+          parts: [{ text: m.content }]
+        }))
+      });
 
-    const lastMessage = request.messages[request.messages.length - 1];
-    const result = await chat.sendMessageStream(lastMessage.content);
+      const lastMessage = request.messages[request.messages.length - 1];
+      const result = await chat.sendMessageStream(lastMessage.content);
 
-    for await (const chunk of result.stream) {
-      const text = chunk.text();
-      if (text) {
-        yield {
-          type: 'text',
-          content: text
-        };
+      for await (const chunk of result.stream) {
+        const text = chunk.text();
+        if (text) {
+          yield {
+            type: 'text',
+            content: text
+          };
+        }
       }
+
+      logger.info('Response received from {provider}', { finishReason: 'streaming', provider: this.provider });
+    } catch (error) {
+      logger.error('API request failed for {provider}', error instanceof Error ? error : new Error(String(error)));
+      throw error;
     }
   }
 
   async getResponse(request: ConnectorRequest): Promise<ConnectorResponse> {
     if (!this.client) throw new Error('Connector not initialized');
+    logger.info('Sending request to {provider}', { model: request.model, provider: this.provider });
 
-    const model = this.client.getGenerativeModel({ model: request.model });
+    try {
+      const model = this.client.getGenerativeModel({ model: request.model });
 
-    const chat = model.startChat({
-      history: request.messages.slice(0, -1).map(m => ({
-        role: m.role === 'user' ? 'user' : 'model',
-        parts: [{ text: m.content }]
-      }))
-    });
+      const chat = model.startChat({
+        history: request.messages.slice(0, -1).map(m => ({
+          role: m.role === 'user' ? 'user' : 'model',
+          parts: [{ text: m.content }]
+        }))
+      });
 
-    const lastMessage = request.messages[request.messages.length - 1];
-    const result = await chat.sendMessage(lastMessage.content);
-    const response = result.response;
+      const lastMessage = request.messages[request.messages.length - 1];
+      const result = await chat.sendMessage(lastMessage.content);
+      const response = result.response;
 
-    return {
-      content: response.text(),
-      finishReason: 'stop',
-      usage: {
-        inputTokens: 0, // Gemini doesn't provide token usage
-        outputTokens: 0
-      }
-    };
+      logger.info('Response received from {provider}', { finishReason: 'stop', provider: this.provider });
+
+      return {
+        content: response.text(),
+        finishReason: 'stop',
+        usage: {
+          inputTokens: 0, // Gemini doesn't provide token usage
+          outputTokens: 0
+        }
+      };
+    } catch (error) {
+      logger.error('API request failed for {provider}', error instanceof Error ? error : new Error(String(error)));
+      throw error;
+    }
   }
 
   async listModels(): Promise<ModelConfig[]> {

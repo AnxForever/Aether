@@ -37,6 +37,7 @@ export class Pipeline {
    * Execute pipeline
    */
   async execute(context: PipelineContext): Promise<Message> {
+    const startTime = Date.now();
     let data: any = context;
 
     for (const stage of this.stages) {
@@ -48,6 +49,7 @@ export class Pipeline {
       }
     }
 
+    logger.info('Pipeline completed in {duration}ms', { duration: Date.now() - startTime });
     return data;
   }
 

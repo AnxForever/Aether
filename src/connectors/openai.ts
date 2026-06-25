@@ -4,6 +4,9 @@
 
 import OpenAI from 'openai';
 import { Connector, ConnectorConfig, ConnectorRequest, ConnectorResponse, StreamChunk, ModelConfig } from '../types/connector';
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger('Connector:OpenAI');
 
 export class OpenAIConnector implements Connector {
   readonly provider = 'openai';
@@ -20,52 +23,69 @@ export class OpenAIConnector implements Connector {
 
   async *streamResponse(request: ConnectorRequest): AsyncIterable<StreamChunk> {
     if (!this.client) throw new Error('Connector not initialized');
+    logger.info('Sending request to {provider}', { model: request.model, provider: this.provider });
 
-    const stream = await this.client.chat.completions.create({
-      model: request.model,
-      messages: request.messages.map(m => ({
-        role: m.role,
-        content: m.content
-      })),
-      temperature: request.temperature,
-      max_tokens: request.maxTokens,
-      stream: true
-    });
+    try {
+      const stream = await this.client.chat.completions.create({
+        model: request.model,
+        messages: request.messages.map(m => ({
+          role: m.role,
+          content: m.content
+        })),
+        temperature: request.temperature,
+        max_tokens: request.maxTokens,
+        stream: true
+      });
 
-    for await (const chunk of stream) {
-      const delta = chunk.choices[0]?.delta;
-      if (delta?.content) {
-        yield {
-          type: 'text',
-          content: delta.content
-        };
+      for await (const chunk of stream) {
+        const delta = chunk.choices[0]?.delta;
+        if (delta?.content) {
+          yield {
+            type: 'text',
+            content: delta.content
+          };
+        }
       }
+
+      logger.info('Response received from {provider}', { finishReason: 'streaming', provider: this.provider });
+    } catch (error) {
+      logger.error('API request failed for {provider}', error instanceof Error ? error : new Error(String(error)));
+      throw error;
     }
   }
 
   async getResponse(request: ConnectorRequest): Promise<ConnectorResponse> {
     if (!this.client) throw new Error('Connector not initialized');
+    logger.info('Sending request to {provider}', { model: request.model, provider: this.provider });
 
-    const response = await this.client.chat.completions.create({
-      model: request.model,
-      messages: request.messages.map(m => ({
-        role: m.role,
-        content: m.content
-      })),
-      temperature: request.temperature,
-      max_tokens: request.maxTokens
-    });
+    try {
+      const response = await this.client.chat.completions.create({
+        model: request.model,
+        messages: request.messages.map(m => ({
+          role: m.role,
+          content: m.content
+        })),
+        temperature: request.temperature,
+        max_tokens: request.maxTokens
+      });
 
-    const choice = response.choices[0];
+      const choice = response.choices[0];
+      const finishReason = choice.finish_reason === 'stop' ? 'stop' : 'length';
 
-    return {
-      content: choice.message.content || '',
-      finishReason: choice.finish_reason === 'stop' ? 'stop' : 'length',
-      usage: {
-        inputTokens: response.usage?.prompt_tokens || 0,
-        outputTokens: response.usage?.completion_tokens || 0
-      }
-    };
+      logger.info('Response received from {provider}', { finishReason, provider: this.provider });
+
+      return {
+        content: choice.message.content || '',
+        finishReason,
+        usage: {
+          inputTokens: response.usage?.prompt_tokens || 0,
+          outputTokens: response.usage?.completion_tokens || 0
+        }
+      };
+    } catch (error) {
+      logger.error('API request failed for {provider}', error instanceof Error ? error : new Error(String(error)));
+      throw error;
+    }
   }
 
   async listModels(): Promise<ModelConfig[]> {

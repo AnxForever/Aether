@@ -115,12 +115,14 @@ function createWindow() {
  * Initialize agent
  */
 async function initializeAgent() {
+  const startupTime = Date.now();
   agent = new AetherAgent({
     dataDir: app.getPath('userData'),
     deviceId: 'electron-' + require('os').hostname()
   });
 
   await agent.initialize();
+  logger.info('Startup completed in {duration}ms', { duration: Date.now() - startupTime });
   logger.info('Agent initialized');
 }
 
@@ -823,6 +825,7 @@ function setupIPC() {
         try {
           data = JSON.parse(await readFile(path, 'utf8'));
         } catch {
+          logger.debug('Storage key not found: {key}', { key });
           data = null;
         }
         return createSuccessResponse(request.id, { key, data });
@@ -1058,10 +1061,15 @@ function setupIPC() {
           try {
             const content = await readFile(join(cronDir, f), 'utf8');
             return JSON.parse(content);
-          } catch { /* parse error — skip */ return null; }
+          } catch {
+            logger.debug('Failed to parse cron task: {file}', { file: f });
+            return null;
+          }
         }));
         tasks = results.filter(Boolean);
-      } catch { /* directory doesn't exist — empty */ }
+      } catch {
+        logger.debug('Cron directory not found (expected on first run)');
+      }
       return createSuccessResponse(request.id, { tasks, total: tasks.length });
     } catch (error: unknown) {
       const err = error instanceof Error ? error : new Error(String(error));
@@ -1077,7 +1085,9 @@ function setupIPC() {
       try {
         await access(path);
         await unlink(path);
-      } catch { /* file doesn't exist — ignore */ }
+      } catch {
+        logger.debug('Cron task not found for deletion: {taskId}', { taskId: request.data.taskId });
+      }
       return createSuccessResponse(request.id, { deleted: true });
     } catch (error: unknown) {
       const err = error instanceof Error ? error : new Error(String(error));
@@ -1102,7 +1112,9 @@ function setupIPC() {
         const task = JSON.parse(content);
         task.enabled = request.data.enabled;
         await writeFile(path, JSON.stringify(task, null, 2));
-      } catch { /* file doesn't exist — nothing to update */ }
+      } catch {
+        logger.debug('Cron task not found for update: {taskId}', { taskId: request.data.taskId });
+      }
       return createSuccessResponse(request.id, { taskId: request.data.taskId, enabled: request.data.enabled });
     } catch (error: unknown) {
       const err = error instanceof Error ? error : new Error(String(error));
@@ -1437,7 +1449,9 @@ function setupIPC() {
       try {
         await access(authPath);
         await unlink(authPath);
-      } catch { /* file doesn't exist — ignore */ }
+      } catch {
+        logger.debug('Auth file not found on logout (expected if no auth configured)');
+      }
       return createSuccessResponse(request.id, { loggedOut: true });
     } catch (error: unknown) {
       const err = error instanceof Error ? error : new Error(String(error));
@@ -1484,6 +1498,16 @@ app.whenReady().then(async () => {
     logger.error('Non-critical: Mini window initialization failed:', error as Error);
   }
   setupIPC();
+
+  // Startup summary
+  logger.info('=== Aether Startup Summary ===');
+  logger.info(`Version: ${app.getVersion()}`);
+  logger.info(`Platform: ${process.platform} ${process.arch}`);
+  logger.info(`Electron: ${process.versions.electron}`);
+  logger.info(`Chrome: ${process.versions.chrome}`);
+  logger.info(`Node: ${process.versions.node}`);
+  logger.info(`NODE_ENV: ${process.env.NODE_ENV || 'production'}`);
+  logger.info(`UserData: ${app.getPath('userData')}`);
 
   // Check if onboarding is needed
   if (onboardingManager?.isOnboardingNeeded()) {

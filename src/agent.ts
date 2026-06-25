@@ -943,7 +943,7 @@ export class AetherAgent {
   }
 
   // ============================================================================
-  // ColaLink API (跨设备消息同步, delegated to agent-colalink.ts)
+  // ColaLink API (cross-device message sync, delegated to agent-colalink.ts)
   // ============================================================================
 
   async sendColaLinkMessage(toHandle: string, content: string): Promise<ColaLinkMessage> {
@@ -1076,7 +1076,7 @@ export class AetherAgent {
   }
 
   // ============================================================================
-  // Awareness System API (AI 日记 & 反思)
+  // Awareness System API (AI diary & reflection)
   // ============================================================================
 
   /** Generate today's diary entry */
@@ -1124,7 +1124,7 @@ export class AetherAgent {
   }
 
   // ============================================================================
-  // Semantic Search API (向量搜索)
+  // Semantic Search API (vector search)
   // ============================================================================
 
   /** Index content for semantic search */
@@ -1156,7 +1156,7 @@ export class AetherAgent {
   }
 
   // ============================================================================
-  // Recommendation Engine API (智能推荐)
+  // Recommendation Engine API (smart recommendations)
   // ============================================================================
 
   /** Record a user interaction for learning */
@@ -1182,7 +1182,7 @@ export class AetherAgent {
   }
 
   // ============================================================================
-  // Browser Automation API (浏览器自动化)
+  // Browser Automation API (browser automation)
   // ============================================================================
 
   /** Launch browser */
@@ -1216,7 +1216,7 @@ export class AetherAgent {
   }
 
   // ============================================================================
-  // Voice Processing API (语音处理)
+  // Voice Processing API (voice processing)
   // ============================================================================
 
   /** Recognize speech from audio */
@@ -1253,7 +1253,7 @@ export class AetherAgent {
   }
 
   // ============================================================================
-  // Visualization API (图表生成)
+  // Visualization API (chart generation)
   // ============================================================================
 
   /** Generate a chart */
@@ -1272,7 +1272,7 @@ export class AetherAgent {
   }
 
   // ============================================================================
-  // Code Analysis API (代码分析)
+  // Code Analysis API (code analysis)
   // ============================================================================
 
   /** Analyze code quality for a file */
@@ -1306,7 +1306,7 @@ export class AetherAgent {
   }
 
   // ============================================================================
-  // Media Processing API (图像处理)
+  // Media Processing API (image processing)
   // ============================================================================
 
   /** Convert an image to a different format */
@@ -1369,7 +1369,7 @@ export class AetherAgent {
   }
 
   // ============================================================================
-  // OAuth & QR Login API (OAuth 认证 & 扫码登录)
+  // OAuth & QR Login API (OAuth authentication & QR code login)
   // ============================================================================
 
   /** Start OAuth flow for a provider */
