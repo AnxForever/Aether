@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aether</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">
+          <span class="logo-mark">Æ</span>
+          <span class="logo-text">Aether</span>
+        </div>
+        <button class="icon-btn" id="collapseSidebar" title="Collapse sidebar">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+      </div>
+
+      <button class="new-chat-btn" id="newChatBtn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+        <span>New Chat</span>
+        <kbd>⌘N</kbd>
+      </button>
+
+      <div class="search-box">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        <input type="text" id="searchInput" placeholder="Search conversations..." />
+      </div>
+
+      <div class="sessions-list" id="sessionsList">
+        <!-- Sessions populated dynamically -->
+      </div>
+
+      <div class="sidebar-footer">
+        <button class="footer-btn" id="settingsBtn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          <span>Settings</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main">
+      <!-- Top Bar -->
+      <header class="topbar">
+        <button class="icon-btn mobile-only" id="toggleSidebar">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+        </button>
+
+        <div class="model-selector" id="modelSelector">
+          <button class="model-btn" id="modelBtn">
+            <span class="model-provider-dot" id="providerDot"></span>
+            <span class="model-name" id="currentModel">Loading...</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <div class="model-dropdown hidden" id="modelDropdown">
+            <!-- Models populated dynamically, grouped by provider -->
+          </div>
+        </div>
+
+        <div class="mode-switch" id="modeSwitch">
+          <button class="mode-btn active" data-mode="chat">Chat</button>
+          <button class="mode-btn" data-mode="coding">Coding</button>
+        </div>
+
+        <div class="topbar-actions">
+          <button class="icon-btn" id="exportBtn" title="Export conversation">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+          </button>
+        </div>
+      </header>
+
+      <!-- Messages -->
+      <div class="messages" id="messages">
+        <!-- Empty state -->
+        <div class="empty-state" id="emptyState">
+          <div class="empty-logo">Æ</div>
+          <h1>How can I help you today?</h1>
+          <p class="empty-subtitle">Switch between 7 AI models instantly. Pick the best brain for each task.</p>
+          <div class="suggestions" id="suggestions">
+            <button class="suggestion-card" data-prompt="Explain quantum computing in simple terms">
+              <span class="suggestion-icon">📝</span>
+              <span class="suggestion-text">Explain a complex topic</span>
+            </button>
+            <button class="suggestion-card" data-prompt="Write a Python function to reverse a linked list">
+              <span class="suggestion-icon">💻</span>
+              <span class="suggestion-text">Write some code</span>
+            </button>
+            <button class="suggestion-card" data-prompt="Draft a professional email to schedule a meeting">
+              <span class="suggestion-icon">✉️</span>
+              <span class="suggestion-text">Draft an email</span>
+            </button>
+            <button class="suggestion-card" data-prompt="Summarize the key ideas of stoicism">
+              <span class="suggestion-icon">📚</span>
+              <span class="suggestion-text">Summarize a topic</span>
+            </button>
+          </div>
+        </div>
+        <!-- Messages populated dynamically -->
+      </div>
+
+      <!-- Input -->
+      <div class="composer">
+        <div class="composer-inner">
+          <textarea
+            id="messageInput"
+            class="composer-input"
+            placeholder="Send a message...  (⌘↵ to send)"
+            rows="1"
+          ></textarea>
+          <div class="composer-actions">
+            <div class="composer-info">
+              <span id="charCount">0</span> / 32000
+            </div>
+            <button class="send-btn" id="sendBtn" disabled>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="composer-hint">
+          Aether can make mistakes. Verify important information.
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Settings Modal -->
+  <div class="modal-overlay hidden" id="settingsModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>Settings</h2>
+        <button class="icon-btn" id="closeSettings">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="setting-group">
+          <label class="setting-label">Theme</label>
+          <div class="segmented" id="themeSelect">
+            <button data-theme="light">Light</button>
+            <button data-theme="dark">Dark</button>
+            <button data-theme="auto">Auto</button>
+          </div>
+        </div>
+        <div class="setting-group">
+          <label class="setting-label">Language</label>
+          <div class="segmented" id="languageSelect">
+            <button data-lang="en">English</button>
+            <button data-lang="zh">中文</button>
+          </div>
+        </div>
+        <div class="setting-group">
+          <label class="setting-label">Temperature: <span id="tempValue">0.7</span></label>
+          <input type="range" id="tempSlider" min="0" max="2" step="0.1" value="0.7" />
+        </div>
+        <div class="setting-group">
+          <label class="setting-label">Streaming responses</label>
+          <label class="switch">
+            <input type="checkbox" id="streamToggle" checked />
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Export Modal -->
+  <div class="modal-overlay hidden" id="exportModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>Export Conversation</h2>
+        <button class="icon-btn" id="closeExport">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="setting-group">
+          <label class="setting-label">Format</label>
+          <div class="segmented" id="exportFormat">
+            <button data-format="markdown" class="active">Markdown</button>
+            <button data-format="json">JSON</button>
+            <button data-format="txt">Plain Text</button>
+          </div>
+        </div>
+        <button class="btn btn-primary btn-block" id="doExport">Export</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
