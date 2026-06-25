@@ -194,6 +194,40 @@
     </div>
   </div>
 
+  <!-- Keyboard Shortcuts Modal -->
+  <div class="modal-overlay hidden" id="shortcutsModal">
+    <div class="modal modal-shortcuts">
+      <div class="modal-header">
+        <h2>Keyboard Shortcuts</h2>
+        <button class="icon-btn" id="closeShortcuts">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body shortcuts-body">
+        <div class="shortcuts-section">
+          <h3>Navigation</h3>
+          <div class="shortcut-row"><kbd>⌘</kbd>+<kbd>N</kbd><span>New chat</span></div>
+          <div class="shortcut-row"><kbd>⌘</kbd>+<kbd>K</kbd><span>Cycle AI model</span></div>
+          <div class="shortcut-row"><kbd>⌘</kbd>+<kbd>B</kbd><span>Toggle sidebar</span></div>
+          <div class="shortcut-row"><kbd>⌘</kbd>+<kbd>/</kbd><span>Search conversations</span></div>
+          <div class="shortcut-row"><kbd>⌘</kbd>+<kbd>,</kbd><span>Open settings</span></div>
+          <div class="shortcut-row"><kbd>?</kbd><span>Show shortcuts</span></div>
+        </div>
+        <div class="shortcuts-section">
+          <h3>Chat</h3>
+          <div class="shortcut-row"><kbd>Enter</kbd><span>Send message</span></div>
+          <div class="shortcut-row"><kbd>Shift</kbd>+<kbd>Enter</kbd><span>New line</span></div>
+          <div class="shortcut-row"><kbd>⌘</kbd>+<kbd>Enter</kbd><span>Send message</span></div>
+          <div class="shortcut-row"><kbd>Esc</kbd><span>Close modals / dropdown</span></div>
+        </div>
+        <div class="shortcuts-section">
+          <h3>Export</h3>
+          <div class="shortcut-row"><kbd>⌘</kbd>+<kbd>Shift</kbd>+<kbd>E</kbd><span>Export conversation</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script src="app.js"></script>
 </body>
 </html>

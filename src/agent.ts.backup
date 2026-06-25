@@ -61,9 +61,6 @@ import { OAuthManager } from './oauth/oauth-manager';
 import type { OAuthProviderConfig, OAuthToken } from './oauth/oauth-manager';
 import { QRLoginManager } from './oauth/qr-login';
 import type { QRLoginSession } from './oauth/qr-login';
-import { BackupManager } from './backup/backup-manager';
-import type { BackupConfig, BackupMetadata } from './backup/backup-manager';
-import { LocalServer } from './cli/local-server';
 
 const logger = createLogger('NexusAgent');
 
@@ -113,16 +110,6 @@ export interface NexusAgentConfig {
     baseUrl?: string;
     providers?: Record<string, OAuthProviderConfig>;
   };
-  /** Backup & Restore config */
-  backup?: {
-    enabled?: boolean;
-    backupDir?: string;
-  };
-  /** CLI & Local Server config */
-  cli?: {
-    enabled?: boolean;
-    port?: number;
-  };
 }
 
 export class NexusAgent {
@@ -151,8 +138,6 @@ export class NexusAgent {
   private mediaProcessor?: ImageProcessor;
   private oauthManager?: OAuthManager;
   private qrLogin?: QRLoginManager;
-  private backupManager?: BackupManager;
-  private localServer?: LocalServer;
 
   constructor(config: NexusAgentConfig) {
     this.config = config;
@@ -295,48 +280,10 @@ export class NexusAgent {
     // Initialize Sentry Manager
     const sentryDsn = this.config.monitoring?.sentryDsn || process.env.SENTRY_DSN;
     if (sentryDsn && this.config.monitoring?.enabled !== false) {
-      this.sentryManager = new SentryManager({
-        dsn: sentryDsn,
-        environment: process.env.SENTRY_ENVIRONMENT || process.env.NODE_ENV || 'production',
-      });
+      this.sentryManager = new SentryManager({ dsn: sentryDsn });
       this.sentryManager.initialize();
       logger.info('Sentry manager initialized');
     }
-
-    // Initialize Media Processor
-    const mediaConfig = this.config.media;
-    if (mediaConfig?.enabled !== false) {
-      this.mediaProcessor = new ImageProcessor({
-        defaultQuality: mediaConfig?.defaultQuality ?? 80,
-        maxWidth: mediaConfig?.maxWidth ?? 10000,
-        maxHeight: mediaConfig?.maxHeight ?? 10000,
-        keepMetadata: mediaConfig?.keepMetadata ?? false,
-        tempDir: mediaConfig?.outputDir ?? '/tmp',
-      });
-      logger.info('Media processor initialized');
-    }
-
-    // Initialize OAuth Manager
-    const oauthConfig = this.config.oauth;
-    if (oauthConfig?.enabled !== false) {
-      this.oauthManager = new OAuthManager(oauthConfig?.callbackPort);
-
-      // Register configured providers
-      if (oauthConfig?.providers) {
-        for (const [name, providerConfig] of Object.entries(oauthConfig.providers)) {
-          this.oauthManager.registerProvider({
-            ...providerConfig,
-            name,
-          });
-        }
-      }
-
-      logger.info('OAuth manager initialized');
-    }
-
-    // Initialize QR Login Manager
-    this.qrLogin = new QRLoginManager(oauthConfig?.baseUrl || 'http://localhost:3000');
-    logger.info('QR login manager initialized');
 
     // Lazy-init tools
     this.chartGenerator = new ChartGenerator();
@@ -357,12 +304,6 @@ export class NexusAgent {
     this.mcpServerManager?.stopAll();
     this.slackManager?.destroy();
     await this.sentryManager?.close();
-    this.oauthManager?.stopCallbackServer();
-    this.qrLogin?.cleanup();
-    this.backupManager?.close();
-    if (this.localServer) {
-      await this.localServer.stop();
-    }
     logger.info('Agent cleaned up');
   }
 
@@ -1170,225 +1111,6 @@ export class NexusAgent {
   async getCodeDependencyGraph(filePaths: string[]) {
     if (!this.dependencyAnalyzer) throw new Error('Dependency analyzer not initialized');
     return await this.dependencyAnalyzer.analyzeFiles(filePaths);
-  }
-
-  // ============================================================================
-  // Media Processing API (图像处理)
-  // ============================================================================
-
-  /** Convert an image to a different format */
-  async convertImage(input: ImageInput, options: ConvertOptions): Promise<ProcessResult> {
-    if (!this.mediaProcessor) throw new Error('Media processor not initialized');
-    return await this.mediaProcessor.convert(input, options);
-  }
-
-  /** Resize an image */
-  async resizeImage(input: ImageInput, options: ResizeOptions): Promise<ProcessResult> {
-    if (!this.mediaProcessor) throw new Error('Media processor not initialized');
-    return await this.mediaProcessor.resize(input, options);
-  }
-
-  /** Crop an image */
-  async cropImage(input: ImageInput, options: CropOptions): Promise<ProcessResult> {
-    if (!this.mediaProcessor) throw new Error('Media processor not initialized');
-    return await this.mediaProcessor.crop(input, options);
-  }
-
-  /** Rotate an image */
-  async rotateImage(input: ImageInput, options: RotateOptions): Promise<ProcessResult> {
-    if (!this.mediaProcessor) throw new Error('Media processor not initialized');
-    return await this.mediaProcessor.rotate(input, options);
-  }
-
-  /** Flip an image (horizontal/vertical) */
-  async flipImage(input: ImageInput, options: FlipOptions): Promise<ProcessResult> {
-    if (!this.mediaProcessor) throw new Error('Media processor not initialized');
-    return await this.mediaProcessor.flip(input, options);
-  }
-
-  /** Compress an image */
-  async compressImage(input: ImageInput, options: CompressOptions): Promise<ProcessResult> {
-    if (!this.mediaProcessor) throw new Error('Media processor not initialized');
-    return await this.mediaProcessor.compress(input, options);
-  }
-
-  /** Add a watermark to an image */
-  async watermarkImage(input: ImageInput, options: WatermarkOptions): Promise<ProcessResult> {
-    if (!this.mediaProcessor) throw new Error('Media processor not initialized');
-    return await this.mediaProcessor.watermark(input, options);
-  }
-
-  /** Get image metadata (dimensions, format, exif, etc.) */
-  async getImageInfo(path: string): Promise<ImageMetadata> {
-    if (!this.mediaProcessor) throw new Error('Media processor not initialized');
-    return await this.mediaProcessor.extractMetadata(path);
-  }
-
-  /** Batch process multiple images */
-  async batchProcessImages(options: BatchProcessOptions): Promise<BatchProcessResult> {
-    if (!this.mediaProcessor) throw new Error('Media processor not initialized');
-    return await this.mediaProcessor.batchProcess(options);
-  }
-
-  /** Check if media processor is active */
-  isMediaProcessorActive(): boolean {
-    return this.mediaProcessor !== undefined;
-  }
-
-  // ============================================================================
-  // OAuth & QR Login API (OAuth 认证 & 扫码登录)
-  // ============================================================================
-
-  /** Start OAuth flow for a provider */
-  async startOAuth(providerConfig: OAuthProviderConfig): Promise<OAuthToken> {
-    if (!this.oauthManager) throw new Error('OAuth manager not initialized');
-    // Register the provider first, then authorize
-    this.oauthManager.registerProvider(providerConfig);
-    await this.oauthManager.startCallbackServer();
-    return await this.oauthManager.authorize(providerConfig.name);
-  }
-
-  /** Get stored OAuth token for a provider */
-  async getOAuthToken(provider: string): Promise<OAuthToken | undefined> {
-    if (!this.oauthManager) return undefined;
-    return this.oauthManager.getToken(provider);
-  }
-
-  /** Refresh OAuth token for a provider */
-  async refreshOAuthToken(provider: string): Promise<OAuthToken> {
-    if (!this.oauthManager) throw new Error('OAuth manager not initialized');
-    return await this.oauthManager.refreshToken(provider);
-  }
-
-  /** Revoke OAuth token for a provider */
-  revokeOAuthToken(provider: string): void {
-    if (!this.oauthManager) return;
-    this.oauthManager.revokeToken(provider);
-  }
-
-  /** Register an OAuth provider */
-  registerOAuthProvider(config: OAuthProviderConfig): void {
-    if (!this.oauthManager) throw new Error('OAuth manager not initialized');
-    this.oauthManager.registerProvider(config);
-  }
-
-  /** Generate a QR code login session */
-  async generateQRLogin(sessionExpiryMs?: number): Promise<QRLoginSession> {
-    if (!this.qrLogin) throw new Error('QR login manager not initialized');
-    return await this.qrLogin.createSession(sessionExpiryMs);
-  }
-
-  /** Wait for QR code scan to complete (polls until confirmed/expired) */
-  async waitForQRScan(
-    sessionId: string,
-    onStatusChange?: (status: string, user?: any) => void
-  ): Promise<void> {
-    if (!this.qrLogin) throw new Error('QR login manager not initialized');
-    return await this.qrLogin.pollSession(
-      sessionId,
-      onStatusChange || (() => {})
-    );
-  }
-
-  /** Check if OAuth manager is active */
-  isOAuthActive(): boolean {
-    return this.oauthManager !== undefined;
-  }
-
-  /** Check if QR login manager is initialized */
-  isQRLoginActive(): boolean {
-    return this.qrLogin !== undefined;
-  }
-
-  // ============================================================================
-  // Backup & Restore API
-  // ============================================================================
-
-  /**
-   * Create a full backup of agent data
-   */
-  async createBackup(): Promise<BackupMetadata> {
-    if (!this.backupManager) throw new Error('Backup manager is not initialized');
-    logger.info('Creating backup via agent API');
-    return await this.backupManager.createFullBackup();
-  }
-
-  /**
-   * Restore agent data from a backup
-   */
-  async restoreBackup(backupId: string): Promise<void> {
-    if (!this.backupManager) throw new Error('Backup manager is not initialized');
-    logger.info(`Restoring backup: ${backupId}`);
-    const metadata = this.backupManager.getBackup(backupId);
-    if (!metadata) {
-      throw new Error(`Backup not found: ${backupId}`);
-    }
-    throw new Error(
-      'Restore via RestoreManager is a separate process — use the backup files directly'
-    );
-  }
-
-  /**
-   * List all available backups
-   */
-  listBackups(): BackupMetadata[] {
-    if (!this.backupManager) return [];
-    return this.backupManager.listBackups();
-  }
-
-  /**
-   * Get backup statistics
-   */
-  getBackupStats(): { totalCount: number; totalSize: number; latestTimestamp: number | null } {
-    const backups = this.listBackups();
-    if (backups.length === 0) {
-      return { totalCount: 0, totalSize: 0, latestTimestamp: null };
-    }
-    return {
-      totalCount: backups.length,
-      totalSize: backups.reduce((sum, b) => sum + b.size, 0),
-      latestTimestamp: backups.reduce((max, b) => Math.max(max, b.timestamp), 0),
-    };
-  }
-
-  // ============================================================================
-  // CLI & Local Server API
-  // ============================================================================
-
-  /**
-   * Start the local HTTP API server
-   */
-  async startLocalServer(port?: number): Promise<void> {
-    if (!this.localServer) {
-      throw new Error('Local server is not configured. Set cli.enabled in config.');
-    }
-    const actualPort = port || this.config.cli?.port || 3000;
-    if (actualPort !== (this.localServer as any)['config'].port) {
-      await this.localServer.stop();
-      this.localServer = new LocalServer(this, {
-        port: actualPort,
-        host: 'localhost',
-      });
-    }
-    await this.localServer.start();
-    logger.info(`Local server started on port ${actualPort}`);
-  }
-
-  /**
-   * Stop the local HTTP API server
-   */
-  async stopLocalServer(): Promise<void> {
-    if (!this.localServer) return;
-    await this.localServer.stop();
-    logger.info('Local server stopped');
-  }
-
-  /**
-   * Get local server status
-   */
-  getLocalServerStatus(): { running: boolean; port?: number } {
-    if (!this.localServer) return { running: false };
-    return { running: true, port: (this.localServer as any)['config'].port };
   }
 
   // ============================================================================

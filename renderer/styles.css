@@ -1151,6 +1151,43 @@ input[type="range"] {
   }
 }
 
+/* === Shortcuts Modal === */
+.modal-shortcuts { width: 520px; }
+
+.shortcuts-body { display: flex; flex-direction: column; gap: var(--spacing-lg); }
+
+.shortcuts-section h3 {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin-bottom: var(--spacing-sm);
+}
+
+.shortcut-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: 6px 0;
+  font-size: 13px;
+}
+
+.shortcut-row kbd {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 3px 8px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-primary);
+}
+
+.shortcut-row span {
+  margin-left: auto;
+  color: var(--text-secondary);
+}
+
 /* === Toast Notifications === */
 .toast-container {
   position: fixed;

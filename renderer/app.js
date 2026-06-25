@@ -239,7 +239,14 @@
       if (e.target === el.settingsModal) el.settingsModal.classList.add('hidden');
     });
     el.exportModal.addEventListener('click', (e) => {
-      if (e.target === el.exportModal) el.exportModal.classList.remove('hidden');
+      if (e.target === el.exportModal) el.exportModal.classList.add('hidden');
+    });
+
+    // Shortcuts modal
+    const shortcutsModal = document.getElementById('shortcutsModal');
+    document.getElementById('closeShortcuts').addEventListener('click', () => shortcutsModal.classList.add('hidden'));
+    shortcutsModal.addEventListener('click', (e) => {
+      if (e.target === shortcutsModal) shortcutsModal.classList.add('hidden');
     });
 
     // Fix scope for model selector click handler
@@ -286,6 +293,20 @@
     if (mod && e.key === ',') {
       e.preventDefault();
       el.settingsModal.classList.remove('hidden');
+      return;
+    }
+
+    // Cmd+Shift+E — export
+    if (mod && e.shiftKey && e.key.toLowerCase() === 'e') {
+      e.preventDefault();
+      el.exportModal.classList.remove('hidden');
+      return;
+    }
+
+    // ? — keyboard shortcuts help
+    if (e.key === '?' && !mod && document.activeElement === document.body) {
+      e.preventDefault();
+      toggleShortcutsModal();
       return;
     }
 
@@ -534,6 +555,11 @@
 
   function escapeRegex(str) {
     return String(str).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
+  function toggleShortcutsModal() {
+    const m = document.getElementById('shortcutsModal');
+    m.classList.toggle('hidden');
   }
 
   async function createNewSession() {
