@@ -1,0 +1,716 @@
+{
+  "nodes": [
+    {
+      "id": "file:src/agent/index.ts",
+      "type": "file",
+      "name": "index.ts",
+      "filePath": "src/agent/index.ts",
+      "summary": "Agent 模块的 barrel 文件，重新导出 PiAgentAdapter 和 convertNexusToolToPiTool，同时重导出 pi-agent-core 的类型定义。",
+      "tags": ["barrel", "entry-point", "type-definition", "agent"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/agent/pi-adapter.ts",
+      "type": "file",
+      "name": "pi-adapter.ts",
+      "filePath": "src/agent/pi-adapter.ts",
+      "summary": "Pi-Agent-Core 适配器，将 Nexus Orchestrator 适配到 pi-agent-core 框架。PiAgentAdapter 继承 EventEmitter，支持 agent 执行、继续、中止、tool permission 检查和 session 管理。",
+      "tags": ["adapter", "agent", "event-handler", "middleware"],
+      "complexity": "complex",
+      "languageNotes": "TypeScript class 继承 EventEmitter 实现事件驱动架构，通过 agentLoop/agentLoopContinue 与 pi-agent-core 框架集成。"
+    },
+    {
+      "id": "file:src/cli/cli-manager.ts",
+      "type": "file",
+      "name": "cli-manager.ts",
+      "filePath": "src/cli/cli-manager.ts",
+      "summary": "CLI 管理器，集成 PiAgentAdapter、SkillRegistry、HttpServer 和 CommandHandlerRegistry，提供命令行参数解析、命令执行、输出格式化和 HTTP 服务器生命周期管理。",
+      "tags": ["cli", "manager", "entry-point", "command-pattern"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:src/cli/cli-tool.ts",
+      "type": "file",
+      "name": "cli-tool.ts",
+      "filePath": "src/cli/cli-tool.ts",
+      "summary": "CLI 工具类，提供零第三方依赖的终端 UI 工具，包括 ANSI 彩色输出、表格渲染、spinner 动画、banner 显示、JSON 语法高亮和参数解析。",
+      "tags": ["cli", "utility", "terminal", "formatting"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:src/cli/command-handler.ts",
+      "type": "file",
+      "name": "command-handler.ts",
+      "filePath": "src/cli/command-handler.ts",
+      "summary": "命令处理器注册表及 CLI 默认命令处理函数，包括 execute、skill-list、skill-invoke、skill-info 和 help 等命令的分发与执行。",
+      "tags": ["cli", "command-pattern", "handler", "registry"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/cli/http-server.ts",
+      "type": "file",
+      "name": "http-server.ts",
+      "filePath": "src/cli/http-server.ts",
+      "summary": "原生 HTTP 服务器，基于 Node.js http.createServer 实现 RESTful API，支持 agent 执行/继续/中止、skill 调用/查询、session 管理和连接追踪。",
+      "tags": ["http-server", "api-handler", "rest-api", "session"],
+      "complexity": "complex",
+      "languageNotes": "使用原生 Node.js http 模块，无第三方依赖。通过 setInterval 实现 session 自动清理，支持 connection 追踪实现优雅关闭。"
+    },
+    {
+      "id": "file:src/cli/index.ts",
+      "type": "file",
+      "name": "index.ts",
+      "filePath": "src/cli/index.ts",
+      "summary": "CLI 模块的 barrel 文件，集中导出 HttpServer、CommandHandlerRegistry、CliTool、CliManager 及其相关类型定义。",
+      "tags": ["barrel", "entry-point", "type-definition", "cli"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/skills/__tests__/integration.test.ts",
+      "type": "file",
+      "name": "integration.test.ts",
+      "filePath": "src/skills/__tests__/integration.test.ts",
+      "summary": "Skills 集成测试，测试 SkillRegistry 的注册、空 registry、Tool 执行上下文、Tool 结果格式及多 skill 管理场景。",
+      "tags": ["test", "integration", "vitest"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/skills/__tests__/system.test.ts",
+      "type": "file",
+      "name": "system.test.ts",
+      "filePath": "src/skills/__tests__/system.test.ts",
+      "summary": "系统 Skills 集成测试，覆盖 SkillRegistry 的注册/查询/启用/禁用、统计信息、文件系统操作验证和 Tool 参数结构验证。",
+      "tags": ["test", "system", "vitest", "integration"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/skills/loader.ts",
+      "type": "file",
+      "name": "loader.ts",
+      "filePath": "src/skills/loader.ts",
+      "summary": "Skill 加载器，从文件系统读取技能清单并动态导入技能模块（manifest.json + JS/TS entry），支持加载所有技能和按需重新加载。",
+      "tags": ["loader", "plugin-system", "dynamic-import"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/skills/registry.ts",
+      "type": "file",
+      "name": "registry.ts",
+      "filePath": "src/skills/registry.ts",
+      "summary": "Skill 注册中心，管理所有 Skill 的注册/注销/查询/启用/禁用，并提供工具查找和统计信息功能，同时导出单例实例。",
+      "tags": ["registry", "singleton", "plugin-system", "skill"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/agent/pi-adapter.ts:PiAgentAdapter",
+      "type": "class",
+      "name": "PiAgentAdapter",
+      "filePath": "src/agent/pi-adapter.ts",
+      "lineRange": [43, 385],
+      "summary": "Pi-Agent-Core 适配器类，继承 EventEmitter，封装 agentLoop 执行循环，管理 tool 权限检查、消息队列和 agent 生命周期（执行/继续/中止）。",
+      "tags": ["adapter", "agent", "event-emitter", "lifecycle"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:src/agent/pi-adapter.ts:convertNexusToolToPiTool",
+      "type": "function",
+      "name": "convertNexusToolToPiTool",
+      "filePath": "src/agent/pi-adapter.ts",
+      "lineRange": [390, 429],
+      "summary": "将 Nexus 格式的 Tool 定义转换为 pi-agent-core 兼容的 AgentTool 格式，映射参数 schema 和执行函数。",
+      "tags": ["adapter", "converter", "tool"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/cli/cli-manager.ts:CliManager",
+      "type": "class",
+      "name": "CliManager",
+      "filePath": "src/cli/cli-manager.ts",
+      "lineRange": [11, 293],
+      "summary": "CLI 管理器，协调 PiAgentAdapter、SkillRegistry、HttpServer 和 CommandHandlerRegistry，处理命令路由、输出格式化和服务器启动/停止控制。",
+      "tags": ["cli", "manager", "orchestrator", "command-pattern"],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:src/cli/cli-tool.ts:CliTool",
+      "type": "class",
+      "name": "CliTool",
+      "filePath": "src/cli/cli-tool.ts",
+      "lineRange": [12, 262],
+      "summary": "零依赖 CLI 工具类，提供 ANSI 彩色输出、表格渲染、spinner 动画、banner、JSON 语法高亮、参数解析等终端交互工具。",
+      "tags": ["cli", "utility", "terminal", "formatting"],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:src/cli/command-handler.ts:CommandHandlerRegistry",
+      "type": "class",
+      "name": "CommandHandlerRegistry",
+      "filePath": "src/cli/command-handler.ts",
+      "lineRange": [20, 54],
+      "summary": "命令处理器注册表，基于 Map 实现命令名称到处理函数的注册、执行、查询和枚举。",
+      "tags": ["registry", "command-pattern", "handler"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/cli/command-handler.ts:executeHandler",
+      "type": "function",
+      "name": "executeHandler",
+      "filePath": "src/cli/command-handler.ts",
+      "lineRange": [58, 75],
+      "summary": "处理 agent execute 命令，将用户输入发送给 PiAgentAdapter 执行并返回结果。",
+      "tags": ["handler", "agent", "execute"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/cli/command-handler.ts:skillListHandler",
+      "type": "function",
+      "name": "skillListHandler",
+      "filePath": "src/cli/command-handler.ts",
+      "lineRange": [77, 89],
+      "summary": "处理 skill list 命令，从 SkillRegistry 获取所有 skill 列表并格式化返回。",
+      "tags": ["handler", "skill", "list"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/cli/command-handler.ts:skillInvokeHandler",
+      "type": "function",
+      "name": "skillInvokeHandler",
+      "filePath": "src/cli/command-handler.ts",
+      "lineRange": [91, 119],
+      "summary": "处理 skill invoke 命令，通过名称查找 skill 并调用其 execute 方法。",
+      "tags": ["handler", "skill", "invoke"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/cli/command-handler.ts:skillInfoHandler",
+      "type": "function",
+      "name": "skillInfoHandler",
+      "filePath": "src/cli/command-handler.ts",
+      "lineRange": [121, 151],
+      "summary": "处理 skill info 命令，从 SkillRegistry 获取 skill 详细信息并格式化返回。",
+      "tags": ["handler", "skill", "info"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/cli/command-handler.ts:helpHandler",
+      "type": "function",
+      "name": "helpHandler",
+      "filePath": "src/cli/command-handler.ts",
+      "lineRange": [153, 171],
+      "summary": "处理 help 命令，显示所有可用的 CLI 命令和帮助信息。",
+      "tags": ["handler", "help"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/cli/command-handler.ts:createDefaultHandlers",
+      "type": "function",
+      "name": "createDefaultHandlers",
+      "filePath": "src/cli/command-handler.ts",
+      "lineRange": [174, 184],
+      "summary": "创建并注册默认的 CLI 命令处理器（execute、skill-list、skill-invoke、skill-info、help）。",
+      "tags": ["handler", "factory", "registration"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/cli/http-server.ts:HttpServer",
+      "type": "class",
+      "name": "HttpServer",
+      "filePath": "src/cli/http-server.ts",
+      "lineRange": [43, 417],
+      "summary": "基于原生 Node.js http 模块的 HTTP 服务器，提供 agent 执行/继续/中止、skill 调用/列表、session 管理和自动清理的 RESTful API。",
+      "tags": ["http-server", "api-handler", "rest-api", "session"],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:src/skills/loader.ts:SkillLoader",
+      "type": "class",
+      "name": "SkillLoader",
+      "filePath": "src/skills/loader.ts",
+      "lineRange": [22, 89],
+      "summary": "从文件系统加载 Skill 的类，通过读取 manifest.json 和动态 import 语法加载技能模块，并注册到全局 SkillRegistry。",
+      "tags": ["loader", "plugin-system", "dynamic-import"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/skills/registry.ts:SkillRegistry",
+      "type": "class",
+      "name": "SkillRegistry",
+      "filePath": "src/skills/registry.ts",
+      "lineRange": [10, 124],
+      "summary": "中心化的 Skill 注册与管理系统，基于 Map 存储 Skill 实例，提供注册、查询、启用/禁用、工具查找和统计功能。",
+      "tags": ["registry", "singleton", "plugin-system"],
+      "complexity": "moderate"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:src/agent/index.ts",
+      "target": "file:src/agent/pi-adapter.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/agent/pi-adapter.ts",
+      "target": "file:src/utils/logger.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/cli/cli-manager.ts",
+      "target": "file:src/agent/pi-adapter.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/cli/cli-manager.ts",
+      "target": "file:src/skills/registry.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/cli/cli-manager.ts",
+      "target": "file:src/cli/http-server.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/cli/cli-manager.ts",
+      "target": "file:src/cli/command-handler.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/cli/cli-manager.ts",
+      "target": "file:src/cli/cli-tool.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/cli/command-handler.ts",
+      "target": "file:src/agent/pi-adapter.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/cli/command-handler.ts",
+      "target": "file:src/skills/registry.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/cli/http-server.ts",
+      "target": "file:src/agent/pi-adapter.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/cli/http-server.ts",
+      "target": "file:src/skills/registry.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/cli/http-server.ts",
+      "target": "file:src/utils/logger.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/cli/index.ts",
+      "target": "file:src/cli/http-server.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/cli/index.ts",
+      "target": "file:src/cli/command-handler.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/cli/index.ts",
+      "target": "file:src/cli/cli-tool.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/cli/index.ts",
+      "target": "file:src/cli/cli-manager.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/skills/__tests__/integration.test.ts",
+      "target": "file:src/skills/registry.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/skills/__tests__/system.test.ts",
+      "target": "file:src/skills/registry.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/skills/loader.ts",
+      "target": "file:src/types/index.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/skills/loader.ts",
+      "target": "file:src/skills/registry.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/skills/loader.ts",
+      "target": "file:src/utils/logger.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/skills/registry.ts",
+      "target": "file:src/types/index.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/skills/registry.ts",
+      "target": "file:src/utils/logger.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/agent/pi-adapter.ts",
+      "target": "class:src/agent/pi-adapter.ts:PiAgentAdapter",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/agent/pi-adapter.ts",
+      "target": "function:src/agent/pi-adapter.ts:convertNexusToolToPiTool",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/cli/cli-manager.ts",
+      "target": "class:src/cli/cli-manager.ts:CliManager",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/cli/cli-tool.ts",
+      "target": "class:src/cli/cli-tool.ts:CliTool",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/cli/command-handler.ts",
+      "target": "class:src/cli/command-handler.ts:CommandHandlerRegistry",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/cli/command-handler.ts",
+      "target": "function:src/cli/command-handler.ts:executeHandler",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/cli/command-handler.ts",
+      "target": "function:src/cli/command-handler.ts:skillListHandler",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/cli/command-handler.ts",
+      "target": "function:src/cli/command-handler.ts:skillInvokeHandler",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/cli/command-handler.ts",
+      "target": "function:src/cli/command-handler.ts:skillInfoHandler",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/cli/command-handler.ts",
+      "target": "function:src/cli/command-handler.ts:helpHandler",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/cli/command-handler.ts",
+      "target": "function:src/cli/command-handler.ts:createDefaultHandlers",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/cli/http-server.ts",
+      "target": "class:src/cli/http-server.ts:HttpServer",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/skills/loader.ts",
+      "target": "class:src/skills/loader.ts:SkillLoader",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/skills/registry.ts",
+      "target": "class:src/skills/registry.ts:SkillRegistry",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/agent/pi-adapter.ts",
+      "target": "class:src/agent/pi-adapter.ts:PiAgentAdapter",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/agent/pi-adapter.ts",
+      "target": "function:src/agent/pi-adapter.ts:convertNexusToolToPiTool",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/cli/cli-manager.ts",
+      "target": "class:src/cli/cli-manager.ts:CliManager",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/cli/cli-tool.ts",
+      "target": "class:src/cli/cli-tool.ts:CliTool",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/cli/command-handler.ts",
+      "target": "class:src/cli/command-handler.ts:CommandHandlerRegistry",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/cli/command-handler.ts",
+      "target": "function:src/cli/command-handler.ts:executeHandler",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/cli/command-handler.ts",
+      "target": "function:src/cli/command-handler.ts:skillListHandler",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/cli/command-handler.ts",
+      "target": "function:src/cli/command-handler.ts:skillInvokeHandler",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/cli/command-handler.ts",
+      "target": "function:src/cli/command-handler.ts:skillInfoHandler",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/cli/command-handler.ts",
+      "target": "function:src/cli/command-handler.ts:helpHandler",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/cli/command-handler.ts",
+      "target": "function:src/cli/command-handler.ts:createDefaultHandlers",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/cli/http-server.ts",
+      "target": "class:src/cli/http-server.ts:HttpServer",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/skills/loader.ts",
+      "target": "class:src/skills/loader.ts:SkillLoader",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/skills/registry.ts",
+      "target": "class:src/skills/registry.ts:SkillRegistry",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/agent/index.ts",
+      "target": "file:src/agent/pi-adapter.ts",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:src/cli/cli-manager.ts",
+      "target": "class:src/cli/http-server.ts:HttpServer",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/cli/cli-manager.ts",
+      "target": "class:src/cli/command-handler.ts:CommandHandlerRegistry",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/cli/cli-manager.ts",
+      "target": "class:src/cli/cli-tool.ts:CliTool",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/agent/pi-adapter.ts",
+      "target": "function:src/utils/logger.ts:createLogger",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/cli/http-server.ts",
+      "target": "function:src/utils/logger.ts:createLogger",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/skills/loader.ts",
+      "target": "function:src/utils/logger.ts:createLogger",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/skills/registry.ts",
+      "target": "function:src/utils/logger.ts:createLogger",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/cli/command-handler.ts",
+      "target": "class:src/agent/pi-adapter.ts:PiAgentAdapter",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/cli/command-handler.ts",
+      "target": "class:src/skills/registry.ts:SkillRegistry",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/cli/http-server.ts",
+      "target": "class:src/agent/pi-adapter.ts:PiAgentAdapter",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/cli/http-server.ts",
+      "target": "class:src/skills/registry.ts:SkillRegistry",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/cli/cli-manager.ts",
+      "target": "class:src/agent/pi-adapter.ts:PiAgentAdapter",
+      "type": "calls",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/skills/__tests__/integration.test.ts",
+      "target": "file:src/skills/registry.ts",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:src/skills/__tests__/system.test.ts",
+      "target": "file:src/skills/registry.ts",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:src/skills/__tests__/system.test.ts",
+      "target": "file:src/skills/loader.ts",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    }
+  ]
+}

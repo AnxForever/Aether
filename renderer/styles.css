@@ -1350,3 +1350,18 @@ input[type="range"] {
   0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
   30% { transform: translateY(-6px); opacity: 1; }
 }
+
+/* === Markdown Rendering === */
+.md-link { color: var(--accent); text-decoration: underline; }
+.md-link:hover { opacity: 0.8; }
+.md-image { max-width: 100%; border-radius: var(--radius-md); margin: var(--spacing-sm) 0; }
+.md-table { width: 100%; border-collapse: collapse; margin: var(--spacing-md) 0; font-size: 13px; }
+.md-table th { background: var(--bg-primary); padding: 8px 12px; text-align: left; font-weight: 600; border: 1px solid var(--border); }
+.md-table td { padding: 8px 12px; border: 1px solid var(--border); }
+.md-table tr:nth-child(even) td { background: var(--bg-primary); }
+h2, h3 { margin: var(--spacing-md) 0 var(--spacing-sm); font-weight: 600; }
+h2 { font-size: 18px; }
+h3 { font-size: 16px; }
+hr { border: none; border-top: 1px solid var(--border); margin: var(--spacing-md) 0; }
+.message-text ul, .message-text ol { margin: var(--spacing-sm) 0; padding-left: var(--spacing-lg); }
+.message-text li { margin-bottom: 4px; }

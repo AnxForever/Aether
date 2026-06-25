@@ -143,6 +143,12 @@
     }
     autoResizeTextarea();
     updateCharCount();
+    // Restore placeholder from current mode
+    if (state.currentMode === 'coding') {
+      el.messageInput.placeholder = 'Write code...  (⌘↵ to send)';
+    } else {
+      el.messageInput.placeholder = 'Send a message...  (⌘↵ to send)';
+    }
     checkAgentStatus();
     setInterval(checkAgentStatus, 30000); // Check every 30s
   }
@@ -747,6 +753,25 @@
     html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
     // Italic
     html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+    // Links (XSS: reject javascript: protocol)
+    html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, function(_, text, url) {
+      var safeUrl = sanitizeUrl(url);
+      return safeUrl ? '<a href="' + safeUrl + '" target="_blank" class="md-link">' + text + '</a>' : text;
+    });
+    // Images (XSS: reject javascript: protocol)
+    html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, function(_, alt, url) {
+      var safeUrl = sanitizeUrl(url);
+      return safeUrl ? '<img src="' + safeUrl + '" alt="' + alt + '" class="md-image" loading="lazy"/>' : '';
+    });
+    // Tables: detect table rows, collect into groups, render as <table>
+    html = renderTables(html);
+    // Headings (must be at start of line, after line break or string start)
+    html = html.replace(/(?:^|\n)\s*### (.+)/g, '$1<h3>$2</h3>');
+    html = html.replace(/(?:^|\n)\s*## (.+)/g, '$1<h2>$2</h2>');
+    // Horizontal rules
+    html = html.replace(/(\n)---(\n|$)/g, '$1<hr>$2');
+    // Unordered lists: consecutive - or * lines
+    html = renderLists(html);
     // Line breaks
     html = html.replace(/\n/g, '<br>');
     return html;
@@ -795,6 +820,113 @@
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#039;');
+  }
+
+  // XSS protection for URLs in markdown links and images
+  function sanitizeUrl(url) {
+    if (!url) return null;
+    var trimmed = url.trim();
+    var lower = trimmed.toLowerCase();
+    if (lower.startsWith('javascript:') || lower.startsWith('data:') || lower.startsWith('vbscript:')) {
+      return null;
+    }
+    return trimmed;
+  }
+
+  // Render markdown tables from HTML-escaped content
+  function renderTables(html) {
+    var lines = html.split('\n');
+    var result = [];
+    var i = 0;
+    while (i < lines.length) {
+      // Check if current line is a table row (starts and ends with | after trimming)
+      var trimmed = lines[i].trim();
+      if (trimmed.startsWith('|') && trimmed.endsWith('|')) {
+        var rows = [];
+        var headerRow = trimmed;
+        i++;
+        // Look for separator row
+        var sepLine = i < lines.length ? lines[i].trim() : '';
+        var isSep = /^\|[\s:-]+\|/.test(sepLine);
+        if (isSep) {
+          i++;
+        }
+        // Collect body rows
+        while (i < lines.length) {
+          var rowTrimmed = lines[i].trim();
+          if (!(rowTrimmed.startsWith('|') && rowTrimmed.endsWith('|'))) break;
+          rows.push(rowTrimmed);
+          i++;
+        }
+        // Build table HTML
+        var tableHtml = '<table class="md-table"><thead><tr>';
+        var headerCells = parseTableRow(headerRow);
+        for (var h = 0; h < headerCells.length; h++) {
+          tableHtml += '<th>' + headerCells[h] + '</th>';
+        }
+        tableHtml += '</tr></thead><tbody>';
+        for (var r = 0; r < rows.length; r++) {
+          tableHtml += '<tr>';
+          var cells = parseTableRow(rows[r]);
+          for (var c = 0; c < cells.length; c++) {
+            tableHtml += '<td>' + cells[c] + '</td>';
+          }
+          tableHtml += '</tr>';
+        }
+        tableHtml += '</tbody></table>';
+        result.push(tableHtml);
+      } else {
+        result.push(lines[i]);
+        i++;
+      }
+    }
+    return result.join('\n');
+  }
+
+  function parseTableRow(row) {
+    // Remove leading/trailing pipe, split by pipe
+    var inner = row.trim();
+    if (inner.startsWith('|')) inner = inner.substring(1);
+    if (inner.endsWith('|')) inner = inner.substring(0, inner.length - 1);
+    var cells = [];
+    var current = '';
+    var inSpan = false;
+    for (var i = 0; i < inner.length; i++) {
+      var ch = inner[i];
+      if (ch === '|') {
+        cells.push(current.trim());
+        current = '';
+      } else {
+        current += ch;
+      }
+    }
+    cells.push(current.trim());
+    return cells;
+  }
+
+  // Render markdown unordered lists from HTML-escaped content
+  function renderLists(html) {
+    var lines = html.split('\n');
+    var result = [];
+    var i = 0;
+    while (i < lines.length) {
+      var trimmed = lines[i].trim();
+      if (/^[-*]\s/.test(trimmed)) {
+        result.push('<ul>');
+        while (i < lines.length) {
+          var liTrimmed = lines[i].trim();
+          if (!/^[-*]\s/.test(liTrimmed)) break;
+          var content = liTrimmed.replace(/^[-*]\s+/, '');
+          result.push('<li>' + content + '</li>');
+          i++;
+        }
+        result.push('</ul>');
+      } else {
+        result.push(lines[i]);
+        i++;
+      }
+    }
+    return result.join('\n');
   }
 
   function scrollToBottom() {
@@ -1068,6 +1200,16 @@
     el.modeSwitch.querySelectorAll('.mode-btn').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.mode === mode);
     });
+
+    if (mode === 'coding') {
+      callApi(api.switchMode, mode);
+      el.messageInput.placeholder = 'Write code...  (⌘↵ to send)';
+      showToast('Coding Mode', 'precise, low-temperature', 'info', 2500);
+    } else {
+      callApi(api.switchMode, mode);
+      el.messageInput.placeholder = 'Send a message...  (⌘↵ to send)';
+      showToast('Chat Mode', 'creative, balanced', 'info', 2500);
+    }
   }
 
   // ============================================================

@@ -1,0 +1,1045 @@
+{
+  "nodes": [
+    {
+      "id": "file:src/modes/mode-manager.ts",
+      "type": "file",
+      "name": "mode-manager.ts",
+      "filePath": "src/modes/mode-manager.ts",
+      "summary": "模式管理器，支持注册、切换、加载 soul 文件和管理 Chat/Coding 双模式。",
+      "tags": [
+        "mode-manager",
+        "ai",
+        "state-machine"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:src/modes/mode-switch.ts",
+      "type": "file",
+      "name": "mode-switch.ts",
+      "filePath": "src/modes/mode-switch.ts",
+      "summary": "智能模式切换分析器，根据用户输入内容自动判断最适合的 Chat/Coding 模式。",
+      "tags": [
+        "mode-switch",
+        "ai",
+        "intent-analysis"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/sandbox/index.ts",
+      "type": "file",
+      "name": "index.ts",
+      "filePath": "src/sandbox/index.ts",
+      "summary": "Sandbox 模块的 barrel 导出文件，统一暴露 SandboxExecutor 和 WindowsJobObject。",
+      "tags": [
+        "barrel",
+        "entry-point"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/sandbox/sandbox-executor.ts",
+      "type": "file",
+      "name": "sandbox-executor.ts",
+      "filePath": "src/sandbox/sandbox-executor.ts",
+      "summary": "跨平台沙盒命令执行器，支持 Windows/Linux/macOS 的安全子进程管理。",
+      "tags": [
+        "sandbox",
+        "executor",
+        "security",
+        "cross-platform"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:src/sandbox/windows-job-object.ts",
+      "type": "file",
+      "name": "windows-job-object.ts",
+      "filePath": "src/sandbox/windows-job-object.ts",
+      "summary": "Windows Job Object 封装，通过 koffi FFI 调用 Win32 API 进行进程资源限制。",
+      "tags": [
+        "windows",
+        "job-object",
+        "ffi",
+        "security"
+      ],
+      "complexity": "complex",
+      "languageNotes": "使用 koffi FFI 库直接调用 Win32 API，实现对 Windows Job Object 的完整封装。"
+    },
+    {
+      "id": "file:src/scheduler/index.ts",
+      "type": "file",
+      "name": "index.ts",
+      "filePath": "src/scheduler/index.ts",
+      "summary": "Scheduler 模块的 barrel 导出文件，统一暴露 TaskScheduler、TaskQueue 和 PriorityScheduler。",
+      "tags": [
+        "barrel",
+        "entry-point"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/scheduler/priority-scheduler.ts",
+      "type": "file",
+      "name": "priority-scheduler.ts",
+      "filePath": "src/scheduler/priority-scheduler.ts",
+      "summary": "优先级调度器，在 TaskQueue 基础上增加优先级队列、资源限制和任务状态跟踪。",
+      "tags": [
+        "scheduler",
+        "priority",
+        "task-queue",
+        "resource-management"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/scheduler/task-queue.ts",
+      "type": "file",
+      "name": "task-queue.ts",
+      "filePath": "src/scheduler/task-queue.ts",
+      "summary": "通用任务队列，支持按优先级排序、并发执行控制、进度事件通知和 drain 模式。",
+      "tags": [
+        "task-queue",
+        "concurrency",
+        "priority"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/scheduler/task-scheduler.ts",
+      "type": "file",
+      "name": "task-scheduler.ts",
+      "filePath": "src/scheduler/task-scheduler.ts",
+      "summary": "基于 croner 和 SQLite 的定时任务调度器，支持任务的增删改查和执行历史统计。",
+      "tags": [
+        "scheduler",
+        "cron",
+        "database",
+        "task-management"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:src/server/collaboration-launcher.ts",
+      "type": "file",
+      "name": "collaboration-launcher.ts",
+      "filePath": "src/server/collaboration-launcher.ts",
+      "summary": "协作功能启动器，协调 CollaborationServer 和 SessionManager 的生命周期管理。",
+      "tags": [
+        "collaboration",
+        "launcher",
+        "lifecycle",
+        "orchestrator"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:src/skills/skill-loader.ts",
+      "type": "file",
+      "name": "skill-loader.ts",
+      "filePath": "src/skills/skill-loader.ts",
+      "summary": "技能加载器与注册表，支持从 Markdown 文件加载技能、处理 front-matter、匹配用户意图。",
+      "tags": [
+        "skill-loader",
+        "plugin",
+        "registry",
+        "matching"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:src/utils/logger.ts",
+      "type": "file",
+      "name": "logger.ts",
+      "filePath": "src/utils/logger.ts",
+      "summary": "结构化日志工具，支持多级别日志、i18n 翻译、OpenTelemetry 追踪和文件输出。",
+      "tags": [
+        "logger",
+        "utility",
+        "observability",
+        "i18n"
+      ],
+      "complexity": "moderate",
+      "languageNotes": "支持 OpenTelemetry trace/span 上下文集成，自动将追踪 ID 注入日志条目。"
+    },
+    {
+      "id": "file:src/voice/index.ts",
+      "type": "file",
+      "name": "index.ts",
+      "filePath": "src/voice/index.ts",
+      "summary": "Voice 模块的 barrel 导出文件，统一暴露所有语音相关类。",
+      "tags": [
+        "barrel",
+        "entry-point"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/voice/marswave-tts.ts",
+      "type": "file",
+      "name": "marswave-tts.ts",
+      "filePath": "src/voice/marswave-tts.ts",
+      "summary": "MarsWave TTS 语音合成服务封装，支持文本转语音、文件保存和可用语音查询。",
+      "tags": [
+        "tts",
+        "voice",
+        "speech-synthesis"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/voice/sherpa-asr.ts",
+      "type": "file",
+      "name": "sherpa-asr.ts",
+      "filePath": "src/voice/sherpa-asr.ts",
+      "summary": "Sherpa ASR 语音识别服务封装，支持文件识别和流式识别模式。",
+      "tags": [
+        "asr",
+        "voice",
+        "speech-recognition"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/voice/silero-vad.ts",
+      "type": "file",
+      "name": "silero-vad.ts",
+      "filePath": "src/voice/silero-vad.ts",
+      "summary": "Silero VAD 语音活动检测封装，支持音频流的人声检测和语音片段提取。",
+      "tags": [
+        "vad",
+        "voice",
+        "audio-processing"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/voice/voice-manager.ts",
+      "type": "file",
+      "name": "voice-manager.ts",
+      "filePath": "src/voice/voice-manager.ts",
+      "summary": "语音管理器，统一协调 ASR、VAD 和 TTS 三个子模块的完整语音处理流程。",
+      "tags": [
+        "voice-manager",
+        "asr",
+        "vad",
+        "tts",
+        "orchestrator"
+      ],
+      "complexity": "complex",
+      "languageNotes": "通过事件代理模式统一协调 ASR、VAD、TTS 三个子模块的异步事件。"
+    },
+    {
+      "id": "class:src/modes/mode-manager.ts:ModeManager",
+      "type": "class",
+      "name": "ModeManager",
+      "filePath": "src/modes/mode-manager.ts",
+      "lineRange": [
+        41,
+        273
+      ],
+      "summary": "模式管理核心类，支持 Chat/Coding 双模式注册、切换和 soul 文件加载。",
+      "tags": [
+        "mode-manager",
+        "state-machine",
+        "ai"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:src/modes/mode-switch.ts:ModeSwitchAnalyzer",
+      "type": "class",
+      "name": "ModeSwitchAnalyzer",
+      "filePath": "src/modes/mode-switch.ts",
+      "lineRange": [
+        44,
+        143
+      ],
+      "summary": "智能模式切换分析器，根据用户输入的关键词和模式自动推荐最佳模式。",
+      "tags": [
+        "mode-switch",
+        "ai",
+        "intent-analysis"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/sandbox/sandbox-executor.ts:SandboxExecutor",
+      "type": "class",
+      "name": "SandboxExecutor",
+      "filePath": "src/sandbox/sandbox-executor.ts",
+      "lineRange": [
+        60,
+        317
+      ],
+      "summary": "跨平台沙盒命令执行器，针对 Windows/Linux/macOS 使用不同的子进程管理策略。",
+      "tags": [
+        "sandbox",
+        "executor",
+        "security",
+        "cross-platform"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:src/sandbox/sandbox-executor.ts:ToolSandbox",
+      "type": "class",
+      "name": "ToolSandbox",
+      "filePath": "src/sandbox/sandbox-executor.ts",
+      "lineRange": [
+        322,
+        389
+      ],
+      "summary": "技能沙盒封装，在 SandboxExecutor 基础上添加命令白名单验证。",
+      "tags": [
+        "sandbox",
+        "tool",
+        "security",
+        "validation"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/sandbox/windows-job-object.ts:isWindowsJobObjectAvailable",
+      "type": "function",
+      "name": "isWindowsJobObjectAvailable",
+      "filePath": "src/sandbox/windows-job-object.ts",
+      "lineRange": [
+        298,
+        311
+      ],
+      "summary": "检测当前系统是否支持 Windows Job Object 功能。",
+      "tags": [
+        "exported"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/sandbox/windows-job-object.ts:WindowsJobObject",
+      "type": "class",
+      "name": "WindowsJobObject",
+      "filePath": "src/sandbox/windows-job-object.ts",
+      "lineRange": [
+        74,
+        293
+      ],
+      "summary": "Windows Job Object 的 FFI 封装，提供进程资源限制和内存配额管理。",
+      "tags": [
+        "windows",
+        "job-object",
+        "ffi",
+        "resource-limit"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:src/scheduler/priority-scheduler.ts:PriorityScheduler",
+      "type": "class",
+      "name": "PriorityScheduler",
+      "filePath": "src/scheduler/priority-scheduler.ts",
+      "lineRange": [
+        39,
+        203
+      ],
+      "summary": "优先级任务调度器，在 TaskQueue 基础上增加资源限制和批量调度。",
+      "tags": [
+        "scheduler",
+        "priority",
+        "resource-management"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/scheduler/task-queue.ts:TaskQueue",
+      "type": "class",
+      "name": "TaskQueue",
+      "filePath": "src/scheduler/task-queue.ts",
+      "lineRange": [
+        36,
+        221
+      ],
+      "summary": "通用优先级任务队列，支持并发控制、事件通知和统计收集。",
+      "tags": [
+        "task-queue",
+        "concurrency",
+        "priority"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/scheduler/task-scheduler.ts:TaskScheduler",
+      "type": "class",
+      "name": "TaskScheduler",
+      "filePath": "src/scheduler/task-scheduler.ts",
+      "lineRange": [
+        54,
+        605
+      ],
+      "summary": "基于 croner 和 SQLite 的完整定时任务调度系统，支持持久化、执行历史和错误追踪。",
+      "tags": [
+        "scheduler",
+        "cron",
+        "database",
+        "task-management"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:src/server/collaboration-launcher.ts:CollaborationLauncher",
+      "type": "class",
+      "name": "CollaborationLauncher",
+      "filePath": "src/server/collaboration-launcher.ts",
+      "lineRange": [
+        37,
+        306
+      ],
+      "summary": "协作功能的启动协调器，统一管理 CollaborationServer 和 SessionManager 的生命周期。",
+      "tags": [
+        "collaboration",
+        "launcher",
+        "lifecycle",
+        "orchestrator"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:src/skills/skill-loader.ts:SkillLoader",
+      "type": "class",
+      "name": "SkillLoader",
+      "filePath": "src/skills/skill-loader.ts",
+      "lineRange": [
+        52,
+        253
+      ],
+      "summary": "技能加载器，从 Markdown 文件目录加载技能定义、处理 front-matter 和触发词。",
+      "tags": [
+        "skill-loader",
+        "plugin",
+        "file-system"
+      ],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:src/skills/skill-loader.ts:SkillRegistry",
+      "type": "class",
+      "name": "SkillRegistry",
+      "filePath": "src/skills/skill-loader.ts",
+      "lineRange": [
+        269,
+        371
+      ],
+      "summary": "技能注册表，封装 SkillLoader 提供懒加载注册和工具格式转换。",
+      "tags": [
+        "skill-registry",
+        "lazy-loading",
+        "tool-conversion"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:src/utils/logger.ts:createLogger",
+      "type": "function",
+      "name": "createLogger",
+      "filePath": "src/utils/logger.ts",
+      "lineRange": [
+        184,
+        186
+      ],
+      "summary": "工厂函数，创建命名 Logger 实例，指定最低日志级别。",
+      "tags": [
+        "exported"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:src/utils/logger.ts:createFileHandler",
+      "type": "function",
+      "name": "createFileHandler",
+      "filePath": "src/utils/logger.ts",
+      "lineRange": [
+        191,
+        199
+      ],
+      "summary": "创建文件日志处理器，将日志条目写入指定文件。",
+      "tags": [
+        "exported"
+      ],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:src/utils/logger.ts:Logger",
+      "type": "class",
+      "name": "Logger",
+      "filePath": "src/utils/logger.ts",
+      "lineRange": [
+        20,
+        177
+      ],
+      "summary": "结构化日志核心类，支持多级别、i18n 翻译和 OpenTelemetry 追踪上下文集成。",
+      "tags": [
+        "logger",
+        "utility",
+        "observability",
+        "i18n"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/voice/marswave-tts.ts:MarswaveTTS",
+      "type": "class",
+      "name": "MarswaveTTS",
+      "filePath": "src/voice/marswave-tts.ts",
+      "lineRange": [
+        67,
+        193
+      ],
+      "summary": "MarsWave TTS 语音合成客户端，支持文本转音频流和语音参数配置。",
+      "tags": [
+        "tts",
+        "voice",
+        "speech-synthesis"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/voice/sherpa-asr.ts:SherpaASR",
+      "type": "class",
+      "name": "SherpaASR",
+      "filePath": "src/voice/sherpa-asr.ts",
+      "lineRange": [
+        46,
+        188
+      ],
+      "summary": "Sherpa ASR 语音识别客户端，支持文件上传和流式音频识别。",
+      "tags": [
+        "asr",
+        "voice",
+        "speech-recognition"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/voice/silero-vad.ts:SileroVAD",
+      "type": "class",
+      "name": "SileroVAD",
+      "filePath": "src/voice/silero-vad.ts",
+      "lineRange": [
+        58,
+        208
+      ],
+      "summary": "Silero VAD 语音活动检测客户端，实时检测人声并提取语音片段。",
+      "tags": [
+        "vad",
+        "voice",
+        "audio-processing",
+        "detection"
+      ],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/voice/voice-manager.ts:VoiceManager",
+      "type": "class",
+      "name": "VoiceManager",
+      "filePath": "src/voice/voice-manager.ts",
+      "lineRange": [
+        44,
+        239
+      ],
+      "summary": "语音处理总控类，统一协调 ASR 识别、VAD 检测和 TTS 合成的完整工作流。",
+      "tags": [
+        "voice-manager",
+        "orchestrator",
+        "asr",
+        "vad",
+        "tts"
+      ],
+      "complexity": "moderate"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:src/modes/mode-manager.ts",
+      "target": "class:src/modes/mode-manager.ts:ModeManager",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/modes/mode-manager.ts",
+      "target": "class:src/modes/mode-manager.ts:ModeManager",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/modes/mode-switch.ts",
+      "target": "class:src/modes/mode-switch.ts:ModeSwitchAnalyzer",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/modes/mode-switch.ts",
+      "target": "class:src/modes/mode-switch.ts:ModeSwitchAnalyzer",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/sandbox/sandbox-executor.ts",
+      "target": "class:src/sandbox/sandbox-executor.ts:SandboxExecutor",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/sandbox/sandbox-executor.ts",
+      "target": "class:src/sandbox/sandbox-executor.ts:SandboxExecutor",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/sandbox/sandbox-executor.ts",
+      "target": "class:src/sandbox/sandbox-executor.ts:ToolSandbox",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/sandbox/sandbox-executor.ts",
+      "target": "class:src/sandbox/sandbox-executor.ts:ToolSandbox",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/sandbox/windows-job-object.ts",
+      "target": "function:src/sandbox/windows-job-object.ts:isWindowsJobObjectAvailable",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/sandbox/windows-job-object.ts",
+      "target": "function:src/sandbox/windows-job-object.ts:isWindowsJobObjectAvailable",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/sandbox/windows-job-object.ts",
+      "target": "class:src/sandbox/windows-job-object.ts:WindowsJobObject",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/sandbox/windows-job-object.ts",
+      "target": "class:src/sandbox/windows-job-object.ts:WindowsJobObject",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/scheduler/priority-scheduler.ts",
+      "target": "class:src/scheduler/priority-scheduler.ts:PriorityScheduler",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/scheduler/priority-scheduler.ts",
+      "target": "class:src/scheduler/priority-scheduler.ts:PriorityScheduler",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/scheduler/task-queue.ts",
+      "target": "class:src/scheduler/task-queue.ts:TaskQueue",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/scheduler/task-queue.ts",
+      "target": "class:src/scheduler/task-queue.ts:TaskQueue",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/scheduler/task-scheduler.ts",
+      "target": "class:src/scheduler/task-scheduler.ts:TaskScheduler",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/scheduler/task-scheduler.ts",
+      "target": "class:src/scheduler/task-scheduler.ts:TaskScheduler",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/server/collaboration-launcher.ts",
+      "target": "class:src/server/collaboration-launcher.ts:CollaborationLauncher",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/server/collaboration-launcher.ts",
+      "target": "class:src/server/collaboration-launcher.ts:CollaborationLauncher",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/skills/skill-loader.ts",
+      "target": "class:src/skills/skill-loader.ts:SkillLoader",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/skills/skill-loader.ts",
+      "target": "class:src/skills/skill-loader.ts:SkillLoader",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/skills/skill-loader.ts",
+      "target": "class:src/skills/skill-loader.ts:SkillRegistry",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/skills/skill-loader.ts",
+      "target": "class:src/skills/skill-loader.ts:SkillRegistry",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/utils/logger.ts",
+      "target": "function:src/utils/logger.ts:createLogger",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/utils/logger.ts",
+      "target": "function:src/utils/logger.ts:createLogger",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/utils/logger.ts",
+      "target": "function:src/utils/logger.ts:createFileHandler",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/utils/logger.ts",
+      "target": "function:src/utils/logger.ts:createFileHandler",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/utils/logger.ts",
+      "target": "class:src/utils/logger.ts:Logger",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/utils/logger.ts",
+      "target": "class:src/utils/logger.ts:Logger",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/voice/marswave-tts.ts",
+      "target": "class:src/voice/marswave-tts.ts:MarswaveTTS",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/voice/marswave-tts.ts",
+      "target": "class:src/voice/marswave-tts.ts:MarswaveTTS",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/voice/sherpa-asr.ts",
+      "target": "class:src/voice/sherpa-asr.ts:SherpaASR",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/voice/sherpa-asr.ts",
+      "target": "class:src/voice/sherpa-asr.ts:SherpaASR",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/voice/silero-vad.ts",
+      "target": "class:src/voice/silero-vad.ts:SileroVAD",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/voice/silero-vad.ts",
+      "target": "class:src/voice/silero-vad.ts:SileroVAD",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/voice/voice-manager.ts",
+      "target": "class:src/voice/voice-manager.ts:VoiceManager",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1
+    },
+    {
+      "source": "file:src/voice/voice-manager.ts",
+      "target": "class:src/voice/voice-manager.ts:VoiceManager",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/modes/mode-manager.ts",
+      "target": "file:src/utils/logger.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/modes/mode-manager.ts",
+      "target": "file:src/modes/chat-mode.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/modes/mode-manager.ts",
+      "target": "file:src/modes/coding-mode.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/modes/mode-switch.ts",
+      "target": "file:src/utils/logger.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/modes/mode-switch.ts",
+      "target": "file:src/modes/mode-manager.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/sandbox/index.ts",
+      "target": "file:src/sandbox/sandbox-executor.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/sandbox/index.ts",
+      "target": "file:src/sandbox/windows-job-object.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/sandbox/sandbox-executor.ts",
+      "target": "file:src/utils/logger.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/sandbox/windows-job-object.ts",
+      "target": "file:src/utils/logger.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/scheduler/index.ts",
+      "target": "file:src/scheduler/task-scheduler.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/scheduler/index.ts",
+      "target": "file:src/scheduler/task-queue.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/scheduler/index.ts",
+      "target": "file:src/scheduler/priority-scheduler.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/scheduler/priority-scheduler.ts",
+      "target": "file:src/utils/logger.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/scheduler/priority-scheduler.ts",
+      "target": "file:src/scheduler/task-queue.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/scheduler/task-queue.ts",
+      "target": "file:src/utils/logger.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/scheduler/task-scheduler.ts",
+      "target": "file:src/utils/logger.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/server/collaboration-launcher.ts",
+      "target": "file:src/collaboration/collaboration-server.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/server/collaboration-launcher.ts",
+      "target": "file:src/collaboration/session-manager.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/server/collaboration-launcher.ts",
+      "target": "file:src/utils/logger.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/skills/skill-loader.ts",
+      "target": "file:src/utils/logger.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/voice/index.ts",
+      "target": "file:src/voice/sherpa-asr.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/voice/index.ts",
+      "target": "file:src/voice/silero-vad.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/voice/index.ts",
+      "target": "file:src/voice/marswave-tts.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/voice/index.ts",
+      "target": "file:src/voice/voice-manager.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/voice/marswave-tts.ts",
+      "target": "file:src/utils/logger.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/voice/sherpa-asr.ts",
+      "target": "file:src/utils/logger.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/voice/silero-vad.ts",
+      "target": "file:src/utils/logger.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/voice/voice-manager.ts",
+      "target": "file:src/utils/logger.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/voice/voice-manager.ts",
+      "target": "file:src/voice/sherpa-asr.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/voice/voice-manager.ts",
+      "target": "file:src/voice/silero-vad.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/voice/voice-manager.ts",
+      "target": "file:src/voice/marswave-tts.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    }
+  ]
+}

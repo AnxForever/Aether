@@ -1,0 +1,725 @@
+{
+  "nodes": [
+    {
+      "id": "file:examples/quick-start.ts",
+      "type": "file",
+      "name": "quick-start.ts",
+      "filePath": "examples/quick-start.ts",
+      "summary": "Aether 平台快速入门示例，演示如何使用 Claude 和 OpenAI 连接器进行基础对话、指定模型调用以及流式响应。",
+      "tags": ["entry-point", "example", "utility"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:examples/quick-start.ts:main",
+      "type": "function",
+      "name": "main",
+      "filePath": "examples/quick-start.ts",
+      "lineRange": [11, 40],
+      "summary": "演示 Aether 平台核心功能的异步主函数：初始化 AI 连接器、创建 agent 实例、发送基础聊天请求和流式聊天请求。",
+      "tags": ["entry-point", "example", "utility"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/connectors/__tests__/claude.test.ts",
+      "type": "file",
+      "name": "claude.test.ts",
+      "filePath": "src/connectors/__tests__/claude.test.ts",
+      "summary": "ClaudeConnector 的单元测试套件，验证初始化、getResponse、streamResponse 和模型配置功能。",
+      "tags": ["test", "connector", "claude"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/connectors/__tests__/deepseek.test.ts",
+      "type": "file",
+      "name": "deepseek.test.ts",
+      "filePath": "src/connectors/__tests__/deepseek.test.ts",
+      "summary": "DeepSeekConnector 的单元测试套件，验证初始化、模型支持和成本效益评估。",
+      "tags": ["test", "connector", "deepseek"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/connectors/__tests__/gemini.test.ts",
+      "type": "file",
+      "name": "gemini.test.ts",
+      "filePath": "src/connectors/__tests__/gemini.test.ts",
+      "summary": "GeminiConnector 的单元测试套件，验证初始化、getResponse、streamResponse 和多模态视觉能力。",
+      "tags": ["test", "connector", "gemini"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/connectors/__tests__/glm.test.ts",
+      "type": "file",
+      "name": "glm.test.ts",
+      "filePath": "src/connectors/__tests__/glm.test.ts",
+      "summary": "GLMConnector 的单元测试套件，验证初始化、GLM-4 模型支持和中文优化特性。",
+      "tags": ["test", "connector", "glm"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/connectors/__tests__/minimax.test.ts",
+      "type": "file",
+      "name": "minimax.test.ts",
+      "filePath": "src/connectors/__tests__/minimax.test.ts",
+      "summary": "MiniMaxConnector 的单元测试套件，验证初始化、模型支持和中文语言优化。",
+      "tags": ["test", "connector", "minimax"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/connectors/__tests__/moonshot.test.ts",
+      "type": "file",
+      "name": "moonshot.test.ts",
+      "filePath": "src/connectors/__tests__/moonshot.test.ts",
+      "summary": "MoonshotConnector 的单元测试套件，验证初始化、128K 长上下文支持和 Kimi 模型变体。",
+      "tags": ["test", "connector", "moonshot"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:src/connectors/__tests__/openai.test.ts",
+      "type": "file",
+      "name": "openai.test.ts",
+      "filePath": "src/connectors/__tests__/openai.test.ts",
+      "summary": "OpenAIConnector 的单元测试套件，验证初始化、getResponse、streamResponse 和 function calling 支持。",
+      "tags": ["test", "connector", "openai"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/connectors/claude.ts",
+      "type": "file",
+      "name": "claude.ts",
+      "filePath": "src/connectors/claude.ts",
+      "summary": "Claude (Anthropic) AI 提供商的连接器实现，封装 Anthropic SDK，支持流式响应、非流式响应、模型列表和可用性检测。",
+      "tags": ["connector", "api-handler", "claude", "service"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/connectors/claude.ts:ClaudeConnector",
+      "type": "class",
+      "name": "ClaudeConnector",
+      "filePath": "src/connectors/claude.ts",
+      "lineRange": [8, 108],
+      "summary": "实现 Connector 接口的 Claude 连接器，通过 Anthropic SDK 管理 Claude 模型的流式和非流式 API 调用。",
+      "tags": ["connector", "service", "claude", "api-handler"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/connectors/deepseek.ts",
+      "type": "file",
+      "name": "deepseek.ts",
+      "filePath": "src/connectors/deepseek.ts",
+      "summary": "DeepSeek AI 提供商的连接器实现，使用 undici HTTP 客户端访问 DeepSeek API，支持流式聊天补全和模型配置。",
+      "tags": ["connector", "api-handler", "deepseek", "service"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/connectors/deepseek.ts:DeepSeekConnector",
+      "type": "class",
+      "name": "DeepSeekConnector",
+      "filePath": "src/connectors/deepseek.ts",
+      "lineRange": [8, 115],
+      "summary": "实现 Connector 接口的 DeepSeek 连接器，使用 fetch API 进行流式 SSE 解析和标准 HTTP 请求。",
+      "tags": ["connector", "service", "deepseek", "api-handler"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/connectors/gemini.ts",
+      "type": "file",
+      "name": "gemini.ts",
+      "filePath": "src/connectors/gemini.ts",
+      "summary": "Gemini (Google Generative AI) 提供商的连接器实现，封装 @google/generative-ai SDK，支持流式和非流式聊天。",
+      "tags": ["connector", "api-handler", "gemini", "service"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/connectors/gemini.ts:GeminiConnector",
+      "type": "class",
+      "name": "GeminiConnector",
+      "filePath": "src/connectors/gemini.ts",
+      "lineRange": [8, 103],
+      "summary": "实现 Connector 接口的 Gemini 连接器，使用 Google Generative AI SDK 管理 Gemini 模型的对话流。",
+      "tags": ["connector", "service", "gemini", "api-handler"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/connectors/glm.ts",
+      "type": "file",
+      "name": "glm.ts",
+      "filePath": "src/connectors/glm.ts",
+      "summary": "GLM (智谱 AI) 提供商的连接器实现，使用 undici HTTP 客户端访问智谱开放平台 API，支持流式聊天补全。",
+      "tags": ["connector", "api-handler", "glm", "service"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/connectors/glm.ts:GLMConnector",
+      "type": "class",
+      "name": "GLMConnector",
+      "filePath": "src/connectors/glm.ts",
+      "lineRange": [8, 115],
+      "summary": "实现 Connector 接口的 GLM 连接器，使用 fetch API 进行流式 SSE 解析并调用智谱开放平台。",
+      "tags": ["connector", "service", "glm", "api-handler"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/connectors/index.ts",
+      "type": "file",
+      "name": "index.ts",
+      "filePath": "src/connectors/index.ts",
+      "summary": "AI 连接器注册中心，集中管理 7 个 AI 提供商的 ConnectorRegistry 实例，同时导出所有连接器类和 barrel 模块。",
+      "tags": ["barrel", "connector", "registry", "service"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/connectors/index.ts:ConnectorRegistry",
+      "type": "class",
+      "name": "ConnectorRegistry",
+      "filePath": "src/connectors/index.ts",
+      "lineRange": [18, 58],
+      "summary": "AI 连接器的中央注册表，使用 Map<AIProvider, Connector> 管理所有提供商，提供注册、查询和批量获取模型列表功能。",
+      "tags": ["registry", "connector", "service"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/connectors/minimax.ts",
+      "type": "file",
+      "name": "minimax.ts",
+      "filePath": "src/connectors/minimax.ts",
+      "summary": "MiniMax AI 提供商的连接器实现，使用 undici HTTP 客户端访问 MiniMax 聊天补全 API，支持流式 SSE 解析。",
+      "tags": ["connector", "api-handler", "minimax", "service"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/connectors/minimax.ts:MiniMaxConnector",
+      "type": "class",
+      "name": "MiniMaxConnector",
+      "filePath": "src/connectors/minimax.ts",
+      "lineRange": [8, 115],
+      "summary": "实现 Connector 接口的 MiniMax 连接器，支持 abab6.5s 等模型的流式和非流式 API 调用。",
+      "tags": ["connector", "service", "minimax", "api-handler"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/connectors/moonshot.ts",
+      "type": "file",
+      "name": "moonshot.ts",
+      "filePath": "src/connectors/moonshot.ts",
+      "summary": "Moonshot (Kimi) AI 提供商的连接器实现，使用 undici HTTP 客户端访问 Moonshot API，支持流式聊天补全。",
+      "tags": ["connector", "api-handler", "moonshot", "service"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/connectors/moonshot.ts:MoonshotConnector",
+      "type": "class",
+      "name": "MoonshotConnector",
+      "filePath": "src/connectors/moonshot.ts",
+      "lineRange": [8, 115],
+      "summary": "实现 Connector 接口的 Moonshot 连接器，支持 moonshot-v1-128k 等长上下文模型的 API 调用。",
+      "tags": ["connector", "service", "moonshot", "api-handler"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/connectors/openai.ts",
+      "type": "file",
+      "name": "openai.ts",
+      "filePath": "src/connectors/openai.ts",
+      "summary": "OpenAI/ChatGPT 提供商的连接器实现，封装 OpenAI SDK，支持 GPT-4o 等模型的流式和非流式 API 调用。",
+      "tags": ["connector", "api-handler", "openai", "service"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:src/connectors/openai.ts:OpenAIConnector",
+      "type": "class",
+      "name": "OpenAIConnector",
+      "filePath": "src/connectors/openai.ts",
+      "lineRange": [8, 109],
+      "summary": "实现 Connector 接口的 OpenAI 连接器，通过 OpenAI SDK 管理 GPT-4o 等模型的流式和非流式聊天补全。",
+      "tags": ["connector", "service", "openai", "api-handler"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:src/types/connector.ts",
+      "type": "file",
+      "name": "connector.ts",
+      "filePath": "src/types/connector.ts",
+      "summary": "AI 连接器的类型定义文件，定义 Connector 接口及 ConnectorConfig、ConnectorRequest、ConnectorResponse 等核心数据类型。",
+      "tags": ["type-definition", "connector", "interface"],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {
+      "source": "file:examples/quick-start.ts",
+      "target": "file:src/agent.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:examples/quick-start.ts",
+      "target": "file:src/connectors/claude.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:examples/quick-start.ts",
+      "target": "file:src/connectors/openai.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/connectors/__tests__/claude.test.ts",
+      "target": "file:src/connectors/claude.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/connectors/__tests__/deepseek.test.ts",
+      "target": "file:src/connectors/deepseek.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/connectors/__tests__/gemini.test.ts",
+      "target": "file:src/connectors/gemini.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/connectors/__tests__/glm.test.ts",
+      "target": "file:src/connectors/glm.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/connectors/__tests__/minimax.test.ts",
+      "target": "file:src/connectors/minimax.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/connectors/__tests__/moonshot.test.ts",
+      "target": "file:src/connectors/moonshot.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/connectors/__tests__/openai.test.ts",
+      "target": "file:src/connectors/openai.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/connectors/claude.ts",
+      "target": "file:src/types/connector.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/connectors/deepseek.ts",
+      "target": "file:src/types/connector.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/connectors/gemini.ts",
+      "target": "file:src/types/connector.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/connectors/glm.ts",
+      "target": "file:src/types/connector.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/connectors/index.ts",
+      "target": "file:src/types/connector.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/connectors/index.ts",
+      "target": "file:src/types/index.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/connectors/index.ts",
+      "target": "file:src/connectors/claude.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/connectors/index.ts",
+      "target": "file:src/connectors/openai.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/connectors/index.ts",
+      "target": "file:src/connectors/gemini.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/connectors/index.ts",
+      "target": "file:src/connectors/minimax.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/connectors/index.ts",
+      "target": "file:src/connectors/moonshot.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/connectors/index.ts",
+      "target": "file:src/connectors/glm.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/connectors/index.ts",
+      "target": "file:src/connectors/deepseek.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/connectors/index.ts",
+      "target": "file:src/connectors/claude.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/connectors/index.ts",
+      "target": "file:src/connectors/openai.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/connectors/index.ts",
+      "target": "file:src/connectors/gemini.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/connectors/index.ts",
+      "target": "file:src/connectors/minimax.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/connectors/index.ts",
+      "target": "file:src/connectors/moonshot.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/connectors/index.ts",
+      "target": "file:src/connectors/glm.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/connectors/index.ts",
+      "target": "file:src/connectors/deepseek.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/connectors/minimax.ts",
+      "target": "file:src/types/connector.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/connectors/moonshot.ts",
+      "target": "file:src/types/connector.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/connectors/openai.ts",
+      "target": "file:src/types/connector.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:src/types/connector.ts",
+      "target": "file:src/types/index.ts",
+      "type": "imports",
+      "direction": "forward",
+      "weight": 0.7
+    },
+    {
+      "source": "file:examples/quick-start.ts",
+      "target": "function:examples/quick-start.ts:main",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/connectors/claude.ts",
+      "target": "class:src/connectors/claude.ts:ClaudeConnector",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/connectors/deepseek.ts",
+      "target": "class:src/connectors/deepseek.ts:DeepSeekConnector",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/connectors/gemini.ts",
+      "target": "class:src/connectors/gemini.ts:GeminiConnector",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/connectors/glm.ts",
+      "target": "class:src/connectors/glm.ts:GLMConnector",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/connectors/index.ts",
+      "target": "class:src/connectors/index.ts:ConnectorRegistry",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/connectors/minimax.ts",
+      "target": "class:src/connectors/minimax.ts:MiniMaxConnector",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/connectors/moonshot.ts",
+      "target": "class:src/connectors/moonshot.ts:MoonshotConnector",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/connectors/openai.ts",
+      "target": "class:src/connectors/openai.ts:OpenAIConnector",
+      "type": "contains",
+      "direction": "forward",
+      "weight": 1.0
+    },
+    {
+      "source": "file:src/connectors/claude.ts",
+      "target": "class:src/connectors/claude.ts:ClaudeConnector",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/connectors/deepseek.ts",
+      "target": "class:src/connectors/deepseek.ts:DeepSeekConnector",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/connectors/gemini.ts",
+      "target": "class:src/connectors/gemini.ts:GeminiConnector",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/connectors/glm.ts",
+      "target": "class:src/connectors/glm.ts:GLMConnector",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/connectors/index.ts",
+      "target": "class:src/connectors/index.ts:ConnectorRegistry",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/connectors/minimax.ts",
+      "target": "class:src/connectors/minimax.ts:MiniMaxConnector",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/connectors/moonshot.ts",
+      "target": "class:src/connectors/moonshot.ts:MoonshotConnector",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/connectors/openai.ts",
+      "target": "class:src/connectors/openai.ts:OpenAIConnector",
+      "type": "exports",
+      "direction": "forward",
+      "weight": 0.8
+    },
+    {
+      "source": "file:src/connectors/index.ts",
+      "target": "class:src/connectors/index.ts:ConnectorRegistry",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:src/connectors/index.ts",
+      "target": "class:src/connectors/claude.ts:ClaudeConnector",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:src/connectors/index.ts",
+      "target": "class:src/connectors/openai.ts:OpenAIConnector",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:src/connectors/index.ts",
+      "target": "class:src/connectors/gemini.ts:GeminiConnector",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:src/connectors/index.ts",
+      "target": "class:src/connectors/minimax.ts:MiniMaxConnector",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:src/connectors/index.ts",
+      "target": "class:src/connectors/moonshot.ts:MoonshotConnector",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:src/connectors/index.ts",
+      "target": "class:src/connectors/glm.ts:GLMConnector",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:src/connectors/index.ts",
+      "target": "class:src/connectors/deepseek.ts:DeepSeekConnector",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:src/types/connector.ts",
+      "target": "file:src/types/index.ts",
+      "type": "depends_on",
+      "direction": "forward",
+      "weight": 0.6
+    },
+    {
+      "source": "file:src/types/index.ts",
+      "target": "file:src/types/connector.ts",
+      "type": "related",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:src/connectors/claude.ts",
+      "target": "file:src/connectors/__tests__/claude.test.ts",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:src/connectors/deepseek.ts",
+      "target": "file:src/connectors/__tests__/deepseek.test.ts",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:src/connectors/gemini.ts",
+      "target": "file:src/connectors/__tests__/gemini.test.ts",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:src/connectors/glm.ts",
+      "target": "file:src/connectors/__tests__/glm.test.ts",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:src/connectors/minimax.ts",
+      "target": "file:src/connectors/__tests__/minimax.test.ts",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:src/connectors/moonshot.ts",
+      "target": "file:src/connectors/__tests__/moonshot.test.ts",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    },
+    {
+      "source": "file:src/connectors/openai.ts",
+      "target": "file:src/connectors/__tests__/openai.test.ts",
+      "type": "tested_by",
+      "direction": "forward",
+      "weight": 0.5
+    }
+  ]
+}
