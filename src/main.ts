@@ -874,6 +874,136 @@ function setupIPC() {
     }
   });
 
+  // OAuth
+  handlers.register(IPC_CHANNELS.OAUTH_LOGIN, async (event, request) => {
+    try {
+      if (!agent) throw new Error('Agent not initialized');
+      const token = await agent.getOAuthToken(request.data.provider);
+      return createSuccessResponse(request.id, { provider: request.data.provider, token: token || null, authenticated: !!token });
+    } catch (error: any) {
+      return createErrorResponse(request.id, error.message);
+    }
+  });
+
+  handlers.register(IPC_CHANNELS.OAUTH_RESPOND, async (event, request) => {
+    return createSuccessResponse(request.id, { success: true, note: 'OAuth callback received' });
+  });
+
+  handlers.register(IPC_CHANNELS.OAUTH_CANCEL, async (event, request) => {
+    return createSuccessResponse(request.id, { cancelled: true });
+  });
+
+  // Permissions
+  handlers.register(IPC_CHANNELS.PERMISSION_REQUEST, async (event, request) => {
+    try {
+      if (!agent) throw new Error('Agent not initialized');
+      const { type, path, operation } = request.data;
+      const allowed = await agent.checkPermission(type || 'file', path, operation || 'read');
+      return createSuccessResponse(request.id, { type, path, operation, granted: allowed });
+    } catch (error: any) {
+      return createErrorResponse(request.id, error.message);
+    }
+  });
+
+  handlers.register(IPC_CHANNELS.PERMISSION_PATH_REQUEST, async (event, request) => {
+    try {
+      if (!agent) throw new Error('Agent not initialized');
+      const { path, operation } = request.data;
+      const allowed = await agent.checkPermission('directory', path, operation || 'read');
+      return createSuccessResponse(request.id, { path, operation, granted: allowed });
+    } catch (error: any) {
+      return createErrorResponse(request.id, error.message);
+    }
+  });
+
+  handlers.register(IPC_CHANNELS.PERMISSION_RESPOND, async (event, request) => {
+    try {
+      if (!agent) throw new Error('Agent not initialized');
+      if (request.data.granted) {
+        agent.grantPermission('file', request.data.path || '*', request.data.operation || 'read');
+      }
+      return createSuccessResponse(request.id, { success: true });
+    } catch (error: any) {
+      return createErrorResponse(request.id, error.message);
+    }
+  });
+
+  handlers.register(IPC_CHANNELS.PERMISSION_CANCEL, async (event, request) => {
+    return createSuccessResponse(request.id, { cancelled: true });
+  });
+
+  // Work queue
+  handlers.register(IPC_CHANNELS.QUEUE_LIST, async (event, request) => {
+    return createSuccessResponse(request.id, { items: [], total: 0 });
+  });
+
+  handlers.register(IPC_CHANNELS.QUEUE_ADD, async (event, request) => {
+    try {
+      if (!agent) throw new Error('Agent not initialized');
+      const id = 'job_' + Date.now();
+      if (agent.enqueueJob) {
+        await agent.enqueueJob(request.data.type || 'default', request.data);
+      }
+      return createSuccessResponse(request.id, { item: { id, ...request.data } });
+    } catch (error: any) {
+      return createErrorResponse(request.id, error.message);
+    }
+  });
+
+  handlers.register(IPC_CHANNELS.QUEUE_REMOVE, async (event, request) => {
+    return createSuccessResponse(request.id, { removed: true });
+  });
+
+  // Scheduled tasks (Cron)
+  handlers.register(IPC_CHANNELS.CRON_LIST, async (event, request) => {
+    try {
+      const { readdirSync, existsSync } = require('fs');
+      const { join } = require('path');
+      const cronDir = join(app.getPath('userData'), 'cron');
+      let tasks = [];
+      if (existsSync(cronDir)) {
+        tasks = readdirSync(cronDir).filter((f: string) => f.endsWith('.json')).map((f: string) => {
+          try {
+            return JSON.parse(require('fs').readFileSync(join(cronDir, f), 'utf8'));
+          } catch { return null; }
+        }).filter(Boolean);
+      }
+      return createSuccessResponse(request.id, { tasks, total: tasks.length });
+    } catch (error: any) {
+      return createErrorResponse(request.id, error.message);
+    }
+  });
+
+  handlers.register(IPC_CHANNELS.CRON_DELETE, async (event, request) => {
+    try {
+      const { unlinkSync, existsSync } = require('fs');
+      const { join } = require('path');
+      const path = join(app.getPath('userData'), 'cron', request.data.taskId + '.json');
+      if (existsSync(path)) unlinkSync(path);
+      return createSuccessResponse(request.id, { deleted: true });
+    } catch (error: any) {
+      return createErrorResponse(request.id, error.message);
+    }
+  });
+
+  handlers.register(IPC_CHANNELS.CRON_SET_ENABLED, async (event, request) => {
+    try {
+      const { writeFileSync, readFileSync, existsSync, mkdirSync } = require('fs');
+      const { join } = require('path');
+      const cronDir = join(app.getPath('userData'), 'cron');
+      if (!existsSync(cronDir)) mkdirSync(cronDir, { recursive: true });
+      const path = join(cronDir, request.data.taskId + '.json');
+      if (existsSync(path)) {
+        const task = JSON.parse(readFileSync(path, 'utf8'));
+        task.enabled = request.data.enabled;
+        writeFileSync(path, JSON.stringify(task, null, 2));
+      }
+      return createSuccessResponse(request.id, { taskId: request.data.taskId, enabled: request.data.enabled });
+    } catch (error: any) {
+      return createErrorResponse(request.id, error.message);
+    }
+  });
+
   handlers.setup();
   logger.info('IPC handlers registered');
 }
