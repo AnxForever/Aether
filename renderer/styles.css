@@ -582,11 +582,22 @@ kbd {
   min-width: 0;
 }
 
+.message-header {
+  display: flex;
+  align-items: baseline;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-xs);
+}
+
 .message-role {
   font-size: 13px;
   font-weight: 600;
-  margin-bottom: var(--spacing-xs);
   color: var(--text-primary);
+}
+
+.message-time {
+  font-size: 11px;
+  color: var(--text-muted);
 }
 
 .message-text {
@@ -810,6 +821,33 @@ kbd {
 .send-btn:disabled {
   opacity: 0.4;
   cursor: not-allowed;
+}
+
+.stop-btn {
+  width: 56px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  background: var(--error);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  transition: all var(--transition);
+  animation: fadeIn 0.15s ease-out;
+}
+
+.stop-btn:hover {
+  background: #A33232;
+}
+
+.stop-icon {
+  width: 8px;
+  height: 8px;
+  background: white;
+  border-radius: 1px;
 }
 
 .composer-hint {

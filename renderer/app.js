@@ -544,10 +544,14 @@
     const avatar = msg.role === 'user' ? 'You' : 'Æ';
     const roleLabel = msg.role === 'user' ? 'You' : 'Aether';
 
+    const time = msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
     div.innerHTML = `
       <div class="message-avatar">${escapeHtml(avatar)}</div>
       <div class="message-content">
-        <div class="message-role">${escapeHtml(roleLabel)}</div>
+        <div class="message-header">
+          <span class="message-role">${escapeHtml(roleLabel)}</span>
+          <span class="message-time">${time}</span>
+        </div>
         <div class="message-text">${formatMessage(msg.content)}</div>
         <div class="message-actions">
           <button class="message-action" data-action="copy-msg">Copy All</button>
@@ -689,7 +693,12 @@
     scrollToBottom();
 
     state.isStreaming = true;
-    el.sendBtn.disabled = true;
+    el.sendBtn.classList.add('hidden');
+    const stopBtn = document.createElement('button');
+    stopBtn.className = 'stop-btn';
+    stopBtn.innerHTML = '<span class="stop-icon"></span>Stop';
+    stopBtn.addEventListener('click', () => stopStreaming(stopBtn));
+    el.sendBtn.parentElement.insertBefore(stopBtn, el.sendBtn);
 
     try {
       if (state.settings.streamResponse) {
@@ -718,8 +727,20 @@
       scrollToBottom();
     } finally {
       state.isStreaming = false;
+      const stopEl = el.sendBtn.parentElement.querySelector('.stop-btn');
+      if (stopEl) stopEl.remove();
+      el.sendBtn.classList.remove('hidden');
       el.sendBtn.disabled = false;
     }
+  }
+
+  function stopStreaming(stopBtn) {
+    if (api && api.stopChat) callApi(api.stopChat).catch(() => {});
+    state.isStreaming = false;
+    if (stopBtn) stopBtn.remove();
+    el.sendBtn.classList.remove('hidden');
+    el.sendBtn.disabled = false;
+    showToast('Stopped', 'Generation stopped', 'warning', 2500);
   }
 
   async function streamChat(text) {
