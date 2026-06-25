@@ -26,6 +26,7 @@
     },
     exportFormat: 'markdown',
     sidebarCollapsed: false,
+    pinnedSessions: JSON.parse(localStorage.getItem('aether_pinned') || '[]'),
   };
 
   // ============================================================
@@ -433,14 +434,19 @@
       el.sessionsList.appendChild(header);
 
       for (const session of sessions) {
+        const isPinned = state.pinnedSessions.includes(session.id);
         const item = document.createElement('div');
-        item.className = 'session-item' + (session.id === state.currentSessionId ? ' active' : '');
+        item.className = 'session-item' + (session.id === state.currentSessionId ? ' active' : '') + (isPinned ? ' pinned' : '');
         item.innerHTML = `
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          ${isPinned ? '<svg class="pin-icon" width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/></svg>' : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>'}
           <span class="session-title">${escapeHtml(session.title || 'New Chat')}</span>
           ${session.updatedAt ? '<span class="session-meta">' + timeAgo(session.updatedAt) + '</span>' : ''}
         `;
         item.addEventListener('click', () => loadSession(session.id));
+        item.addEventListener('contextmenu', (e) => {
+          e.preventDefault();
+          showContextMenu(e.clientX, e.clientY, session.id, isPinned);
+        });
         el.sessionsList.appendChild(item);
       }
     }
@@ -452,17 +458,29 @@
     const yesterday = new Date(today); yesterday.setDate(yesterday.getDate() - 1);
     const weekAgo = new Date(today); weekAgo.setDate(weekAgo.getDate() - 7);
 
-    const groups = { Today: [], Yesterday: [], 'This Week': [], Older: [] };
-    for (const s of sessions) {
+    // Sort: pinned first, then by time
+    const sorted = [...sessions].sort((a, b) => {
+      const aPinned = state.pinnedSessions.includes(a.id) ? -1 : 0;
+      const bPinned = state.pinnedSessions.includes(b.id) ? -1 : 0;
+      if (aPinned !== bPinned) return aPinned - bPinned;
+      return (b.updatedAt || b.createdAt || 0) - (a.updatedAt || a.createdAt || 0);
+    });
+
+    const groups = {};
+    const pinnedList = sorted.filter(s => state.pinnedSessions.includes(s.id));
+    if (pinnedList.length > 0) groups['📌 Pinned'] = pinnedList;
+
+    const unpinned = sorted.filter(s => !state.pinnedSessions.includes(s.id));
+    const timeGroups = { Today: [], Yesterday: [], 'This Week': [], Older: [] };
+    for (const s of unpinned) {
       const t = (s.updatedAt || s.createdAt || 0);
-      if (t >= today.getTime()) groups['Today'].push(s);
-      else if (t >= yesterday.getTime()) groups['Yesterday'].push(s);
-      else if (t >= weekAgo.getTime()) groups['This Week'].push(s);
-      else groups['Older'].push(s);
+      if (t >= today.getTime()) timeGroups['Today'].push(s);
+      else if (t >= yesterday.getTime()) timeGroups['Yesterday'].push(s);
+      else if (t >= weekAgo.getTime()) timeGroups['This Week'].push(s);
+      else timeGroups['Older'].push(s);
     }
-    // Remove empty groups
-    for (const key of Object.keys(groups)) {
-      if (groups[key].length === 0) delete groups[key];
+    for (const [k, v] of Object.entries(timeGroups)) {
+      if (v.length > 0) groups[k] = v;
     }
     return groups;
   }
@@ -560,6 +578,47 @@
   function toggleShortcutsModal() {
     const m = document.getElementById('shortcutsModal');
     m.classList.toggle('hidden');
+  }
+
+  function togglePin(sessionId) {
+    const idx = state.pinnedSessions.indexOf(sessionId);
+    if (idx >= 0) {
+      state.pinnedSessions.splice(idx, 1);
+      showToast('Unpinned', 'Removed from pinned', 'info', 2000);
+    } else {
+      state.pinnedSessions.push(sessionId);
+      showToast('Pinned', 'Added to pinned', 'success', 2000);
+    }
+    localStorage.setItem('aether_pinned', JSON.stringify(state.pinnedSessions));
+    renderSessions(el.searchInput.value);
+  }
+
+  let contextMenuEl = null;
+  function showContextMenu(x, y, sessionId, isPinned) {
+    hideContextMenu();
+    const menu = document.createElement('div');
+    menu.className = 'context-menu';
+    menu.style.left = x + 'px';
+    menu.style.top = y + 'px';
+    menu.innerHTML = `
+      <div class="ctx-item" data-action="pin">${isPinned ? '📌 Unpin' : '📌 Pin'}</div>
+      <div class="ctx-item danger" data-action="delete">🗑 Delete</div>
+    `;
+    menu.querySelector('[data-action="pin"]').addEventListener('click', () => { togglePin(sessionId); hideContextMenu(); });
+    menu.querySelector('[data-action="delete"]').addEventListener('click', () => {
+      if (confirm('Delete this conversation?')) {
+        callApi(api.deleteSession, sessionId).then(() => loadSessions()).catch(() => {});
+        if (state.currentSessionId === sessionId) { state.currentSessionId = null; state.messages = []; renderMessages(); }
+      }
+      hideContextMenu();
+    });
+    document.body.appendChild(menu);
+    contextMenuEl = menu;
+    setTimeout(() => document.addEventListener('click', hideContextMenu, { once: true }), 0);
+  }
+
+  function hideContextMenu() {
+    if (contextMenuEl) { contextMenuEl.remove(); contextMenuEl = null; }
   }
 
   async function createNewSession() {

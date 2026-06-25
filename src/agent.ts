@@ -64,6 +64,50 @@ import type { QRLoginSession } from './oauth/qr-login';
 import { BackupManager } from './backup/backup-manager';
 import type { BackupConfig, BackupMetadata } from './backup/backup-manager';
 import { LocalServer } from './cli/local-server';
+import { PermissionManager } from './permission/manager';
+import type { PermissionType, PermissionOperation, PermissionRequest, PermissionDecision } from './permission/manager';
+import { TTS } from './speech/tts';
+import type { TTSConfig, Voice, SynthesisResult } from './speech/tts';
+import { ProcessManager } from './system/process-manager';
+import type { ProcessConfig, ManagedProcessInfo } from './system/process-manager';
+import { FeedbackExporter } from './feedback/exporter';
+import type { ExportOptions } from './feedback/exporter';
+import { TelemetrySystem } from './telemetry/telemetry-system';
+import type { TelemetryConfig } from './telemetry/telemetry-system';
+import { AnalyticsClient } from './analytics/analytics-client';
+import type { AnalyticsConfig, UserProperties } from './analytics/analytics-client';
+import { I18nManager } from './i18n/i18n-manager';
+import type { SupportedLocale, I18nNamespace, TranslationOptions, I18nConfig } from './i18n/types';
+
+// Module 1: Observability (OpenTelemetry)
+import { TelemetryManager } from './observability/telemetry-manager';
+import type { TelemetryConfig as OTelTelemetryConfig } from './observability/types';
+
+// Module 2: Sandbox
+import { SandboxExecutor, ToolSandbox } from './sandbox/sandbox-executor';
+import type { SandboxConfig, SandboxResult } from './sandbox/sandbox-executor';
+
+// Module 3: Updater
+import { AutoUpdater } from './updater/auto-updater';
+import type { AutoUpdaterConfig, UpdateInfo } from './updater/auto-updater';
+
+// Module 4: Gateway
+import { GatewayClient } from './gateway/gateway-client';
+import type { GatewayConfig, ConnectionState, MessageResponse } from './gateway/gateway-client';
+
+// Module 5: Diagnostics
+import { NetworkDiagnostics } from './diagnostics/network';
+import type { DiagnosticResult } from './diagnostics/network';
+import { SystemDiagnostics } from './diagnostics/system';
+import type { SystemInfo, HealthStatus } from './diagnostics/system';
+
+// Module 6: Queue
+import { WorkQueueManager } from './queue/manager';
+import type { WorkItem, WorkPriority, WorkStatus } from './queue/manager';
+
+// Module 7: Modes
+import { ModeManager } from './modes/mode-manager';
+import type { Mode, AgentMode } from './modes/mode-manager';
 
 const logger = createLogger('NexusAgent');
 
@@ -123,6 +167,79 @@ export interface NexusAgentConfig {
     enabled?: boolean;
     port?: number;
   };
+  /** Permission config */
+  permission?: {
+    enabled?: boolean;
+    dbPath?: string;
+  };
+  /** Speech/TTS config */
+  speech?: TTSConfig;
+  /** Process manager config */
+  process?: {
+    enabled?: boolean;
+  };
+  /** Feedback export config */
+  feedback?: {
+    enabled?: boolean;
+    dataDir?: string;
+    outputDir?: string;
+  };
+  /** Telemetry config */
+  telemetry?: {
+    enabled?: boolean;
+    serviceName?: string;
+    endpoint?: string;
+  };
+  /** Analytics config */
+  analytics?: {
+    enabled?: boolean;
+    apiKey?: string;
+    host?: string;
+  };
+  /** i18n config */
+  i18n?: Partial<I18nConfig>;
+  /** Observability (OpenTelemetry) config */
+  observability?: {
+    enabled?: boolean;
+    serviceName?: string;
+    serviceVersion?: string;
+  };
+  /** Sandbox config */
+  sandbox?: {
+    enabled?: boolean;
+    timeout?: number;
+    maxMemoryMB?: number;
+  };
+  /** Auto updater config (electron only) */
+  updater?: {
+    enabled?: boolean;
+    autoCheck?: boolean;
+    autoDownload?: boolean;
+    updateUrl?: string;
+  };
+  /** Gateway config */
+  gateway?: {
+    enabled?: boolean;
+    url?: string;
+    apiKey?: string;
+  };
+  /** Diagnostics config */
+  diagnostics?: {
+    enabled?: boolean;
+    apiEndpoints?: { provider: string; endpoint: string }[];
+  };
+  /** Work queue config */
+  queue?: {
+    enabled?: boolean;
+    dbPath?: string;
+    maxConcurrent?: number;
+  };
+  /** Mode config */
+  mode?: {
+    enabled?: boolean;
+    modsDirectory?: string;
+    defaultMode?: AgentMode;
+  };
 }
 
 export class NexusAgent {
@@ -153,6 +270,26 @@ export class NexusAgent {
   private qrLogin?: QRLoginManager;
   private backupManager?: BackupManager;
   private localServer?: LocalServer;
+
+  // New 7 modules
+  private permissionManager?: PermissionManager;
+  private tts?: TTS;
+  private processManager?: ProcessManager;
+  private feedbackExporter?: FeedbackExporter;
+  private telemetrySystem?: TelemetrySystem;
+  private analyticsClient?: AnalyticsClient;
+  private i18nManager?: I18nManager;
+
+  // 7 activated modules
+  private telemetryManager?: TelemetryManager;
+  private sandboxExecutor?: SandboxExecutor;
+  private toolSandbox?: ToolSandbox;
+  private autoUpdater?: AutoUpdater;
+  private gatewayClient?: GatewayClient;
+  private networkDiagnostics?: NetworkDiagnostics;
+  private systemDiagnostics?: SystemDiagnostics;
+  private workQueueManager?: WorkQueueManager;
+  private modeManager?: ModeManager;
 
   constructor(config: NexusAgentConfig) {
     this.config = config;
@@ -338,6 +475,62 @@ export class NexusAgent {
     this.qrLogin = new QRLoginManager(oauthConfig?.baseUrl || 'http://localhost:3000');
     logger.info('QR login manager initialized');
 
+    // Initialize Permission Manager
+    const permissionDbPath = this.config.permission?.dbPath || join(agentDataDir, 'permissions.db');
+    this.permissionManager = new PermissionManager(permissionDbPath);
+    logger.info('Permission manager initialized');
+
+    // Initialize Speech/TTS
+    this.tts = new TTS(this.config.speech || {});
+    await this.tts.initialize();
+    logger.info('TTS initialized');
+
+    // Initialize Process Manager
+    if (this.config.process?.enabled !== false) {
+      this.processManager = new ProcessManager();
+      logger.info('Process manager initialized');
+    }
+
+    // Initialize Feedback Exporter
+    if (this.config.feedback?.enabled !== false) {
+      const feedbackDataDir = this.config.feedback?.dataDir || agentDataDir;
+      const feedbackOutputDir = this.config.feedback?.outputDir || join(agentDataDir, 'exports');
+      this.feedbackExporter = new FeedbackExporter(feedbackDataDir, feedbackOutputDir);
+      logger.info('Feedback exporter initialized');
+    }
+
+    // Initialize Telemetry
+    if (this.config.telemetry?.enabled !== false) {
+      this.telemetrySystem = new TelemetrySystem({
+        serviceName: this.config.telemetry?.serviceName || 'nexus-agent',
+        endpoint: this.config.telemetry?.endpoint,
+        enabled: true,
+      });
+      await this.telemetrySystem.initialize();
+      logger.info('Telemetry system initialized');
+    }
+
+    // Initialize Analytics
+    const analyticsApiKey = this.config.analytics?.apiKey || process.env.POSTHOG_API_KEY;
+    if (analyticsApiKey && this.config.analytics?.enabled !== false) {
+      this.analyticsClient = new AnalyticsClient({
+        apiKey: analyticsApiKey,
+        host: this.config.analytics?.host,
+        enabled: true,
+      });
+      await this.analyticsClient.initialize();
+      logger.info('Analytics client initialized');
+    }
+
+    // Initialize i18n
+    try {
+      this.i18nManager = new I18nManager(this.config.i18n);
+      await this.i18nManager.initialize();
+      logger.info('i18n manager initialized');
+    } catch (error) {
+      logger.warn(`i18n init failed: ${(error as Error).message}`);
+    }
+
     // Lazy-init tools
     this.chartGenerator = new ChartGenerator();
     this.dataTransformer = new DataTransformer();
@@ -363,6 +556,10 @@ export class NexusAgent {
     if (this.localServer) {
       await this.localServer.stop();
     }
+    await this.telemetrySystem?.destroy();
+    await this.analyticsClient?.destroy();
+    await this.i18nManager?.cleanup();
+    this.processManager?.stopAll();
     logger.info('Agent cleaned up');
   }
 

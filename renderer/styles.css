@@ -301,6 +301,32 @@ kbd {
   color: var(--text-muted);
 }
 
+.pin-icon { flex-shrink: 0; color: var(--accent); }
+
+/* Context Menu */
+.context-menu {
+  position: fixed;
+  z-index: 3000;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  padding: var(--spacing-xs);
+  min-width: 160px;
+  animation: fadeIn 0.1s ease-out;
+}
+.ctx-item {
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  cursor: pointer;
+  color: var(--text-primary);
+  transition: background var(--transition);
+}
+.ctx-item:hover { background: var(--bg-hover); }
+.ctx-item.danger { color: var(--error); }
+.ctx-item.danger:hover { background: #FCE8E8; }
+
 .sidebar-footer {
   padding: var(--spacing-sm);
   border-top: 1px solid var(--border);
