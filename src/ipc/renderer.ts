@@ -124,6 +124,18 @@ export interface PreloadAPI {
   enableSkill: (skillId: string) => Promise<void>;
   disableSkill: (skillId: string) => Promise<void>;
 
+  // Onboarding
+  getOnboardingStatus: () => Promise<any>;
+  getOnboardingProgress: () => Promise<any>;
+  nextOnboardingStep: () => Promise<any>;
+  skipOnboardingStep: () => Promise<any>;
+  validateAPIKey: (provider: string, apiKey: string) => Promise<any>;
+  saveAPIKey: (provider: string, apiKey: string) => Promise<void>;
+  saveModel: (modelId: string) => Promise<void>;
+  completeOnboarding: (data: any) => Promise<void>;
+  skipOnboarding: () => Promise<void>;
+  resetOnboarding: () => Promise<void>;
+
   // Events
   onMessage: (callback: EventCallback) => void;
   onStreamChunk: (callback: EventCallback) => void;
@@ -171,6 +183,24 @@ export function createPreloadAPI(client: IPCClient): PreloadAPI {
     listSkills: () => client.invoke(IPC_CHANNELS.SKILLS_LIST, {}),
     enableSkill: (skillId) => client.invoke(IPC_CHANNELS.SKILLS_ENABLE, { skillId }),
     disableSkill: (skillId) => client.invoke(IPC_CHANNELS.SKILLS_DISABLE, { skillId }),
+
+    // Onboarding
+    getOnboardingStatus: () => client.invoke(IPC_CHANNELS.ONBOARDING_GET_STATUS, {}),
+    getOnboardingProgress: () => client.invoke(IPC_CHANNELS.ONBOARDING_GET_PROGRESS, {}),
+    nextOnboardingStep: () => client.invoke(IPC_CHANNELS.ONBOARDING_NEXT_STEP, {}),
+    skipOnboardingStep: () => client.invoke(IPC_CHANNELS.ONBOARDING_SKIP_STEP, {}),
+    validateAPIKey: (provider, apiKey) =>
+      client.invoke(IPC_CHANNELS.ONBOARDING_VALIDATE_API_KEY, { provider, apiKey }),
+    saveAPIKey: (provider, apiKey) =>
+      client.invoke(IPC_CHANNELS.ONBOARDING_SAVE_API_KEY, { provider, apiKey }),
+    saveModel: (modelId) =>
+      client.invoke(IPC_CHANNELS.ONBOARDING_SAVE_MODEL, { modelId }),
+    completeOnboarding: (data) =>
+      client.invoke(IPC_CHANNELS.ONBOARDING_COMPLETE, data),
+    skipOnboarding: () =>
+      client.invoke(IPC_CHANNELS.ONBOARDING_SKIP, {}),
+    resetOnboarding: () =>
+      client.invoke(IPC_CHANNELS.ONBOARDING_RESET, {}),
 
     // Events
     onMessage: (callback) => client.on(IPC_CHANNELS.EVENT_MESSAGE, callback),

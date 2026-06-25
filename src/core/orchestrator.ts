@@ -11,7 +11,12 @@ import { CycleManager } from './cycle-manager';
 import { connectorRegistry } from '../connectors';
 import { randomUUID } from 'crypto';
 import { LearningIntegration } from './learning-integration';
+import { SkillCreator } from '../learning/skill-creator';
+import { SkillCreatorIntegration } from './skill-creator-integration';
+import { WorkflowIntegration } from './workflow-integration';
+import { skillRegistry } from '../skills/registry';
 import { createLogger } from '../utils/logger';
+import { join } from 'path';
 
 const logger = createLogger('Orchestrator');
 
@@ -21,6 +26,7 @@ export interface OrchestratorConfig {
   maxConcurrentCycles: number;
   dataDir?: string;
   enableLearning?: boolean;
+  enableWorkflows?: boolean;
 }
 
 export class Orchestrator extends EventEmitter {
@@ -29,6 +35,8 @@ export class Orchestrator extends EventEmitter {
   private config: OrchestratorConfig;
   private activeCycles: Map<string, Cycle> = new Map();
   private learningIntegration?: LearningIntegration;
+  private skillCreatorIntegration?: SkillCreatorIntegration;
+  private workflowIntegration?: WorkflowIntegration;
 
   constructor(config: OrchestratorConfig) {
     super();
@@ -47,6 +55,25 @@ export class Orchestrator extends EventEmitter {
 
       this.learningIntegration.start();
       logger.info('Learning integration enabled');
+
+      // Initialize skill creator integration
+      const skillsDir = join(config.dataDir, 'skills', 'dynamic');
+      const skillCreator = new SkillCreator(skillsDir);
+      this.skillCreatorIntegration = new SkillCreatorIntegration(
+        skillCreator,
+        skillRegistry
+      );
+      logger.info('Skill creator integration enabled');
+    }
+
+    // Initialize workflow integration if enabled
+    if (config.enableWorkflows !== false && config.dataDir) {
+      this.workflowIntegration = new WorkflowIntegration({
+        dataDir: config.dataDir,
+        enableScheduler: true,
+        autoRegisterTemplates: true
+      });
+      logger.info('Workflow integration enabled');
     }
   }
 
@@ -74,7 +101,9 @@ export class Orchestrator extends EventEmitter {
         cycle,
         config: this.config,
         connectorRegistry,
-        learningIntegration: this.learningIntegration
+        skillRegistry,
+        learningIntegration: this.learningIntegration,
+        skillCreatorIntegration: this.skillCreatorIntegration
       });
 
       // Update cycle status
@@ -200,6 +229,13 @@ export class Orchestrator extends EventEmitter {
   }
 
   /**
+   * Get workflow integration
+   */
+  getWorkflowIntegration(): WorkflowIntegration | undefined {
+    return this.workflowIntegration;
+  }
+
+  /**
    * Record user feedback
    */
   async recordUserFeedback(
@@ -250,11 +286,100 @@ export class Orchestrator extends EventEmitter {
   }
 
   /**
+   * Get skill creator integration
+   */
+  getSkillCreatorIntegration(): SkillCreatorIntegration | undefined {
+    return this.skillCreatorIntegration;
+  }
+
+  /**
+   * Create skill from description
+   */
+  async createSkill(description: string): Promise<{
+    success: boolean;
+    skillId?: string;
+    error?: string;
+  }> {
+    if (!this.skillCreatorIntegration) {
+      return {
+        success: false,
+        error: 'Skill creator not enabled. Enable learning to use dynamic skill creation.'
+      };
+    }
+
+    return await this.skillCreatorIntegration.createSkillFromRequest(description);
+  }
+
+  /**
+   * Initialize orchestrator
+   */
+  async initialize(): Promise<void> {
+    // Initialize workflow integration
+    if (this.workflowIntegration) {
+      await this.workflowIntegration.initialize();
+
+      // Register workflow skill
+      const { createWorkflowSkill } = await import('../workflow/workflow-skill');
+      const workflowSkill = createWorkflowSkill(this.workflowIntegration);
+      skillRegistry.register(workflowSkill);
+      logger.info('Workflow skill registered');
+    }
+
+    logger.info('Orchestrator initialized');
+  }
+
+  /**
+   * Process message (wrapper for processInput)
+   */
+  async processMessage(message: Message, sessionId?: string): Promise<Message> {
+    const input: UserInput = {
+      transcript: message.content
+    };
+
+    const context: AgentContext = {
+      sessionId: sessionId || randomUUID(),
+      deviceId: 'gateway',
+      settings: {
+        model: this.config.defaultModel,
+        language: 'en',
+        theme: 'dark'
+      },
+      capabilities: []
+    };
+
+    const response = await this.processInput(input, context);
+
+    return response;
+  }
+
+  /**
+   * Get available skills
+   */
+  getAvailableSkills(): any[] {
+    // TODO: Implement skill registry integration
+    logger.warn('getAvailableSkills not yet implemented');
+    return [];
+  }
+
+  /**
+   * Get specific skill
+   */
+  getSkill(skillId: string): any | null {
+    // TODO: Implement skill registry integration
+    logger.warn('getSkill not yet implemented');
+    return null;
+  }
+
+  /**
    * Cleanup resources
    */
   async cleanup(): Promise<void> {
     if (this.learningIntegration) {
       this.learningIntegration.stop();
+    }
+
+    if (this.workflowIntegration) {
+      await this.workflowIntegration.cleanup();
     }
   }
 }

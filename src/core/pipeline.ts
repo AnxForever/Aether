@@ -16,6 +16,7 @@ export interface PipelineContext {
   connectorRegistry: any;
   skillRegistry?: any; // Optional skill registry for tool execution
   learningIntegration?: any; // Optional learning integration
+  skillCreatorIntegration?: any; // Optional skill creator integration
 }
 
 export class Pipeline {
@@ -26,6 +27,7 @@ export class Pipeline {
     this.stages = [
       { name: 'context', execute: this.contextStage.bind(this) },
       { name: 'inference', execute: this.inferenceStage.bind(this) },
+      { name: 'skill-creation-detection', execute: this.skillCreationDetectionStage.bind(this) },
       { name: 'tool-execution', execute: this.toolExecutionStage.bind(this) },
       { name: 'response', execute: this.responseStage.bind(this) }
     ];
@@ -96,7 +98,45 @@ export class Pipeline {
   }
 
   /**
-   * Stage 3: Tool execution (if needed)
+   * Stage 3: Skill Creation Detection
+   */
+  private async skillCreationDetectionStage(context: any): Promise<any> {
+    const { cycle, skillCreatorIntegration, aiResponse } = context;
+
+    // Skip if no skill creator integration
+    if (!skillCreatorIntegration) {
+      return context;
+    }
+
+    // Check if user wants to create a skill
+    const userMessage = cycle.input.transcript;
+    const hasIntent = skillCreatorIntegration.detectSkillCreationIntent(userMessage);
+
+    if (!hasIntent) {
+      return context;
+    }
+
+    logger.info('Skill creation intent detected');
+
+    // Extract skill description
+    const description = skillCreatorIntegration.extractSkillDescription(userMessage);
+    if (!description) {
+      logger.warn('Could not extract skill description from user message');
+      return context;
+    }
+
+    // Create skill
+    const result = await skillCreatorIntegration.createSkillFromRequest(description);
+
+    // Add skill creation result to context
+    return {
+      ...context,
+      skillCreationResult: result
+    };
+  }
+
+  /**
+   * Stage 4: Tool execution (if needed)
    */
   private async toolExecutionStage(context: any): Promise<any> {
     const { aiResponse, skillRegistry, learningIntegration } = context;
@@ -189,19 +229,30 @@ export class Pipeline {
   }
 
   /**
-   * Stage 4: Response formatting
+   * Stage 5: Response formatting
    */
   private async responseStage(context: any): Promise<Message> {
-    const { aiResponse } = context;
+    const { aiResponse, skillCreationResult } = context;
+
+    // If skill was created, append creation result to response
+    let content = aiResponse.content;
+    if (skillCreationResult) {
+      if (skillCreationResult.success) {
+        content += `\n\n✅ 已成功创建新技能！\n技能ID: ${skillCreationResult.skillId}\n\n⚠️ 注意：动态生成的工具暂未启用执行功能（需要安全审查）。工具定义已注册，但调用时会返回提示信息。`;
+      } else {
+        content += `\n\n❌ 技能创建失败：${skillCreationResult.error}`;
+      }
+    }
 
     return {
       id: randomUUID(),
       role: 'assistant',
-      content: aiResponse.content,
+      content,
       timestamp: Date.now(),
       metadata: {
         finishReason: aiResponse.finishReason,
-        usage: aiResponse.usage
+        usage: aiResponse.usage,
+        skillCreated: skillCreationResult?.success || false
       }
     };
   }

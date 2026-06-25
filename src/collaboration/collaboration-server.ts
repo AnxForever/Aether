@@ -388,7 +388,8 @@ export class CollaborationServer extends EventEmitter {
     }
 
     // Remove from all sessions
-    for (const [sessionId, users] of this.sessions.entries()) {
+    const sessionEntries = Array.from(this.sessions.entries());
+    for (const [sessionId, users] of sessionEntries) {
       if (users.has(userId)) {
         users.delete(userId);
 
@@ -427,7 +428,8 @@ export class CollaborationServer extends EventEmitter {
     const users = this.sessions.get(sessionId);
     if (!users) return;
 
-    for (const userId of users) {
+    const userArray = Array.from(users);
+    for (const userId of userArray) {
       if (userId !== excludeUserId) {
         this.sendToUser(userId, message);
       }

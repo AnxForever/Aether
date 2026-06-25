@@ -13,6 +13,7 @@ const api = createPreloadAPI(ipcClient);
 
 // Expose API to renderer
 contextBridge.exposeInMainWorld('nexus', api);
+contextBridge.exposeInMainWorld('electronAPI', api); // Alias for compatibility
 
 // Type declarations for renderer
 export type NexusAPI = typeof api;
@@ -20,5 +21,6 @@ export type NexusAPI = typeof api;
 declare global {
   interface Window {
     nexus: NexusAPI;
+    electronAPI: NexusAPI;
   }
 }

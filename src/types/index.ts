@@ -41,6 +41,15 @@ export interface AgentSettings {
   streamResponse?: boolean;
   language: 'en' | 'zh';
   theme: 'light' | 'dark' | 'auto';
+  onboarding?: OnboardingState;
+}
+
+export interface OnboardingState {
+  completed: boolean;
+  currentStep: number;
+  stepsCompleted: string[];
+  skipped: boolean;
+  completedAt?: number;
 }
 
 // ============================================================================

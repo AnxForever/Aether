@@ -45,6 +45,42 @@ Pick the best AI for each task:
 - 📄 **Gemini** for long documents (1M context)
 - 🇨🇳 **GLM/MiniMax** for Chinese content
 
+---
+
+## 🆕 New in v2.0 (2026-06-25)
+
+### 🧠 Self-Learning AI
+Your AI learns from every interaction:
+- **Automatic improvement**: AI tracks performance and suggests optimizations
+- **User feedback**: Rate responses (1-5 stars), AI adapts to your preferences
+- **Smart statistics**: See success rates, response times, and satisfaction trends
+- **Learning reports**: Comprehensive analytics on AI performance
+
+### 🛠️ Dynamic Tool Creation
+Say what you need, AI creates it:
+- **"I need a tool to batch rename files"** → Tool created instantly
+- **7-language intent detection**: Works in Chinese and English
+- **Auto-registration**: New tools immediately available
+- **Safe execution**: Generated tools are validated before use
+
+### ⚙️ Workflow Automation
+Complex tasks, automated:
+- **4 built-in templates**: Code deployment, data processing, batch operations, notifications
+- **Cron scheduling**: Run workflows on a schedule
+- **Smart control**: Conditions, loops, parallel execution, auto-retry
+- **AI-powered**: AI can trigger workflows intelligently
+
+### 🏢 Enterprise Ready
+Production-grade infrastructure:
+- **API Gateway**: JWT auth + rate limiting + unified REST API
+- **Real-time collaboration**: Multi-user WebSocket sessions (like Google Docs)
+- **Plugin ecosystem**: Load community extensions with security validation
+- **40+ new APIs**: Complete programmatic control
+
+---
+
+## 🎯 Why Aether?
+
 ### Three Core Principles
 
 1. 🏠 **Local-first** — Your conversations stay on your machine, encrypted, never sent to our servers

@@ -151,6 +151,18 @@ export const IPC_CHANNELS = {
   FILE_UPLOAD: 'file:upload',
   FILE_DELETE: 'file:delete',
 
+  // Onboarding
+  ONBOARDING_GET_STATUS: 'onboarding:getStatus',
+  ONBOARDING_GET_PROGRESS: 'onboarding:getProgress',
+  ONBOARDING_NEXT_STEP: 'onboarding:nextStep',
+  ONBOARDING_SKIP_STEP: 'onboarding:skipStep',
+  ONBOARDING_VALIDATE_API_KEY: 'onboarding:validateApiKey',
+  ONBOARDING_SAVE_API_KEY: 'onboarding:saveApiKey',
+  ONBOARDING_SAVE_MODEL: 'onboarding:saveModel',
+  ONBOARDING_COMPLETE: 'onboarding:complete',
+  ONBOARDING_SKIP: 'onboarding:skip',
+  ONBOARDING_RESET: 'onboarding:reset',
+
   // Events (renderer <- main)
   EVENT_MESSAGE: 'event:message',
   EVENT_STREAM_CHUNK: 'event:stream-chunk',
@@ -479,3 +491,69 @@ export interface ShortcutStatus {
   shortcut: string;
   enabled: boolean;
 }
+
+/**
+ * Onboarding status response
+ */
+export interface OnboardingStatusResponse {
+  isNeeded: boolean;
+  currentStep?: string;
+  completedSteps: string[];
+  totalSteps: number;
+}
+
+/**
+ * Onboarding progress response
+ */
+export interface OnboardingProgressResponse {
+  currentStep: string;
+  completedSteps: string[];
+  totalSteps: number;
+  percentComplete: number;
+}
+
+/**
+ * Validate API key request
+ */
+export interface ValidateAPIKeyRequest {
+  provider: string;
+  apiKey: string;
+}
+
+/**
+ * Validate API key response
+ */
+export interface ValidateAPIKeyResponse {
+  provider: string;
+  valid: boolean;
+  error?: string;
+  model?: string;
+}
+
+/**
+ * Save API key request
+ */
+export interface SaveAPIKeyRequest {
+  provider: string;
+  apiKey: string;
+}
+
+/**
+ * Save model request
+ */
+export interface SaveModelRequest {
+  modelId: string;
+}
+
+/**
+ * Complete onboarding request
+ */
+export interface CompleteOnboardingRequest {
+  selectedProviders: string[];
+  defaultModel: string;
+  language: 'en' | 'zh';
+  theme: 'light' | 'dark' | 'auto';
+  tourCompleted: boolean;
+  completedAt: number;
+}
+

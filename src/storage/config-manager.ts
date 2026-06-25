@@ -194,6 +194,12 @@ export class ConfigManager {
       streamResponse: true,
       language: 'en',
       theme: 'auto',
+      onboarding: {
+        completed: false,
+        currentStep: 0,
+        stepsCompleted: [],
+        skipped: false,
+      },
     };
   }
 

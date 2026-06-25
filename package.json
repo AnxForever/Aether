@@ -2,7 +2,7 @@
   "name": "aether",
   "version": "1.0.0",
   "description": "Aether - Multi-AI orchestration platform with enhanced security and extensibility",
-  "main": "dist/index.js",
+  "main": "dist/main.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",

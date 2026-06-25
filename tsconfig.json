@@ -12,6 +12,8 @@
     "importHelpers": true,
     "isolatedModules": true,
     "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "downlevelIteration": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,
     "noUnusedLocals": false,
@@ -21,7 +23,6 @@
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "moduleResolution": "node",
-    "allowSyntheticDefaultImports": true,
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"],

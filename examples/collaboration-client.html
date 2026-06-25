@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Collaboration Client - Nexus Agent</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: #f5f5f5;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 20px 30px;
+    }
+
+    .header h1 {
+      font-size: 24px;
+      margin-bottom: 5px;
+    }
+
+    .header p {
+      opacity: 0.9;
+      font-size: 14px;
+    }
+
+    .status {
+      padding: 15px 30px;
+      background: #f9f9f9;
+      border-bottom: 1px solid #e0e0e0;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .status-indicator {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #ccc;
+      animation: pulse 2s infinite;
+    }
+
+    .status-indicator.connected {
+      background: #4caf50;
+    }
+
+    .status-indicator.disconnected {
+      background: #f44336;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .connection-form {
+      padding: 20px 30px;
+      display: flex;
+      gap: 10px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .input-group {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    input {
+      padding: 10px 15px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+      font-family: 'Monaco', 'Courier New', monospace;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    button {
+      padding: 10px 20px;
+      background: #667eea;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+      align-self: flex-end;
+    }
+
+    button:hover {
+      background: #5568d3;
+    }
+
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+
+    .main-content {
+      display: grid;
+      grid-template-columns: 1fr 300px;
+      min-height: 500px;
+    }
+
+    .editor-panel {
+      padding: 20px;
+      border-right: 1px solid #e0e0e0;
+    }
+
+    .editor-panel h3 {
+      margin-bottom: 15px;
+      color: #333;
+      font-size: 16px;
+    }
+
+    .editor {
+      width: 100%;
+      min-height: 400px;
+      padding: 15px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-family: 'Monaco', 'Courier New', monospace;
+      font-size: 14px;
+      line-height: 1.6;
+      resize: vertical;
+    }
+
+    .sidebar {
+      padding: 20px;
+      background: #fafafa;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .section {
+      background: white;
+      border-radius: 4px;
+      padding: 15px;
+      border: 1px solid #e0e0e0;
+    }
+
+    .section h4 {
+      font-size: 14px;
+      margin-bottom: 10px;
+      color: #333;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .user-list {
+      list-style: none;
+    }
+
+    .user-item {
+      padding: 8px;
+      margin-bottom: 5px;
+      background: #f5f5f5;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+    }
+
+    .user-avatar {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 600;
+      font-size: 11px;
+    }
+
+    .log {
+      max-height: 200px;
+      overflow-y: auto;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .log-entry {
+      padding: 5px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .log-entry:last-child {
+      border-bottom: none;
+    }
+
+    .log-entry.join { color: #4caf50; }
+    .log-entry.leave { color: #ff9800; }
+    .log-entry.edit { color: #2196f3; }
+    .log-entry.comment { color: #9c27b0; }
+
+    .comment-form {
+      display: flex;
+      gap: 5px;
+      margin-top: 10px;
+    }
+
+    .comment-form input {
+      flex: 1;
+      padding: 8px;
+      font-size: 12px;
+    }
+
+    .comment-form button {
+      padding: 8px 12px;
+      font-size: 12px;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+    }
+
+    .actions button {
+      flex: 1;
+      padding: 8px;
+      font-size: 12px;
+    }
+
+    .actions button.secondary {
+      background: #f5f5f5;
+      color: #666;
+    }
+
+    .actions button.secondary:hover {
+      background: #e0e0e0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🚀 Nexus Agent - Collaboration Client</h1>
+      <p>Real-time collaboration demo with WebSocket</p>
+    </div>
+
+    <div class="status">
+      <div class="status-indicator" id="statusIndicator"></div>
+      <span id="statusText">Disconnected</span>
+    </div>
+
+    <div class="connection-form">
+      <div class="input-group">
+        <label>Your Name</label>
+        <input type="text" id="userName" placeholder="Enter your name" value="User">
+      </div>
+      <div class="input-group">
+        <label>Session ID</label>
+        <input type="text" id="sessionId" placeholder="Enter session ID">
+      </div>
+      <button id="connectBtn" onclick="connect()">Connect</button>
+    </div>
+
+    <div class="main-content">
+      <div class="editor-panel">
+        <h3>📝 Collaborative Editor</h3>
+        <textarea class="editor" id="editor" placeholder="Start typing... Your changes will be synced in real-time" disabled></textarea>
+
+        <div class="comment-form">
+          <input type="text" id="commentInput" placeholder="Add a comment..." disabled>
+          <button onclick="addComment()" disabled id="commentBtn">💬 Comment</button>
+        </div>
+      </div>
+
+      <div class="sidebar">
+        <div class="section">
+          <h4>👥 Active Users (<span id="userCount">0</span>)</h4>
+          <ul class="user-list" id="userList"></ul>
+        </div>
+
+        <div class="section">
+          <h4>📊 Activity Log</h4>
+          <div class="log" id="activityLog"></div>
+        </div>
+
+        <div class="section">
+          <h4>🎮 Actions</h4>
+          <div class="actions">
+            <button onclick="moveCursor()" disabled id="cursorBtn" class="secondary">Move Cursor</button>
+          </div>
+          <div class="actions">
+            <button onclick="disconnect()" disabled id="disconnectBtn" class="secondary">Disconnect</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let ws = null;
+    let userId = null;
+    let currentSession = null;
+    let users = new Map();
+
+    const colors = ['#e91e63', '#9c27b0', '#3f51b5', '#00bcd4', '#4caf50', '#ff9800'];
+
+    function getRandomColor() {
+      return colors[Math.floor(Math.random() * colors.length)];
+    }
+
+    function connect() {
+      const userName = document.getElementById('userName').value.trim();
+      const sessionId = document.getElementById('sessionId').value.trim();
+
+      if (!userName || !sessionId) {
+        alert('Please enter your name and session ID');
+        return;
+      }
+
+      updateStatus('connecting', 'Connecting...');
+
+      ws = new WebSocket('ws://localhost:8081');
+
+      ws.onopen = () => {
+        updateStatus('connected', 'Connected');
+        currentSession = sessionId;
+
+        // Send join message
+        send({
+          type: 'join',
+          sessionId: sessionId,
+          data: {
+            user: {
+              id: userId,
+              name: userName,
+              color: getRandomColor()
+            }
+          }
+        });
+
+        // Enable controls
+        document.getElementById('editor').disabled = false;
+        document.getElementById('commentInput').disabled = false;
+        document.getElementById('commentBtn').disabled = false;
+        document.getElementById('cursorBtn').disabled = false;
+        document.getElementById('disconnectBtn').disabled = false;
+        document.getElementById('connectBtn').disabled = true;
+
+        addLog('join', `Connected to session: ${sessionId}`);
+      };
+
+      ws.onmessage = (event) => {
+        const message = JSON.parse(event.data);
+        handleMessage(message);
+      };
+
+      ws.onclose = () => {
+        updateStatus('disconnected', 'Disconnected');
+        document.getElementById('editor').disabled = true;
+        document.getElementById('commentInput').disabled = true;
+        document.getElementById('commentBtn').disabled = true;
+        document.getElementById('cursorBtn').disabled = true;
+        document.getElementById('disconnectBtn').disabled = true;
+        document.getElementById('connectBtn').disabled = false;
+        addLog('leave', 'Disconnected from server');
+      };
+
+      ws.onerror = (error) => {
+        console.error('WebSocket error:', error);
+        addLog('error', 'Connection error');
+      };
+    }
+
+    function disconnect() {
+      if (ws) {
+        send({
+          type: 'leave',
+          sessionId: currentSession,
+          data: {}
+        });
+        ws.close();
+      }
+    }
+
+    function send(message) {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify(message));
+      }
+    }
+
+    function handleMessage(message) {
+      switch (message.type) {
+        case 'sync':
+          // Initial sync
+          users.clear();
+          message.data.users.forEach(user => {
+            users.set(user.id, user);
+          });
+          updateUserList();
+          addLog('sync', `Synced ${message.data.users.length} users`);
+          break;
+
+        case 'join':
+          users.set(message.userId, message.data.user);
+          updateUserList();
+          addLog('join', `${message.data.user.name} joined`);
+          break;
+
+        case 'leave':
+          const user = users.get(message.userId);
+          if (user) {
+            users.delete(message.userId);
+            updateUserList();
+            addLog('leave', `${user.name} left`);
+          }
+          break;
+
+        case 'cursor':
+          addLog('cursor', `Cursor moved by user ${message.userId}`);
+          break;
+
+        case 'edit':
+          addLog('edit', `Edit: ${message.data.type} by user ${message.userId}`);
+          break;
+
+        case 'comment':
+          addLog('comment', `Comment: "${message.data.content}"`);
+          break;
+      }
+    }
+
+    function updateStatus(status, text) {
+      const indicator = document.getElementById('statusIndicator');
+      const statusText = document.getElementById('statusText');
+
+      indicator.className = `status-indicator ${status}`;
+      statusText.textContent = text;
+    }
+
+    function updateUserList() {
+      const userList = document.getElementById('userList');
+      const userCount = document.getElementById('userCount');
+
+      userList.innerHTML = '';
+      userCount.textContent = users.size;
+
+      users.forEach(user => {
+        const li = document.createElement('li');
+        li.className = 'user-item';
+        li.innerHTML = `
+          <div class="user-avatar" style="background: ${user.color}">
+            ${user.name.charAt(0).toUpperCase()}
+          </div>
+          <span>${user.name}</span>
+        `;
+        userList.appendChild(li);
+      });
+    }
+
+    function addLog(type, message) {
+      const log = document.getElementById('activityLog');
+      const entry = document.createElement('div');
+      entry.className = `log-entry ${type}`;
+      entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+      log.insertBefore(entry, log.firstChild);
+
+      // Keep only last 50 entries
+      while (log.children.length > 50) {
+        log.removeChild(log.lastChild);
+      }
+    }
+
+    // Editor events
+    let editTimeout = null;
+    document.getElementById('editor').addEventListener('input', (e) => {
+      clearTimeout(editTimeout);
+      editTimeout = setTimeout(() => {
+        send({
+          type: 'edit',
+          sessionId: currentSession,
+          data: {
+            type: 'insert',
+            file: 'demo.txt',
+            position: { line: 1, column: 1 },
+            content: e.target.value
+          }
+        });
+      }, 500);
+    });
+
+    // Cursor movement
+    document.getElementById('editor').addEventListener('mousemove', (e) => {
+      if (Math.random() < 0.1) { // Throttle to 10%
+        send({
+          type: 'cursor',
+          sessionId: currentSession,
+          data: {
+            x: e.clientX,
+            y: e.clientY
+          }
+        });
+      }
+    });
+
+    function moveCursor() {
+      send({
+        type: 'cursor',
+        sessionId: currentSession,
+        data: {
+          x: Math.random() * 800,
+          y: Math.random() * 600
+        }
+      });
+    }
+
+    function addComment() {
+      const input = document.getElementById('commentInput');
+      const content = input.value.trim();
+
+      if (!content) return;
+
+      send({
+        type: 'comment',
+        sessionId: currentSession,
+        data: {
+          file: 'demo.txt',
+          line: 1,
+          content: content,
+          resolved: false
+        }
+      });
+
+      input.value = '';
+    }
+
+    // Allow Enter key for comment
+    document.getElementById('commentInput').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        addComment();
+      }
+    });
+  </script>
+</body>
+</html>

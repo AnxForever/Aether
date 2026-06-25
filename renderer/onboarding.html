@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Welcome to Aether</title>
+  <link rel="stylesheet" href="onboarding.css">
+</head>
+<body>
+  <div class="onboarding-container">
+    <!-- Progress indicator -->
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+
+    <!-- Welcome Step -->
+    <div class="step" id="step-welcome" data-step="welcome">
+      <div class="step-content">
+        <div class="step-header">
+          <div class="eyebrow">Welcome to</div>
+          <h1>Aether</h1>
+          <p class="subtitle">Spotify for AI — Switch between 7 AI models instantly</p>
+        </div>
+
+        <div class="features-grid">
+          <div class="feature-card">
+            <div class="feature-icon">🏠</div>
+            <h3>Local-first</h3>
+            <p>Your conversations stay on your machine, encrypted and secure</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">🔌</div>
+            <h3>No vendor lock-in</h3>
+            <p>Switch between Claude, GPT-4, Gemini, and 4 more providers</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">🛠️</div>
+            <h3>Batteries included</h3>
+            <p>105+ tools ready: Gmail, GitHub, Google Workspace, Office</p>
+          </div>
+        </div>
+
+        <div class="step-actions">
+          <button class="btn btn-primary" onclick="nextStep()">Get Started</button>
+          <button class="btn btn-text" onclick="skipOnboarding()">Skip Setup</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- API Keys Step -->
+    <div class="step hidden" id="step-api-keys" data-step="api-keys">
+      <div class="step-content">
+        <div class="step-header">
+          <div class="eyebrow">Step 1 of 3</div>
+          <h1>Configure API Keys</h1>
+          <p class="subtitle">Add at least one AI provider to get started</p>
+        </div>
+
+        <div class="api-keys-form">
+          <div class="provider-section">
+            <label class="provider-label">
+              <input type="checkbox" id="provider-claude" value="claude">
+              <span class="provider-name">Claude (Anthropic)</span>
+            </label>
+            <div class="api-key-input hidden" id="input-claude">
+              <input type="password" placeholder="sk-ant-api03-..." data-provider="claude">
+              <button class="btn-validate" onclick="validateKey('claude')">Validate</button>
+              <span class="validation-status"></span>
+            </div>
+          </div>
+
+          <div class="provider-section">
+            <label class="provider-label">
+              <input type="checkbox" id="provider-openai" value="openai">
+              <span class="provider-name">OpenAI (GPT-4)</span>
+            </label>
+            <div class="api-key-input hidden" id="input-openai">
+              <input type="password" placeholder="sk-..." data-provider="openai">
+              <button class="btn-validate" onclick="validateKey('openai')">Validate</button>
+              <span class="validation-status"></span>
+            </div>
+          </div>
+
+          <div class="provider-section">
+            <label class="provider-label">
+              <input type="checkbox" id="provider-gemini" value="gemini">
+              <span class="provider-name">Google Gemini</span>
+            </label>
+            <div class="api-key-input hidden" id="input-gemini">
+              <input type="password" placeholder="AIza..." data-provider="gemini">
+              <button class="btn-validate" onclick="validateKey('gemini')">Validate</button>
+              <span class="validation-status"></span>
+            </div>
+          </div>
+
+          <details class="more-providers">
+            <summary>More providers (Chinese models)</summary>
+
+            <div class="provider-section">
+              <label class="provider-label">
+                <input type="checkbox" id="provider-minimax" value="minimax">
+                <span class="provider-name">MiniMax</span>
+              </label>
+              <div class="api-key-input hidden" id="input-minimax">
+                <input type="password" placeholder="API Key" data-provider="minimax">
+                <button class="btn-validate" onclick="validateKey('minimax')">Validate</button>
+                <span class="validation-status"></span>
+              </div>
+            </div>
+
+            <div class="provider-section">
+              <label class="provider-label">
+                <input type="checkbox" id="provider-moonshot" value="moonshot">
+                <span class="provider-name">Moonshot (Kimi)</span>
+              </label>
+              <div class="api-key-input hidden" id="input-moonshot">
+                <input type="password" placeholder="sk-..." data-provider="moonshot">
+                <button class="btn-validate" onclick="validateKey('moonshot')">Validate</button>
+                <span class="validation-status"></span>
+              </div>
+            </div>
+
+            <div class="provider-section">
+              <label class="provider-label">
+                <input type="checkbox" id="provider-glm" value="glm">
+                <span class="provider-name">GLM (Zhipu)</span>
+              </label>
+              <div class="api-key-input hidden" id="input-glm">
+                <input type="password" placeholder="API Key" data-provider="glm">
+                <button class="btn-validate" onclick="validateKey('glm')">Validate</button>
+                <span class="validation-status"></span>
+              </div>
+            </div>
+
+            <div class="provider-section">
+              <label class="provider-label">
+                <input type="checkbox" id="provider-deepseek" value="deepseek">
+                <span class="provider-name">DeepSeek</span>
+              </label>
+              <div class="api-key-input hidden" id="input-deepseek">
+                <input type="password" placeholder="sk-..." data-provider="deepseek">
+                <button class="btn-validate" onclick="validateKey('deepseek')">Validate</button>
+                <span class="validation-status"></span>
+              </div>
+            </div>
+          </details>
+        </div>
+
+        <div class="step-actions">
+          <button class="btn btn-primary" id="btn-next-keys" onclick="nextStep()" disabled>Continue</button>
+          <button class="btn btn-secondary" onclick="previousStep()">Back</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Model Selection Step -->
+    <div class="step hidden" id="step-model-selection" data-step="model-selection">
+      <div class="step-content">
+        <div class="step-header">
+          <div class="eyebrow">Step 2 of 3</div>
+          <h1>Choose Default Model</h1>
+          <p class="subtitle">Pick your preferred AI model (you can change this later)</p>
+        </div>
+
+        <div class="models-grid" id="modelsGrid">
+          <!-- Populated dynamically based on configured providers -->
+        </div>
+
+        <div class="step-actions">
+          <button class="btn btn-primary" id="btn-next-model" onclick="nextStep()" disabled>Continue</button>
+          <button class="btn btn-secondary" onclick="previousStep()">Back</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Tour Step -->
+    <div class="step hidden" id="step-quick-tour" data-step="quick-tour">
+      <div class="step-content">
+        <div class="step-header">
+          <div class="eyebrow">Step 3 of 3</div>
+          <h1>Quick Tour</h1>
+          <p class="subtitle">Learn the basics in 60 seconds</p>
+        </div>
+
+        <div class="tour-content">
+          <div class="tour-item">
+            <div class="tour-number">1</div>
+            <div class="tour-text">
+              <h3>Switch models instantly</h3>
+              <p>Click the model selector in the top bar to switch between AI providers</p>
+            </div>
+          </div>
+
+          <div class="tour-item">
+            <div class="tour-number">2</div>
+            <div class="tour-text">
+              <h3>Two modes: Chat & Coding</h3>
+              <p>Chat mode for creative tasks, Coding mode for precise technical work</p>
+            </div>
+          </div>
+
+          <div class="tour-item">
+            <div class="tour-number">3</div>
+            <div class="tour-text">
+              <h3>105+ built-in tools</h3>
+              <p>Send emails, update spreadsheets, create GitHub issues — all from chat</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="step-actions">
+          <button class="btn btn-primary" onclick="completeOnboarding()">Finish Setup</button>
+          <button class="btn btn-text" onclick="completeOnboarding()">Skip Tour</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Complete Step -->
+    <div class="step hidden" id="step-complete" data-step="complete">
+      <div class="step-content">
+        <div class="step-header">
+          <div class="success-icon">✓</div>
+          <h1>You're All Set!</h1>
+          <p class="subtitle">Aether is ready to use</p>
+        </div>
+
+        <div class="completion-summary" id="completionSummary">
+          <!-- Populated dynamically -->
+        </div>
+
+        <div class="step-actions">
+          <button class="btn btn-primary btn-large" onclick="launchApp()">Launch Aether</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="onboarding.js"></script>
+</body>
+</html>

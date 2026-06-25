@@ -8,11 +8,61 @@ import { IPCHandlerRegistry, createSuccessResponse, createErrorResponse } from '
 import { IPC_CHANNELS } from './ipc/protocol';
 import { NexusAgent } from './agent';
 import { createLogger } from './utils/logger';
+import { OnboardingManager } from './onboarding';
+import { ConfigManager } from './storage/config-manager';
+import { CollaborationLauncher } from './server/collaboration-launcher';
 
 const logger = createLogger('Main');
 
 let mainWindow: BrowserWindow | null = null;
+let onboardingWindow: BrowserWindow | null = null;
 let agent: NexusAgent | null = null;
+let onboardingManager: OnboardingManager | null = null;
+let collaborationLauncher: CollaborationLauncher | null = null;
+
+/**
+ * Create onboarding window
+ */
+function createOnboardingWindow() {
+  onboardingWindow = new BrowserWindow({
+    width: 900,
+    height: 700,
+    minWidth: 900,
+    minHeight: 700,
+    resizable: false,
+    frame: true,
+    webPreferences: {
+      preload: join(__dirname, 'preload.js'),
+      nodeIntegration: false,
+      contextIsolation: true,
+      sandbox: true
+    },
+    show: false
+  });
+
+  // Load onboarding page
+  if (process.env.NODE_ENV === 'development') {
+    onboardingWindow.loadURL('http://localhost:5173/onboarding');
+  } else {
+    onboardingWindow.loadFile(join(__dirname, '../renderer/onboarding.html'));
+  }
+
+  // Show when ready
+  onboardingWindow.once('ready-to-show', () => {
+    onboardingWindow?.show();
+  });
+
+  // Handle window close
+  onboardingWindow.on('closed', () => {
+    onboardingWindow = null;
+    // If onboarding was not completed, create main window anyway
+    if (!mainWindow) {
+      createWindow();
+    }
+  });
+
+  logger.info('Onboarding window created');
+}
 
 /**
  * Create main window
@@ -67,6 +117,71 @@ async function initializeAgent() {
     logger.info('Agent initialized');
   } catch (error: any) {
     logger.error('Failed to initialize agent:', error as Error);
+  }
+}
+
+/**
+ * Initialize onboarding manager
+ */
+function initializeOnboarding() {
+  try {
+    const dataDir = app.getPath('userData');
+    const password = process.env.ENCRYPTION_PASSWORD || 'default-dev-password';
+    const configManager = new ConfigManager(password);
+
+    onboardingManager = new OnboardingManager(dataDir, configManager);
+
+    // Listen to onboarding events
+    onboardingManager.on('onboarding-completed', () => {
+      logger.info('Onboarding completed, closing onboarding window');
+      onboardingWindow?.close();
+      if (!mainWindow) {
+        createWindow();
+      }
+    });
+
+    onboardingManager.on('onboarding-skipped', () => {
+      logger.info('Onboarding skipped, closing onboarding window');
+      onboardingWindow?.close();
+      if (!mainWindow) {
+        createWindow();
+      }
+    });
+
+    logger.info('Onboarding manager initialized');
+  } catch (error) {
+    logger.error('Failed to initialize onboarding:', error as Error);
+  }
+}
+
+/**
+ * Initialize collaboration server
+ */
+async function initializeCollaboration() {
+  try {
+    collaborationLauncher = new CollaborationLauncher({
+      port: 8081,
+      dataDir: app.getPath('userData'),
+      enableAuth: false // Optional: enable token validation
+    });
+
+    // Setup event listeners
+    collaborationLauncher.on('started', (data) => {
+      logger.info(`Collaboration server started on port ${data.port}`);
+    });
+
+    collaborationLauncher.on('user-joined', (data) => {
+      logger.info(`User ${data.user.name} joined session ${data.sessionId}`);
+    });
+
+    collaborationLauncher.on('error', (error) => {
+      logger.error('Collaboration server error:', error as Error);
+    });
+
+    await collaborationLauncher.start();
+    logger.info('Collaboration services initialized');
+  } catch (error: any) {
+    logger.error('Failed to initialize collaboration:', error as Error);
   }
 }
 
@@ -180,6 +295,150 @@ function setupIPC() {
     }
   });
 
+  // Onboarding
+  handlers.register(IPC_CHANNELS.ONBOARDING_GET_STATUS, async (event, request) => {
+    try {
+      if (!onboardingManager) throw new Error('Onboarding manager not initialized');
+      const isNeeded = onboardingManager.isOnboardingNeeded();
+      const progress = onboardingManager.getProgress();
+
+      return createSuccessResponse(request.id, {
+        isNeeded,
+        currentStep: progress.currentStep,
+        completedSteps: progress.completedSteps,
+        totalSteps: progress.totalSteps,
+      });
+    } catch (error: any) {
+      return createErrorResponse(request.id, error.message);
+    }
+  });
+
+  handlers.register(IPC_CHANNELS.ONBOARDING_GET_PROGRESS, async (event, request) => {
+    try {
+      if (!onboardingManager) throw new Error('Onboarding manager not initialized');
+      const progress = onboardingManager.getProgress();
+      return createSuccessResponse(request.id, progress);
+    } catch (error: any) {
+      return createErrorResponse(request.id, error.message);
+    }
+  });
+
+  handlers.register(IPC_CHANNELS.ONBOARDING_NEXT_STEP, async (event, request) => {
+    try {
+      if (!onboardingManager) throw new Error('Onboarding manager not initialized');
+      onboardingManager.nextStep();
+      const progress = onboardingManager.getProgress();
+      return createSuccessResponse(request.id, progress);
+    } catch (error: any) {
+      return createErrorResponse(request.id, error.message);
+    }
+  });
+
+  handlers.register(IPC_CHANNELS.ONBOARDING_SKIP_STEP, async (event, request) => {
+    try {
+      if (!onboardingManager) throw new Error('Onboarding manager not initialized');
+      const skipped = onboardingManager.skipStep();
+      return createSuccessResponse(request.id, { skipped });
+    } catch (error: any) {
+      return createErrorResponse(request.id, error.message);
+    }
+  });
+
+  handlers.register(IPC_CHANNELS.ONBOARDING_VALIDATE_API_KEY, async (event, request) => {
+    try {
+      if (!onboardingManager) throw new Error('Onboarding manager not initialized');
+      const { provider, apiKey } = request.data;
+      const validation = await onboardingManager.validateAPIKey(provider, apiKey);
+      return createSuccessResponse(request.id, validation);
+    } catch (error: any) {
+      return createErrorResponse(request.id, error.message);
+    }
+  });
+
+  handlers.register(IPC_CHANNELS.ONBOARDING_SAVE_API_KEY, async (event, request) => {
+    try {
+      if (!onboardingManager) throw new Error('Onboarding manager not initialized');
+      const { provider, apiKey } = request.data;
+      await onboardingManager.saveAPIKey(provider, apiKey);
+      return createSuccessResponse(request.id, { success: true });
+    } catch (error: any) {
+      return createErrorResponse(request.id, error.message);
+    }
+  });
+
+  handlers.register(IPC_CHANNELS.ONBOARDING_SAVE_MODEL, async (event, request) => {
+    try {
+      if (!onboardingManager) throw new Error('Onboarding manager not initialized');
+      const { modelId } = request.data;
+      await onboardingManager.saveModelSelection(modelId);
+      return createSuccessResponse(request.id, { success: true });
+    } catch (error: any) {
+      return createErrorResponse(request.id, error.message);
+    }
+  });
+
+  handlers.register(IPC_CHANNELS.ONBOARDING_COMPLETE, async (event, request) => {
+    try {
+      if (!onboardingManager) throw new Error('Onboarding manager not initialized');
+      await onboardingManager.completeOnboarding(request.data);
+      return createSuccessResponse(request.id, { success: true });
+    } catch (error: any) {
+      return createErrorResponse(request.id, error.message);
+    }
+  });
+
+  handlers.register(IPC_CHANNELS.ONBOARDING_SKIP, async (event, request) => {
+    try {
+      if (!onboardingManager) throw new Error('Onboarding manager not initialized');
+      await onboardingManager.skipOnboarding();
+      return createSuccessResponse(request.id, { success: true });
+    } catch (error: any) {
+      return createErrorResponse(request.id, error.message);
+    }
+  });
+
+  handlers.register(IPC_CHANNELS.ONBOARDING_RESET, async (event, request) => {
+    try {
+      if (!onboardingManager) throw new Error('Onboarding manager not initialized');
+      await onboardingManager.resetOnboarding();
+      return createSuccessResponse(request.id, { success: true });
+    } catch (error: any) {
+      return createErrorResponse(request.id, error.message);
+    }
+  });
+
+  // Collaboration server
+  handlers.register('collaboration:status', async (event, request) => {
+    try {
+      if (!collaborationLauncher) throw new Error('Collaboration not initialized');
+      const status = collaborationLauncher.getStatus();
+      return createSuccessResponse(request.id, status);
+    } catch (error: any) {
+      return createErrorResponse(request.id, error.message);
+    }
+  });
+
+  handlers.register('collaboration:create-session', async (event, request) => {
+    try {
+      if (!collaborationLauncher) throw new Error('Collaboration not initialized');
+      const { name, createdBy, metadata } = request.data;
+      const session = collaborationLauncher.createSession(name, createdBy, metadata);
+      return createSuccessResponse(request.id, session);
+    } catch (error: any) {
+      return createErrorResponse(request.id, error.message);
+    }
+  });
+
+  handlers.register('collaboration:get-sessions', async (event, request) => {
+    try {
+      if (!collaborationLauncher) throw new Error('Collaboration not initialized');
+      const sessions = collaborationLauncher.getActiveSessions();
+      return createSuccessResponse(request.id, { sessions });
+    } catch (error: any) {
+      return createErrorResponse(request.id, error.message);
+    }
+  });
+
   handlers.setup();
   logger.info('IPC handlers registered');
 }
@@ -189,12 +448,26 @@ function setupIPC() {
  */
 app.whenReady().then(async () => {
   await initializeAgent();
+  await initializeCollaboration();
+  initializeOnboarding();
   setupIPC();
-  createWindow();
+
+  // Check if onboarding is needed
+  if (onboardingManager?.isOnboardingNeeded()) {
+    logger.info('First launch detected, showing onboarding');
+    createOnboardingWindow();
+  } else {
+    logger.info('Onboarding already completed, showing main window');
+    createWindow();
+  }
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow();
+      if (onboardingManager?.isOnboardingNeeded()) {
+        createOnboardingWindow();
+      } else {
+        createWindow();
+      }
     }
   });
 });
@@ -213,6 +486,7 @@ app.on('window-all-closed', () => {
  */
 app.on('before-quit', async () => {
   logger.info('Application quitting');
+  await collaborationLauncher?.stop();
   await agent?.cleanup();
 });
 
