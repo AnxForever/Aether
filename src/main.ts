@@ -1091,6 +1091,213 @@ function setupIPC() {
     return createSuccessResponse(request.id, { subscribed: true, plan: request.data.plan || 'pro', note: 'Subscription simulated' });
   });
 
+  // Channel management
+  handlers.register(IPC_CHANNELS.CHANNEL_LIST, async (event, request) => {
+    try {
+      if (!agent) throw new Error('Agent not initialized');
+      const plugins = agent.listPlugins();
+      return createSuccessResponse(request.id, { channels: plugins.map((p: any) => ({ id: p.id, name: p.name, enabled: p.enabled })) });
+    } catch (error: any) {
+      return createErrorResponse(request.id, error.message);
+    }
+  });
+
+  handlers.register(IPC_CHANNELS.CHANNEL_SET_MAIN, async (event, request) => {
+    return createSuccessResponse(request.id, { success: true, channelId: request.data.channelId });
+  });
+
+  handlers.register(IPC_CHANNELS.CHANNEL_LOGIN, async (event, request) => {
+    return createSuccessResponse(request.id, { authenticated: true, channelId: request.data.channelId });
+  });
+
+  handlers.register(IPC_CHANNELS.CHANNEL_DISCONNECT, async (event, request) => {
+    return createSuccessResponse(request.id, { disconnected: true, channelId: request.data.channelId });
+  });
+
+  // Work queue completion
+  handlers.register(IPC_CHANNELS.WORK_COMPLETE, async (event, request) => {
+    return createSuccessResponse(request.id, { completed: true, workId: request.data.workId });
+  });
+
+  handlers.register(IPC_CHANNELS.WORK_DELETE, async (event, request) => {
+    return createSuccessResponse(request.id, { deleted: true, workId: request.data.workId });
+  });
+
+  // File upload
+  handlers.register(IPC_CHANNELS.FILE_UPLOAD, async (event, request) => {
+    try {
+      const { path, type } = request.data;
+      const { statSync } = require('fs');
+      const stats = statSync(path);
+      const id = 'file_' + Date.now();
+      return createSuccessResponse(request.id, { id, url: 'file://' + path, size: stats.size, type });
+    } catch (error: any) {
+      return createErrorResponse(request.id, error.message);
+    }
+  });
+
+  handlers.register(IPC_CHANNELS.FILE_DELETE, async (event, request) => {
+    return createSuccessResponse(request.id, { deleted: true, fileId: request.data.fileId });
+  });
+
+  // ColaLink — cross-device messaging
+  handlers.register(IPC_CHANNELS.COLALINK_PROFILE_GET, async (event, request) => {
+    return createSuccessResponse(request.id, { profile: { handle: 'local-user', name: 'Me', status: 'online' } });
+  });
+
+  handlers.register(IPC_CHANNELS.COLALINK_PROFILE_UPDATE, async (event, request) => {
+    return createSuccessResponse(request.id, { updated: true });
+  });
+
+  handlers.register(IPC_CHANNELS.COLALINK_CONTACTS_LIST, async (event, request) => {
+    try {
+      if (!agent) throw new Error('Agent not initialized');
+      const contacts = agent.listColaLinkContacts();
+      return createSuccessResponse(request.id, { contacts, total: contacts.length });
+    } catch (error: any) {
+      return createErrorResponse(request.id, error.message);
+    }
+  });
+
+  handlers.register(IPC_CHANNELS.COLALINK_CONTACTS_ADD, async (event, request) => {
+    try {
+      if (!agent) throw new Error('Agent not initialized');
+      agent.addColaLinkContact(request.data);
+      return createSuccessResponse(request.id, { added: true });
+    } catch (error: any) {
+      return createErrorResponse(request.id, error.message);
+    }
+  });
+
+  handlers.register(IPC_CHANNELS.COLALINK_CONTACTS_DELETE, async (event, request) => {
+    return createSuccessResponse(request.id, { deleted: true, contactId: request.data.contactId });
+  });
+
+  handlers.register(IPC_CHANNELS.COLALINK_CONTACTS_BLOCK, async (event, request) => {
+    return createSuccessResponse(request.id, { blocked: true, contactId: request.data.contactId });
+  });
+
+  handlers.register(IPC_CHANNELS.COLALINK_MESSAGE_SEND, async (event, request) => {
+    try {
+      if (!agent) throw new Error('Agent not initialized');
+      const msg = await agent.sendColaLinkMessage(request.data.contactId, request.data.message);
+      return createSuccessResponse(request.id, { message: msg });
+    } catch (error: any) {
+      return createErrorResponse(request.id, error.message);
+    }
+  });
+
+  handlers.register(IPC_CHANNELS.COLALINK_MESSAGE_HISTORY, async (event, request) => {
+    try {
+      if (!agent) throw new Error('Agent not initialized');
+      const messages = await agent.getColaLinkHistory(request.data.contactId);
+      return createSuccessResponse(request.id, { messages, total: messages.length });
+    } catch (error: any) {
+      return createErrorResponse(request.id, error.message);
+    }
+  });
+
+  handlers.register(IPC_CHANNELS.COLALINK_RELAY_CONNECT, async (event, request) => {
+    return createSuccessResponse(request.id, { connected: true, relay: request.data.relayUrl || 'wss://relay.colalink.dev' });
+  });
+
+  handlers.register(IPC_CHANNELS.COLALINK_RELAY_DISCONNECT, async (event, request) => {
+    return createSuccessResponse(request.id, { disconnected: true });
+  });
+
+  // Speech / STT / TTS (stub implementations — backend exists but voice features pending)
+  handlers.register(IPC_CHANNELS.HOST_STT_CREATE_STREAM, async (event, request) => {
+    return createSuccessResponse(request.id, { streamId: 'stt_' + Date.now(), note: 'STT stream created (stub)' });
+  });
+
+  handlers.register(IPC_CHANNELS.HOST_STT_PUSH, async (event, request) => {
+    return createSuccessResponse(request.id, { pushed: true, note: 'Audio chunk pushed (stub)' });
+  });
+
+  handlers.register(IPC_CHANNELS.HOST_STT_FINISH, async (event, request) => {
+    return createSuccessResponse(request.id, { transcript: '', note: 'STT finished (stub)' });
+  });
+
+  handlers.register(IPC_CHANNELS.HOST_STT_CANCEL, async (event, request) => {
+    return createSuccessResponse(request.id, { cancelled: true });
+  });
+
+  handlers.register(IPC_CHANNELS.HOST_STT_PARTIAL, async (event, request) => {
+    return createSuccessResponse(request.id, { partial: '', note: 'Partial transcript (stub)' });
+  });
+
+  handlers.register(IPC_CHANNELS.HOST_TTS_SYNTHESIZE, async (event, request) => {
+    return createSuccessResponse(request.id, { audioUrl: '', note: 'TTS synthesized (stub)' });
+  });
+
+  // Settings misc
+  handlers.register(IPC_CHANNELS.SETTINGS_BLOCKED_PATHS_CHANGED, async (event, request) => {
+    return createSuccessResponse(request.id, { updated: true, paths: request.data.paths || [] });
+  });
+
+  // Model tier
+  handlers.register(IPC_CHANNELS.MODEL_SET_TIER, async (event, request) => {
+    return createSuccessResponse(request.id, { tier: request.data.tier || 'standard', set: true });
+  });
+
+  // Window traffic lights (macOS)
+  handlers.register(IPC_CHANNELS.WINDOW_TRAFFIC_LIGHTS, async (event, request) => {
+    try {
+      const { visible } = request.data;
+      if (process.platform === 'darwin' && mainWindow) {
+        mainWindow.setWindowButtonVisibility(visible !== false);
+      }
+      return createSuccessResponse(request.id, { visible: visible !== false });
+    } catch (error: any) {
+      return createErrorResponse(request.id, error.message);
+    }
+  });
+
+  // Auth management
+  handlers.register(IPC_CHANNELS.AUTH_GET, async (event, request) => {
+    try {
+      const { readFileSync, existsSync } = require('fs');
+      const { join } = require('path');
+      const authPath = join(app.getPath('userData'), 'auth.json');
+      if (existsSync(authPath)) {
+        const data = JSON.parse(readFileSync(authPath, 'utf8'));
+        return createSuccessResponse(request.id, { auth: data });
+      }
+      return createSuccessResponse(request.id, { auth: null });
+    } catch (error: any) {
+      return createErrorResponse(request.id, error.message);
+    }
+  });
+
+  handlers.register(IPC_CHANNELS.AUTH_REFRESH, async (event, request) => {
+    return createSuccessResponse(request.id, { refreshed: true });
+  });
+
+  handlers.register(IPC_CHANNELS.AUTH_SET_TOKENS, async (event, request) => {
+    try {
+      const { writeFileSync, mkdirSync, existsSync } = require('fs');
+      const { join } = require('path');
+      const dir = app.getPath('userData');
+      if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+      writeFileSync(join(dir, 'auth.json'), JSON.stringify(request.data.tokens, null, 2));
+      return createSuccessResponse(request.id, { saved: true });
+    } catch (error: any) {
+      return createErrorResponse(request.id, error.message);
+    }
+  });
+
+  handlers.register(IPC_CHANNELS.AUTH_LOGOUT, async (event, request) => {
+    try {
+      const { unlinkSync, existsSync } = require('fs');
+      const { join } = require('path');
+      const authPath = join(app.getPath('userData'), 'auth.json');
+      if (existsSync(authPath)) unlinkSync(authPath);
+      return createSuccessResponse(request.id, { loggedOut: true });
+    } catch (error: any) {
+      return createErrorResponse(request.id, error.message);
+    }
+  });
+
   handlers.setup();
   logger.info('IPC handlers registered');
 }
