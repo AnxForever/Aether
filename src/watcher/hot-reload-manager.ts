@@ -1,4 +1,5 @@
 /**
+import { createLogger } from './utils/logger';
  * Hot Reload Manager
  *
  * Manages hot reload functionality for skills, plugins, and configurations.

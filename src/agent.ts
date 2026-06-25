@@ -1,4 +1,5 @@
 /**
+import { createLogger } from './utils/logger';
  * Nexus Agent - Main Agent Class
  *
  * High-level API for interacting with Nexus

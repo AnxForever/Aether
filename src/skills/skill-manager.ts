@@ -1,4 +1,5 @@
 /**
+import { createLogger } from './utils/logger';
  * Skill Manager
  *
  * Central management for all Nexus skills
@@ -137,7 +138,7 @@ export class SkillManager {
     const initPromises = Array.from(this.skills.values()).map(skill =>
       skill.initialize(this.context).catch(error => {
         const metadata = skill.getMetadata();
-        console.error(`Failed to initialize skill "${metadata.name}":`, error);
+        logger.error(`Failed to initialize skill "${metadata.name}":`, error);
       })
     );
 
@@ -151,7 +152,7 @@ export class SkillManager {
     const cleanupPromises = Array.from(this.skills.values()).map(skill =>
       skill.cleanup().catch(error => {
         const metadata = skill.getMetadata();
-        console.error(`Failed to cleanup skill "${metadata.name}":`, error);
+        logger.error(`Failed to cleanup skill "${metadata.name}":`, error);
       })
     );
 

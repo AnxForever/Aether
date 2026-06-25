@@ -1,4 +1,5 @@
 /**
+import { createLogger } from './utils/logger';
  * Nexus Render Optimizer
  *
  * Manages Electron rendering modes with automatic GPU fallback,

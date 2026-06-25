@@ -1,4 +1,5 @@
 /**
+import { createLogger } from './utils/logger';
  * Connector Registry
  *
  * Central registry for all AI provider connectors

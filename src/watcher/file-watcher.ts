@@ -1,4 +1,5 @@
 /**
+import { createLogger } from './utils/logger';
  * File Watcher System
  *
  * Cross-platform file monitoring using @parcel/watcher with hot reload support.

@@ -1,4 +1,5 @@
 /**
+import { createLogger } from './utils/logger';
  * Auto Updater
  *
  * Handles application updates using electron-updater.

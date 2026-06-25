@@ -1,4 +1,5 @@
 /**
+import { createLogger } from './utils/logger';
  * Locale Loader
  *
  * Handles loading and watching locale files

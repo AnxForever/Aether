@@ -2,12 +2,14 @@
 node_modules/
 yarn.lock
 pnpm-lock.yaml
+package-lock.json
 
 # Build output
 dist/
 build/
 out/
 *.tsbuildinfo
+tsconfig.tsbuildinfo
 
 # Environment variables
 .env
@@ -39,10 +41,16 @@ yarn-error.log*
 # Testing
 coverage/
 .nyc_output/
+.vitest/
+
+# Linting & Formatting
+.eslintcache
+.prettierrc.cache
 
 # Electron
 electron-builder-output/
 release/
+*.tgz
 
 # OS
 Thumbs.db
@@ -62,3 +70,19 @@ skills/generated/
 *.key
 *.pem
 secrets/
+
+# Build cache
+.turbo/
+.next/
+.nuxt/
+.cache/
+
+# Development documentation (internal use only)
+CLAUDE.md
+FEATURES.md
+COLA_ALIGNMENT_PLAN.md
+PROJECT-*.md
+PHASE_*.md
+*COMPLETION*.md
+*SUMMARY*.md
+*COMPLETE*.md

@@ -1,4 +1,5 @@
 /**
+import { createLogger } from './utils/logger';
  * Skill Registry - Central skill management
  */
 
@@ -12,7 +13,7 @@ export class SkillRegistry {
    */
   register(skill: Skill): void {
     this.skills.set(skill.id, skill);
-    console.info(`[SkillRegistry] Registered: ${skill.name}`);
+    logger.info(`[SkillRegistry] Registered: ${skill.name}`);
   }
 
   /**
@@ -20,7 +21,7 @@ export class SkillRegistry {
    */
   unregister(skillId: string): void {
     this.skills.delete(skillId);
-    console.info(`[SkillRegistry] Unregistered: ${skillId}`);
+    logger.info(`[SkillRegistry] Unregistered: ${skillId}`);
   }
 
   /**
@@ -89,7 +90,7 @@ export class SkillRegistry {
     const skill = this.skills.get(skillId);
     if (skill) {
       skill.enabled = true;
-      console.info(`[SkillRegistry] Enabled: ${skill.name}`);
+      logger.info(`[SkillRegistry] Enabled: ${skill.name}`);
     }
   }
 
@@ -100,7 +101,7 @@ export class SkillRegistry {
     const skill = this.skills.get(skillId);
     if (skill) {
       skill.enabled = false;
-      console.info(`[SkillRegistry] Disabled: ${skill.name}`);
+      logger.info(`[SkillRegistry] Disabled: ${skill.name}`);
     }
   }
 

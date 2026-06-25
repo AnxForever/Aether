@@ -1,4 +1,5 @@
 /**
+import { createLogger } from './utils/logger';
  * Skill Loader - Load skills from filesystem
  */
 
@@ -36,9 +37,9 @@ export class SkillLoader {
         }
       }
 
-      console.info(`[SkillLoader] Loaded ${skillRegistry.listAll().length} skills`);
+      logger.info(`[SkillLoader] Loaded ${skillRegistry.listAll().length} skills`);
     } catch (error) {
-      console.error('[SkillLoader] Failed to load skills:', error);
+      logger.error('[SkillLoader] Failed to load skills:', error);
     }
   }
 
@@ -70,7 +71,7 @@ export class SkillLoader {
 
       skillRegistry.register(skill);
     } catch (error) {
-      console.error(`[SkillLoader] Failed to load skill '${skillId}':`, error);
+      logger.error(`[SkillLoader] Failed to load skill '${skillId}':`, error);
     }
   }
 

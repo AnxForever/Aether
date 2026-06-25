@@ -1,4 +1,5 @@
 /**
+import { createLogger } from './utils/logger';
  * Telemetry System
  *
  * OpenTelemetry-based performance monitoring and tracing.
