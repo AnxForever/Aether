@@ -99,6 +99,131 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Examples**: ~1,500+ lines
 - **Documentation**: ~100+ pages
 
+## [2.2.0] - 2026-06-25
+
+### Added — 20 Subsystem Activations (Round 2)
+
+#### Tier 1 — High Impact
+
+##### 💾 Backup & Restore (1,040 lines)
+- Full backup creation with SQLite persistence
+- Backup metadata tracking (timestamp, size, checksum)
+- RestoreManager for recovery operations
+- **New APIs**: `createBackup()`, `restoreBackup()`, `listBackups()`, `getBackupStats()`
+
+##### 🖥️ CLI & Local Server (1,511 lines)
+- Local HTTP API server for programmatic access
+- CLI command handler with tool registration
+- **New APIs**: `startLocalServer()`, `stopLocalServer()`, `getLocalServerStatus()`
+
+##### 💬 Slack Integration (2,191 lines)
+- Full Slack bot with command/action handlers
+- Message sending, channel listing, interactive components
+- **New APIs**: `connectSlack()`, `sendSlackMessage()`, `listSlackChannels()`, `isSlackConnected()`
+
+##### 🔍 Monitoring/Sentry (1,885 lines)
+- Error tracking with context and breadcrumbs
+- Performance monitoring and transaction tracing
+- User session tracking
+- **New APIs**: `captureError()`, `captureMessage()`, `setSentryUser()`, `getPerformanceMetrics()`
+
+##### 🖼️ Media Processing (1,726 lines)
+- Image format conversion (HEIC, JPEG, PNG, WebP)
+- Resize, crop, rotate, flip, watermark operations
+- Batch processing with progress tracking
+- **New APIs**: `convertImage()`, `resizeImage()`, `cropImage()`, `compressImage()`, `batchProcessImages()` (12 methods)
+
+##### 🔐 OAuth + QR Login (619 lines)
+- Multi-provider OAuth 2.0 flow
+- QR code-based login with polling
+- Token refresh and revocation
+- **New APIs**: `startOAuth()`, `generateQRLogin()`, `waitForQRScan()`, `refreshOAuthToken()` (10 methods)
+
+#### Tier 2 — Good Value
+
+##### 📊 Observability/OpenTelemetry (922 lines)
+- Distributed tracing with span export
+- Metrics collection and aggregation
+- **New APIs**: `getMetrics()`, `getTraces()`, `isObservabilityEnabled()`
+
+##### 🏖️ Sandbox Execution (706 lines)
+- Secure code execution in isolated environments
+- Tool sandbox for safe plugin testing
+- **New APIs**: `executeInSandbox()`, `getSandboxStatus()`
+
+##### 🔄 Auto Updater (317 lines)
+- Electron auto-update with version checking
+- Download progress and installation
+- **New APIs**: `checkForUpdates()`, `getCurrentVersion()`, `isUpdateAvailable()`
+
+##### 🌐 Gateway Client (1,570 lines)
+- Authentication gateway integration
+- Token management and refresh
+- **New APIs**: `authenticateGateway()`, `getGatewayToken()`, `isGatewayConnected()`
+
+##### 🔧 Diagnostics (534 lines)
+- Network connectivity testing
+- System health checks and reporting
+- **New APIs**: `runDiagnostics()`, `getSystemHealth()`, `getDiagnosticReport()`
+
+##### 📋 Job Queue (375 lines)
+- SQLite-backed job queue with priority
+- Status tracking and job lifecycle
+- **New APIs**: `enqueueJob()`, `getJobStatus()`, `listJobs()`
+
+##### 🎭 Mode Manager (565 lines)
+- Chat/Coding mode switching with soul.md
+- Mode-specific settings and configurations
+- **New APIs**: `setMode()`, `getCurrentMode()`, `listModes()`
+
+#### Tier 3 — Supporting
+
+##### 🔒 Permission Manager (334 lines)
+- Granular permission checking and granting
+- **New APIs**: `checkPermission()`, `grantPermission()`, `revokePermission()`
+
+##### 🗣️ Speech/TTS (963 lines)
+- Text-to-speech with multiple engines (Edge TTS, Piper, Coqui)
+- Voice listing and selection
+- **New APIs**: `textToSpeech()`, `listVoices()`, `getSpeechStatus()`
+
+##### ⚙️ Process Manager (999 lines)
+- System process monitoring and management
+- Resource usage tracking (CPU, memory)
+- **New APIs**: `getSystemInfo()`, `getProcessList()`, `getResourceUsage()`
+
+##### 📝 Feedback System (362 lines)
+- User feedback collection and export
+- Feedback statistics and analysis
+- **New APIs**: `submitFeedback()`, `getFeedbackStats()`, `listFeedback()`
+
+##### 📡 Telemetry (323 lines)
+- Event and metric tracking
+- Configurable export (console/file/remote)
+- **New APIs**: `trackTelemetryEvent()`, `trackTelemetryMetric()`, `getTelemetryStatus()`
+
+##### 📈 Analytics (274 lines)
+- User identification and event tracking
+- Session analytics
+- **New APIs**: `trackAnalyticsEvent()`, `identifyAnalyticsUser()`, `getAnalyticsStatus()`
+
+##### 🌍 i18n Manager (492 lines)
+- Multi-language support with resource bundles
+- Dynamic language switching
+- **New APIs**: `setLanguage()`, `translate()`, `getCurrentLanguage()`, `listLanguages()`
+
+### Changed
+- **agent.ts**: 550 → 2,164 lines (4x growth)
+- **NexusAgentConfig**: 8 → 28 config options
+- **Active subsystems**: 10 → 30
+- **Public API methods**: ~50 → ~120
+
+### Code Statistics
+- **New activated code**: ~21,000 lines across 20 modules
+- **Cumulative activated**: ~214,000 lines (was ~193K in v2.1)
+- **Compilation**: 0 errors
+- **All 30 subsystems now accessible through unified agent API**
+
 ## [2.1.0] - 2026-06-25
 
 ### Added — 10 New Subsystem Activations
