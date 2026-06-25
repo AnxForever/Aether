@@ -1,5 +1,5 @@
 /**
- * ColaLink Example - Demonstration of complete system usage
+ * ColaLink Example - Demonstration of complete system usage with E2EE
  */
 
 import { join } from 'path';
@@ -9,15 +9,14 @@ import { createLogger } from '../utils/logger';
 const logger = createLogger('ColaLink:Example');
 
 /**
- * Example usage of ColaLink system
+ * Example usage of ColaLink system with E2EE
  */
 async function main() {
   logger.info('=== ColaLink Example Started ===');
 
-  // 1. Initialize ColaLink Manager
+  // 1. Initialize ColaLink Manager (no encryptionKey needed - E2EE auto-generated)
   const colalink = new ColaLinkManager({
     dataDir: join(process.cwd(), 'data'),
-    encryptionKey: 'my-secret-key-change-in-production',
     myHandle: 'alice',
     wechatPlugin: {
       myHandle: 'alice',
@@ -26,6 +25,10 @@ async function main() {
       handlePrefix: 'wx_'
     }
   });
+
+  // Get this instance's E2EE public key for distribution
+  const alicePublicKey = colalink.getPublicKey();
+  logger.info(`My E2EE public key: ${alicePublicKey.substring(0, 32)}...`);
 
   // 2. Setup event listeners
   colalink.on('ready', () => {
@@ -41,32 +44,40 @@ async function main() {
   });
 
   colalink.on('message:sent', message => {
-    logger.info(`Message sent: @${message.fromHandle} → @${message.toHandle}`);
+    logger.info(`Message sent (E2EE): @${message.fromHandle} → @${message.toHandle}`);
   });
 
   colalink.on('request:received', request => {
     logger.info(`Contact request received from @${request.fromHandle}`);
   });
 
-  // 3. Add contacts
+  // 3. Add contacts (with E2EE public keys)
   logger.info('\n=== Adding Contacts ===');
 
+  // In a real scenario, bobPublicKey would be obtained through a key exchange
+  // (e.g., during contact request/accept flow or out-of-band)
+  const bobPublicKey = 'BOB_ECDH_PUBLIC_KEY_PLACEHOLDER';
   const bob = colalink.addContact({
     handle: 'bob',
     displayName: 'Bob Smith',
-    publicKey: 'bob-public-key-123',
+    publicKey: bobPublicKey,
     status: 'friend'
   });
   logger.info(`Added: @${bob.handle}`);
 
+  const carolPublicKey = 'CAROL_ECDH_PUBLIC_KEY_PLACEHOLDER';
   const carol = colalink.addContact({
     handle: 'carol',
     displayName: 'Carol Johnson',
-    publicKey: 'carol-public-key-456',
+    publicKey: carolPublicKey,
     remark: 'Met at conference',
     status: 'friend'
   });
   logger.info(`Added: @${carol.handle}`);
+
+  // Set peer public keys for E2EE (auto-done by addContact, but explicit for demo)
+  colalink.setPeerPublicKey('bob', bobPublicKey);
+  colalink.setPeerPublicKey('carol', carolPublicKey);
 
   // 4. List all contacts
   logger.info('\n=== Listing Contacts ===');
@@ -76,22 +87,27 @@ async function main() {
     logger.info(`  @${c.handle} - ${c.displayName} (${c.status})`);
   });
 
-  // 5. Send messages
+  // 5. Send messages (E2EE encrypted)
   logger.info('\n=== Sending Messages ===');
 
   const msg1 = await colalink.sendMessage('bob', 'Hello Bob! How are you?');
-  logger.info(`Sent message: ${msg1.id}`);
+  logger.info(`Sent message (E2EE): ${msg1.id}`);
 
   const msg2 = await colalink.sendMessage('bob', 'Are you free for coffee tomorrow?');
-  logger.info(`Sent message: ${msg2.id}`);
+  logger.info(`Sent message (E2EE): ${msg2.id}`);
 
   const msg3 = await colalink.sendMessage('carol', 'Hi Carol! Nice to meet you at the conference!');
-  logger.info(`Sent message: ${msg3.id}`);
+  logger.info(`Sent message (E2EE): ${msg3.id}`);
 
   // 6. Simulate receiving messages
   logger.info('\n=== Simulating Received Messages ===');
 
   const messageManager = colalink.getMessageManager();
+
+  // In real usage, received messages would be E2EE encrypted by the sender.
+  // For this demo, we simulate receiving messages that were encrypted by bob
+  // using alice's public key. Since we don't have bob's actual E2EE instance,
+  // we'll note that in production the relay would deliver pre-encrypted messages.
 
   await messageManager.receiveMessage({
     id: 'msg_bob_1',
@@ -113,7 +129,7 @@ async function main() {
     createdAt: Date.now()
   });
 
-  // 7. Get conversation history
+  // 7. Get conversation history (decrypted on read)
   logger.info('\n=== Conversation History ===');
 
   const history = await colalink.getHistory('bob');
@@ -160,6 +176,11 @@ async function main() {
   if (pendingRequests.length > 0) {
     const accepted = colalink.acceptContactRequest(pendingRequests[0].id);
     logger.info(`Accepted request: ${accepted.id}`);
+
+    // In production, key exchange would happen here:
+    // - Alice sends her public key to eve
+    // - Eve sends her public key to alice
+    // colalink.setPeerPublicKey('eve', evePublicKey);
   }
 
   // 10. Mark messages as read
@@ -226,7 +247,7 @@ async function main() {
   colalink.unblockContact('bob');
 
   const msg4 = await colalink.sendMessage('bob', 'Now this works again!');
-  logger.info(`Sent message: ${msg4.id}`);
+  logger.info(`Sent message (E2EE): ${msg4.id}`);
 
   // 13. Withdraw message
   logger.info('\n=== Message Withdrawal ===');

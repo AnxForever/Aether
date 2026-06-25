@@ -212,6 +212,17 @@ app.get('/api/models', async (_req: Request, res: Response) => {
   }
 });
 
+// Switch model
+app.post('/api/models/switch', (req: Request, res: Response) => {
+  const { model } = req.body;
+  if (!model) {
+    res.status(400).json({ success: false, error: 'model is required' });
+    return;
+  }
+  agent.updateSettings({ model } as any);
+  res.json({ success: true, data: { model } });
+});
+
 // Chat
 app.post('/api/chat', async (req: Request, res: Response) => {
   try {

@@ -1,4 +1,5 @@
 import { useAppStore } from '../stores/app';
+import { switchModel } from '../api/client';
 
 const PROVIDERS = [
   { id: 'claude', name: 'Claude', model: 'Sonnet', color: 'bg-provider-claude', dot: '#f59e0b' },
@@ -24,7 +25,10 @@ export default function ProviderBar() {
           return (
             <button
               key={p.id}
-              onClick={() => setModel(p.id)}
+              onClick={() => {
+                setModel(p.id);
+                switchModel(p.id).catch(() => {});
+              }}
               className={`
                 group flex items-center gap-2 px-3 py-1.5 rounded-sm transition-all duration-300
                 ${active

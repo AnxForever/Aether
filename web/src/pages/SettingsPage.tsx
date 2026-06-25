@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getModels } from '../api/client';
+import { getModels, switchModel as switchModelApi } from '../api/client';
 import { useAppStore } from '../stores/app';
 import { Settings, Cpu, HardDrive, Check } from 'lucide-react';
 
@@ -48,7 +48,7 @@ export default function SettingsPage() {
                 return (
                   <button
                     key={m.id || m.name}
-                    onClick={() => setModel(m.id || m.name)}
+                    onClick={() => { setModel(m.id || m.name); switchModelApi(m.id || m.name).catch(() => {}); }}
                     className={`w-full flex items-center justify-between px-3 py-2.5 rounded-sm transition-all text-left ${
                       selected
                         ? 'bg-accent/8 border border-accent/20'

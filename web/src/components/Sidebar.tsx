@@ -1,6 +1,7 @@
 import { NavLink } from 'react-router-dom';
 import { MessageSquare, Zap, Workflow, Settings, LogOut, Plus, PanelLeftClose } from 'lucide-react';
 import { useAppStore } from '../stores/app';
+import { newSession } from '../api/client';
 
 const navItems = [
   { to: '/chat', icon: MessageSquare, label: '对话' },
@@ -30,7 +31,7 @@ export default function Sidebar() {
       {/* New Chat */}
       <div className="px-3 mb-3">
         <button
-          onClick={clearMessages}
+          onClick={() => { clearMessages(); newSession().catch(() => {}); }}
           className="flex items-center gap-2 w-full px-3 py-2 rounded-sm border border-border-default text-ink-secondary hover:text-ink hover:bg-white/[0.04] transition-all text-caption font-ui"
         >
           <Plus size={14} />

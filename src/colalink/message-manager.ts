@@ -1,12 +1,12 @@
 /**
- * ColaLink Message Manager - EventEmitter-based messaging
+ * ColaLink Message Manager - EventEmitter-based messaging with E2EE
  */
 
 import Database from 'better-sqlite3';
 import { EventEmitter } from 'eventemitter3';
 import { randomUUID } from 'crypto';
 import { createLogger } from '../utils/logger';
-import { encrypt, decrypt } from '../utils/crypto';
+import { E2EECrypto, EncryptedPayload } from './crypto';
 
 const logger = createLogger('ColaLink:MessageManager');
 
@@ -38,26 +38,66 @@ export interface MessageEvents {
 }
 
 /**
- * Message Manager with EventEmitter
+ * Key store for peer public keys
+ */
+interface PeerKeyEntry {
+  handle: string;
+  publicKey: string;
+}
+
+/**
+ * Message Manager with EventEmitter and E2EE
  *
- * TODO: SECURITY - Implement proper end-to-end encryption with Signal Protocol
- * Current implementation uses symmetric encryption which is NOT suitable for production.
- * Required changes:
- * 1. Implement Signal Protocol (X3DH + Double Ratchet)
- * 2. Store per-user identity keys and prekeys
- * 3. Implement proper key exchange and session management
- * 4. Remove plaintext encryption key from constructor
+ * Uses ECDH + AES-256-GCM for end-to-end encryption:
+ * - Each instance generates its own ECDH key pair
+ * - Messages are encrypted with the recipient's public key
+ * - Only the recipient can decrypt with their private key
  */
 export class MessageManager extends EventEmitter<MessageEvents> {
   private db: Database.Database;
-  private encryptionKey: string; // TODO: Replace with Signal Protocol session manager
+  private e2ee: E2EECrypto;
 
-  constructor(dbPath: string, encryptionKey: string) {
+  constructor(dbPath: string) {
     super();
     this.db = new Database(dbPath);
-    this.encryptionKey = encryptionKey;
+    this.e2ee = new E2EECrypto();
     this.initializeTables();
-    logger.info('MessageManager initialized');
+    logger.info('MessageManager initialized with E2EE');
+  }
+
+  /**
+   * Get this instance's ECDH public key
+   */
+  getPublicKey(): string {
+    return this.e2ee.getPublicKey();
+  }
+
+  /**
+   * Store a peer's public key for encryption
+   *
+   * Must be called before sending messages to this handle.
+   * Typically called when a contact is added or during key exchange.
+   */
+  setPeerPublicKey(handle: string, publicKey: string): void {
+    this.db
+      .prepare(
+        `INSERT OR REPLACE INTO colalink_peer_keys (handle, publicKey)
+         VALUES (?, ?)`
+      )
+      .run(handle, publicKey);
+
+    logger.info(`Peer public key stored for @${handle}`);
+  }
+
+  /**
+   * Get a peer's stored public key
+   */
+  getPeerPublicKey(handle: string): string | null {
+    const entry = this.db
+      .prepare('SELECT publicKey FROM colalink_peer_keys WHERE handle = ?')
+      .get(handle) as PeerKeyEntry | undefined;
+
+    return entry?.publicKey ?? null;
   }
 
   /**
@@ -81,14 +121,37 @@ export class MessageManager extends EventEmitter<MessageEvents> {
       CREATE INDEX IF NOT EXISTS idx_messages_to ON colalink_messages(toHandle);
       CREATE INDEX IF NOT EXISTS idx_messages_conversation ON colalink_messages(fromHandle, toHandle, createdAt);
       CREATE INDEX IF NOT EXISTS idx_messages_status ON colalink_messages(status);
+
+      CREATE TABLE IF NOT EXISTS colalink_peer_keys (
+        handle TEXT PRIMARY KEY,
+        publicKey TEXT NOT NULL
+      );
     `);
   }
 
   /**
-   * Send message
+   * Send message with E2EE
+   *
+   * Encrypts content using recipient's public key (ECDH + AES-256-GCM).
+   * The recipient's public key must have been stored via setPeerPublicKey().
    */
-  async sendMessage(fromHandle: string, toHandle: string, content: string): Promise<Message> {
-    const encryptedContent = await encrypt(content, this.encryptionKey);
+  async sendMessage(
+    fromHandle: string,
+    toHandle: string,
+    content: string
+  ): Promise<Message> {
+    // Get recipient's public key
+    const peerPublicKey = this.getPeerPublicKey(toHandle);
+    if (!peerPublicKey) {
+      throw new Error(
+        `Cannot encrypt message to @${toHandle}: peer public key not found. ` +
+          `Call setPeerPublicKey('${toHandle}', '<publicKey>') first.`
+      );
+    }
+
+    // E2EE encrypt
+    const payload = this.e2ee.encrypt(content, peerPublicKey);
+    const encryptedContent = E2EECrypto.serialize(payload);
 
     const message: Message = {
       id: randomUUID(),
@@ -97,7 +160,7 @@ export class MessageManager extends EventEmitter<MessageEvents> {
       content: encryptedContent,
       encrypted: true,
       status: 'pending',
-      createdAt: Date.now()
+      createdAt: Date.now(),
     };
 
     this.db
@@ -115,7 +178,9 @@ export class MessageManager extends EventEmitter<MessageEvents> {
         message.createdAt
       );
 
-    logger.info(`Message sent: ${message.id} (@${fromHandle} → @${toHandle})`);
+    logger.info(
+      `Message sent (E2EE): ${message.id} (@${fromHandle} → @${toHandle})`
+    );
     this.emit('message:sent', message);
 
     return message;
@@ -123,6 +188,9 @@ export class MessageManager extends EventEmitter<MessageEvents> {
 
   /**
    * Receive message (from remote)
+   *
+   * The message is stored in encrypted form. Decryption happens on read
+   * via getMessage() / getHistory().
    */
   async receiveMessage(message: Message): Promise<void> {
     // Check if message already exists
@@ -150,12 +218,38 @@ export class MessageManager extends EventEmitter<MessageEvents> {
         message.createdAt
       );
 
-    logger.info(`Message received: ${message.id} (@${message.fromHandle} → @${message.toHandle})`);
+    logger.info(
+      `Message received: ${message.id} (@${message.fromHandle} → @${message.toHandle})`
+    );
     this.emit('message:received', message);
   }
 
   /**
-   * Get message by ID
+   * Decrypt a message's content in place
+   *
+   * Uses the sender's public key to derive the shared secret
+   * and decrypt the message.
+   */
+  private decryptMessage(msg: Message): Message {
+    if (!msg.encrypted) {
+      return msg;
+    }
+
+    const peerPublicKey = this.getPeerPublicKey(msg.fromHandle);
+    if (!peerPublicKey) {
+      throw new Error(
+        `Cannot decrypt message ${msg.id} from @${msg.fromHandle}: ` +
+          `sender's public key not found.`
+      );
+    }
+
+    const payload = E2EECrypto.deserialize(msg.content);
+    const decrypted = this.e2ee.decrypt(payload, peerPublicKey);
+    return { ...msg, content: decrypted };
+  }
+
+  /**
+   * Get message by ID (decrypted)
    */
   async getMessage(messageId: string): Promise<Message | null> {
     const message = this.db
@@ -166,28 +260,22 @@ export class MessageManager extends EventEmitter<MessageEvents> {
       return null;
     }
 
-    // Decrypt if encrypted
-    if (message.encrypted) {
-      try {
-        message.content = await decrypt(message.content, this.encryptionKey);
-      } catch (error) {
-        logger.error(`Failed to decrypt message ${messageId}`, error as Error);
-        throw error;
-      }
+    try {
+      return this.decryptMessage(message);
+    } catch (error) {
+      logger.error(`Failed to decrypt message ${messageId}`, error as Error);
+      throw error;
     }
-
-    return message;
   }
 
   /**
-   * Get conversation history
-   *
-   * TODO: PERFORMANCE - Optimize decryption with key caching
-   * Current implementation derives keys for each message independently.
-   * With Signal Protocol implementation, cache derived session keys per conversation
-   * to avoid repeated key derivations for the same conversation.
+   * Get conversation history (decrypted)
    */
-  async getHistory(handle1: string, handle2: string, limit: number = 50): Promise<Message[]> {
+  async getHistory(
+    handle1: string,
+    handle2: string,
+    limit: number = 50
+  ): Promise<Message[]> {
     const messages = this.db
       .prepare(
         `SELECT * FROM colalink_messages
@@ -198,20 +286,20 @@ export class MessageManager extends EventEmitter<MessageEvents> {
 
     // Decrypt messages
     const decrypted = await Promise.all(
-      messages.map(async msg => {
-        if (msg.encrypted) {
-          try {
-            return {
-              ...msg,
-              content: await decrypt(msg.content, this.encryptionKey)
-            };
-          } catch (error) {
-            logger.error(`Failed to decrypt message ${msg.id}`, error as Error);
-            // SECURITY: Throw error instead of silent failure with placeholder
-            throw new Error(`Decryption failed for message ${msg.id}: ${(error as Error).message}`);
-          }
+      messages.map(async (msg) => {
+        if (!msg.encrypted) return msg;
+
+        try {
+          return this.decryptMessage(msg);
+        } catch (error) {
+          logger.error(
+            `Failed to decrypt message ${msg.id}`,
+            error as Error
+          );
+          throw new Error(
+            `Decryption failed for message ${msg.id}: ${(error as Error).message}`
+          );
         }
-        return msg;
       })
     );
 
@@ -237,7 +325,6 @@ export class MessageManager extends EventEmitter<MessageEvents> {
 
     const updated: Message = { ...message, status: 'sent' };
     logger.info(`Message marked as sent: ${messageId}`);
-    // No event emission for sent status (internal state)
   }
 
   /**
@@ -255,10 +342,16 @@ export class MessageManager extends EventEmitter<MessageEvents> {
 
     const deliveredAt = Date.now();
     this.db
-      .prepare('UPDATE colalink_messages SET status = ?, deliveredAt = ? WHERE id = ?')
+      .prepare(
+        'UPDATE colalink_messages SET status = ?, deliveredAt = ? WHERE id = ?'
+      )
       .run('delivered', deliveredAt, messageId);
 
-    const updated: Message = { ...message, status: 'delivered', deliveredAt };
+    const updated: Message = {
+      ...message,
+      status: 'delivered',
+      deliveredAt,
+    };
     logger.info(`Message marked as delivered: ${messageId}`);
     this.emit('message:delivered', updated);
   }
@@ -278,7 +371,9 @@ export class MessageManager extends EventEmitter<MessageEvents> {
 
     const readAt = Date.now();
     this.db
-      .prepare('UPDATE colalink_messages SET status = ?, readAt = ? WHERE id = ?')
+      .prepare(
+        'UPDATE colalink_messages SET status = ?, readAt = ? WHERE id = ?'
+      )
       .run('read', readAt, messageId);
 
     const updated: Message = { ...message, status: 'read', readAt };
@@ -312,7 +407,9 @@ export class MessageManager extends EventEmitter<MessageEvents> {
    */
   getUnreadCount(handle: string): number {
     const result = this.db
-      .prepare('SELECT COUNT(*) as count FROM colalink_messages WHERE toHandle = ? AND status NOT IN (?, ?)')
+      .prepare(
+        'SELECT COUNT(*) as count FROM colalink_messages WHERE toHandle = ? AND status NOT IN (?, ?)'
+      )
       .get(handle, 'read', 'withdrawn') as { count: number };
 
     return result.count;
@@ -321,11 +418,16 @@ export class MessageManager extends EventEmitter<MessageEvents> {
   /**
    * Get recent conversations
    */
-  async getRecentConversations(myHandle: string, limit: number = 20): Promise<Array<{
-    handle: string;
-    lastMessage: Message;
-    unreadCount: number;
-  }>> {
+  async getRecentConversations(
+    myHandle: string,
+    limit: number = 20
+  ): Promise<
+    Array<{
+      handle: string;
+      lastMessage: Message;
+      unreadCount: number;
+    }>
+  > {
     const conversations = this.db
       .prepare(
         `SELECT
@@ -341,21 +443,26 @@ export class MessageManager extends EventEmitter<MessageEvents> {
          ORDER BY lastTime DESC
          LIMIT ?`
       )
-      .all(myHandle, myHandle, myHandle, limit) as Array<{ handle: string; id: string }>;
+      .all(myHandle, myHandle, myHandle, limit) as Array<{
+      handle: string;
+      id: string;
+    }>;
 
     const result = await Promise.all(
-      conversations.map(async conv => {
+      conversations.map(async (conv) => {
         const lastMessage = await this.getMessage(conv.id);
         const unreadCount = this.db
           .prepare(
             'SELECT COUNT(*) as count FROM colalink_messages WHERE fromHandle = ? AND toHandle = ? AND status NOT IN (?, ?)'
           )
-          .get(conv.handle, myHandle, 'read', 'withdrawn') as { count: number };
+          .get(conv.handle, myHandle, 'read', 'withdrawn') as {
+          count: number;
+        };
 
         return {
           handle: conv.handle,
           lastMessage: lastMessage!,
-          unreadCount: unreadCount.count
+          unreadCount: unreadCount.count,
         };
       })
     );

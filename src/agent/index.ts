@@ -3,6 +3,8 @@
  */
 
 export * from './pi-adapter';
+export * from './agent-plugins';
+export * from './agent-colalink';
 
 // Re-export pi-agent-core types for convenience
 export type {

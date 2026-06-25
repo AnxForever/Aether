@@ -58,16 +58,25 @@ export async function login(username: string, password: string) {
 }
 
 // ============================================================================
+// Models
+// ============================================================================
+
+export async function switchModel(model: string) {
+  return request<{ model: string }>('POST', '/api/models/switch', { model });
+}
+
+// ============================================================================
 // Chat
 // ============================================================================
 
-export async function sendMessage(message: string, sessionId?: string) {
-  return request<{ message: string; sessionId: string }>('POST', '/api/chat', { message, sessionId });
+export async function sendMessage(message: string, sessionId?: string, model?: string) {
+  return request<{ message: string; sessionId: string }>('POST', '/api/chat', { message, sessionId, model });
 }
 
 export function streamChat(
   message: string,
   sessionId: string | undefined,
+  model: string,
   onChunk: (text: string) => void,
   onDone: (sessionId: string) => void,
   onError: (error: string) => void
@@ -75,6 +84,7 @@ export function streamChat(
   const controller = new AbortController();
   const params = new URLSearchParams({ message });
   if (sessionId) params.set('sessionId', sessionId);
+  if (model) params.set('model', model);
 
   const headers: Record<string, string> = {};
   if (authToken) headers['Authorization'] = `Bearer ${authToken}`;

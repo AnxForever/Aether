@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Send, StopCircle, Sparkles, Hash } from 'lucide-react';
-import { streamChat } from '../api/client';
+import { streamChat, newSession } from '../api/client';
 import { useAppStore } from '../stores/app';
 import ChatMessage from '../components/ChatMessage';
 
@@ -44,6 +44,7 @@ export default function ChatPage() {
     const controller = streamChat(
       text,
       sessionId ?? undefined,
+      currentModel,
       (chunk) => {
         streamingRef.current += chunk;
         setStreamingContent(streamingRef.current);

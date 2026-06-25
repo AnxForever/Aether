@@ -11,7 +11,6 @@ import { randomUUID } from 'crypto';
 import { PluginLoader } from './plugins/plugin-loader';
 import { PluginMarketplace } from './plugins/marketplace';
 import { pluginRegistry, Plugin } from './plugins/plugin-registry';
-import { pluginValidator } from './plugins/plugin-validator';
 import { createLogger } from './utils/logger';
 import { join } from 'path';
 import { ColaLinkManager } from './colalink/colalink-manager';
@@ -106,6 +105,12 @@ import type { WorkItem, WorkPriority, WorkStatus } from './queue/manager';
 // Module 7: Modes
 import { ModeManager } from './modes/mode-manager';
 import type { Mode, AgentMode } from './modes/mode-manager';
+
+// ============================================================================
+// Extracted subsystem modules (reducing God Object size)
+// ============================================================================
+import * as agentPlugins from './agent/agent-plugins';
+import * as agentColaLink from './agent/agent-colalink';
 
 const logger = createLogger('NexusAgent');
 
@@ -360,15 +365,17 @@ export class NexusAgent {
 
     const agentDataDir = this.config.dataDir || './data';
 
-    // Initialize ColaLink
+    // Initialize ColaLink with E2EE
     if (this.config.colaLink) {
-      this.colaLinkManager = new ColaLinkManager({
+      const colaLinkConfig = {
         dataDir: agentDataDir,
-        encryptionKey: this.config.colaLink?.encryptionKey || process.env.COLALINK_ENCRYPTION_KEY || '',
         myHandle: this.config.colaLink?.myHandle || 'aether-user',
         ...this.config.colaLink
-      });
-      logger.info('ColaLink initialized');
+      };
+      // Remove legacy encryptionKey if present (E2EE is now auto-generated)
+      delete (colaLinkConfig as any).encryptionKey;
+      this.colaLinkManager = new ColaLinkManager(colaLinkConfig);
+      logger.info('ColaLink initialized with E2EE');
     }
 
     // Initialize Awareness System
@@ -642,210 +649,78 @@ export class NexusAgent {
   }
 
   // ============================================================================
-  // Plugin Management API
+  // Plugin Management API (delegated to agent-plugins.ts)
   // ============================================================================
 
-  /**
-   * Load a plugin by ID
-   */
   async loadPlugin(pluginId: string): Promise<Plugin> {
-    logger.info(`Loading plugin: ${pluginId}`);
-
-    try {
-      // Check if already loaded
-      if (this.pluginLoader.isLoaded(pluginId)) {
-        logger.warn(`Plugin already loaded: ${pluginId}`);
-        return this.pluginLoader.getPlugin(pluginId)!;
-      }
-
-      // Load plugin
-      const plugin = await this.pluginLoader.loadPlugin(pluginId);
-
-      // Validate plugin
-      const pluginPath = join(this.pluginLoader['pluginsDir'], pluginId);
-      const { validation, security } = await pluginValidator.validatePlugin(
-        pluginPath,
-        plugin.manifest
-      );
-
-      // Log validation results
-      if (!validation.valid) {
-        throw new Error(`Plugin validation failed: ${validation.errors.join(', ')}`);
-      }
-
-      if (!security.safe) {
-        const report = pluginValidator.generateReport(validation, security);
-        logger.warn(`Security risks detected in plugin ${pluginId}:\n${report}`);
-      }
-
-      // Register plugin
-      pluginRegistry.register(plugin);
-
-      logger.info(`Plugin loaded successfully: ${plugin.name} v${plugin.version}`);
-      return plugin;
-    } catch (error: unknown) {
-      logger.error(`Failed to load plugin ${pluginId}:`, error as Error);
-      throw error;
-    }
+    return agentPlugins.loadPlugin({ pluginLoader: this.pluginLoader }, pluginId);
   }
 
-  /**
-   * Unload a plugin by ID
-   */
   async unloadPlugin(pluginId: string): Promise<void> {
-    logger.info(`Unloading plugin: ${pluginId}`);
-
-    try {
-      // Unload from loader
-      await this.pluginLoader.unloadPlugin(pluginId);
-
-      // Unregister from registry
-      pluginRegistry.unregister(pluginId);
-
-      logger.info(`Plugin unloaded: ${pluginId}`);
-    } catch (error: unknown) {
-      logger.error(`Failed to unload plugin ${pluginId}:`, error as Error);
-      throw error;
-    }
+    return agentPlugins.unloadPlugin({ pluginLoader: this.pluginLoader }, pluginId);
   }
 
-  /**
-   * Reload a plugin by ID
-   */
   async reloadPlugin(pluginId: string): Promise<Plugin> {
-    logger.info(`Reloading plugin: ${pluginId}`);
-    await this.unloadPlugin(pluginId);
-    return await this.loadPlugin(pluginId);
+    return agentPlugins.reloadPlugin({ pluginLoader: this.pluginLoader }, pluginId);
   }
 
-  /**
-   * List all loaded plugins
-   */
   listPlugins(): Plugin[] {
-    return pluginRegistry.listAll();
+    return agentPlugins.listPlugins();
   }
 
-  /**
-   * List enabled plugins
-   */
   listEnabledPlugins(): Plugin[] {
-    return pluginRegistry.listEnabled();
+    return agentPlugins.listEnabledPlugins();
   }
 
-  /**
-   * Enable a plugin
-   */
   enablePlugin(pluginId: string): void {
-    pluginRegistry.enable(pluginId);
-    logger.info(`Plugin enabled: ${pluginId}`);
+    agentPlugins.enablePlugin(pluginId);
   }
 
-  /**
-   * Disable a plugin
-   */
   disablePlugin(pluginId: string): void {
-    pluginRegistry.disable(pluginId);
-    logger.info(`Plugin disabled: ${pluginId}`);
+    agentPlugins.disablePlugin(pluginId);
   }
 
-  /**
-   * Get plugin by ID
-   */
   getPlugin(pluginId: string): Plugin | undefined {
-    return pluginRegistry.get(pluginId);
+    return agentPlugins.getPlugin(pluginId);
   }
 
-  /**
-   * Search plugins in marketplace
-   */
   async searchPlugins(query: string, category?: string) {
-    return await this.marketplace.search(query, category);
+    return agentPlugins.searchPlugins({ marketplace: this.marketplace }, query, category);
   }
 
-  /**
-   * Get featured plugins from marketplace
-   */
   async getFeaturedPlugins() {
-    return await this.marketplace.getFeatured();
+    return agentPlugins.getFeaturedPlugins({ marketplace: this.marketplace });
   }
 
-  /**
-   * Install plugin from marketplace
-   */
   async installPlugin(pluginId: string, version?: string): Promise<void> {
-    logger.info(`Installing plugin: ${pluginId}${version ? `@${version}` : ''}`);
-
-    try {
-      // Install from marketplace
-      await this.marketplace.install(pluginId, version);
-
-      // Load the installed plugin
-      await this.loadPlugin(pluginId);
-
-      logger.info(`Plugin installed: ${pluginId}`);
-    } catch (error: unknown) {
-      logger.error(`Failed to install plugin ${pluginId}:`, error as Error);
-      throw error;
-    }
+    return agentPlugins.installPlugin(
+      { marketplace: this.marketplace, loadPlugin: (id) => this.loadPlugin(id) },
+      pluginId,
+      version,
+    );
   }
 
-  /**
-   * Uninstall plugin
-   */
   async uninstallPlugin(pluginId: string): Promise<void> {
-    logger.info(`Uninstalling plugin: ${pluginId}`);
-
-    try {
-      // Unload if loaded
-      if (this.pluginLoader.isLoaded(pluginId)) {
-        await this.unloadPlugin(pluginId);
-      }
-
-      // Uninstall from marketplace
-      await this.marketplace.uninstall(pluginId);
-
-      logger.info(`Plugin uninstalled: ${pluginId}`);
-    } catch (error: unknown) {
-      logger.error(`Failed to uninstall plugin ${pluginId}:`, error as Error);
-      throw error;
-    }
+    return agentPlugins.uninstallPlugin(
+      { marketplace: this.marketplace, pluginLoader: this.pluginLoader, unloadPlugin: (id) => this.unloadPlugin(id) },
+      pluginId,
+    );
   }
 
-  /**
-   * Update plugin to latest or specific version
-   */
   async updatePlugin(pluginId: string, version?: string): Promise<void> {
-    logger.info(`Updating plugin: ${pluginId}${version ? ` to ${version}` : ''}`);
-
-    try {
-      // Unload plugin
-      await this.unloadPlugin(pluginId);
-
-      // Update via marketplace
-      await this.marketplace.update(pluginId, version);
-
-      // Reload plugin
-      await this.loadPlugin(pluginId);
-
-      logger.info(`Plugin updated: ${pluginId}`);
-    } catch (error: unknown) {
-      logger.error(`Failed to update plugin ${pluginId}:`, error as Error);
-      throw error;
-    }
+    return agentPlugins.updatePlugin(
+      { marketplace: this.marketplace, unloadPlugin: (id) => this.unloadPlugin(id), loadPlugin: (id) => this.loadPlugin(id) },
+      pluginId,
+      version,
+    );
   }
 
-  /**
-   * Check for plugin updates
-   */
   async checkPluginUpdates() {
-    return await this.marketplace.checkUpdates();
+    return agentPlugins.checkPluginUpdates({ marketplace: this.marketplace });
   }
 
-  /**
-   * Get plugin statistics
-   */
   getPluginStats() {
-    return pluginRegistry.getStats();
+    return agentPlugins.getPluginStats();
   }
 
   /**
@@ -1068,60 +943,43 @@ export class NexusAgent {
   }
 
   // ============================================================================
-  // ColaLink API (跨设备消息同步)
+  // ColaLink API (跨设备消息同步, delegated to agent-colalink.ts)
   // ============================================================================
 
-  /** Send a message via ColaLink */
   async sendColaLinkMessage(toHandle: string, content: string): Promise<ColaLinkMessage> {
-    if (!this.colaLinkManager) throw new Error('ColaLink is not initialized');
-    return await this.colaLinkManager.sendMessage(toHandle, content);
+    return agentColaLink.sendColaLinkMessage({ colaLinkManager: this.colaLinkManager }, toHandle, content);
   }
 
-  /** Get conversation history with a contact */
   async getColaLinkHistory(handle: string, limit?: number): Promise<ColaLinkMessage[]> {
-    if (!this.colaLinkManager) throw new Error('ColaLink is not initialized');
-    return await this.colaLinkManager.getHistory(handle, limit);
+    return agentColaLink.getColaLinkHistory({ colaLinkManager: this.colaLinkManager }, handle, limit);
   }
 
-  /** List all contacts */
   listColaLinkContacts(status?: Contact['status']): Contact[] {
-    if (!this.colaLinkManager) return [];
-    return this.colaLinkManager.listContacts(status);
+    return agentColaLink.listColaLinkContacts({ colaLinkManager: this.colaLinkManager }, status);
   }
 
-  /** Add a contact */
   addColaLinkContact(contact: Omit<Contact, 'addedAt' | 'updatedAt'>): Contact {
-    if (!this.colaLinkManager) throw new Error('ColaLink is not initialized');
-    return this.colaLinkManager.addContact(contact);
+    return agentColaLink.addColaLinkContact({ colaLinkManager: this.colaLinkManager }, contact);
   }
 
-  /** Send a contact request */
   sendColaLinkContactRequest(toHandle: string, message?: string): ContactRequest {
-    if (!this.colaLinkManager) throw new Error('ColaLink is not initialized');
-    return this.colaLinkManager.sendContactRequest(toHandle, message);
+    return agentColaLink.sendColaLinkContactRequest({ colaLinkManager: this.colaLinkManager }, toHandle, message);
   }
 
-  /** List pending contact requests */
   listColaLinkPendingRequests(): ContactRequest[] {
-    if (!this.colaLinkManager) return [];
-    return this.colaLinkManager.listPendingRequests();
+    return agentColaLink.listColaLinkPendingRequests({ colaLinkManager: this.colaLinkManager });
   }
 
-  /** Get unread message count */
   getColaLinkUnreadCount(): number {
-    if (!this.colaLinkManager) return 0;
-    return this.colaLinkManager.getUnreadCount();
+    return agentColaLink.getColaLinkUnreadCount({ colaLinkManager: this.colaLinkManager });
   }
 
-  /** Get recent conversations */
   async getColaLinkRecentConversations(limit?: number) {
-    if (!this.colaLinkManager) return [];
-    return await this.colaLinkManager.getRecentConversations(limit);
+    return agentColaLink.getColaLinkRecentConversations({ colaLinkManager: this.colaLinkManager }, limit);
   }
 
-  /** Get ColaLink system health */
   isColaLinkActive(): boolean {
-    return this.colaLinkManager !== undefined;
+    return agentColaLink.isColaLinkActive({ colaLinkManager: this.colaLinkManager });
   }
 
   // ============================================================================
