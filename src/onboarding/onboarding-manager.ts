@@ -180,9 +180,17 @@ export class OnboardingManager extends EventEmitter {
         return validation;
       }
 
-      // TODO: Actual API validation by making test request
-      // For now, just validate format
-      logger.info(`API key format valid for ${provider}`);
+      // Actual API validation via test request
+      logger.info(`Testing API connection for ${provider}...`);
+      const connectionValid = await this.testProviderConnection(provider, apiKey);
+
+      if (!connectionValid.valid) {
+        return {
+          provider,
+          valid: false,
+          error: connectionValid.error || 'Connection test failed',
+        };
+      }
 
       return {
         provider,
@@ -197,6 +205,97 @@ export class OnboardingManager extends EventEmitter {
         error: error instanceof Error ? error.message : 'Validation failed',
       };
     }
+  }
+
+  /**
+   * Test real API connection to a provider
+   */
+  private async testProviderConnection(
+    provider: AIProvider,
+    apiKey: string
+  ): Promise<{ valid: boolean; error?: string }> {
+    try {
+      const endpoint = this.getTestEndpoint(provider);
+      if (!endpoint) {
+        return { valid: true }; // Skip for providers without known endpoint
+      }
+
+      const url = typeof endpoint.getUrl === 'function' ? endpoint.getUrl(apiKey) : endpoint.url;
+      const response = await fetch(url, {
+        method: endpoint.method || 'GET',
+        headers: endpoint.headers
+          ? typeof endpoint.headers === 'function'
+            ? endpoint.headers(apiKey)
+            : endpoint.headers
+          : {},
+        signal: AbortSignal.timeout(10000),
+      });
+
+      if (response.ok || response.status === 200) {
+        logger.info(`API connection test passed for ${provider}`);
+        return { valid: true };
+      }
+
+      // 401/403 means invalid key, other errors may be temporary
+      if (response.status === 401 || response.status === 403) {
+        return { valid: false, error: `Invalid API key (HTTP ${response.status})` };
+      }
+
+      // 429 is rate limit — key format is likely valid
+      if (response.status === 429) {
+        logger.warn(`Rate limited testing ${provider}, assuming valid`);
+        return { valid: true };
+      }
+
+      return { valid: false, error: `API returned HTTP ${response.status}` };
+    } catch (error: any) {
+      // Network errors may be transient — warn but don't block
+      if (error.name === 'AbortError' || error.name === 'TimeoutError') {
+        logger.warn(`Connection timeout testing ${provider}, assuming valid`);
+        return { valid: true }; // Timeout is network issue, not invalid key
+      }
+      logger.warn(`Connection test warning for ${provider}:`, error.message);
+      return { valid: true }; // Don't block setup on network errors
+    }
+  }
+
+  /**
+   * Get API test endpoint for provider
+   */
+  private getTestEndpoint(provider: AIProvider): { url: string; method: string; headers?: Record<string, string> | ((key: string) => Record<string, string>); getUrl?: (key: string) => string } | null {
+    const endpoints: Record<string, any> = {
+      claude: {
+        url: 'https://api.anthropic.com/v1/messages',
+        method: 'POST',
+        headers: (key: string) => ({
+          'x-api-key': key,
+          'anthropic-version': '2023-06-01',
+          'content-type': 'application/json',
+        }),
+      },
+      openai: {
+        url: 'https://api.openai.com/v1/models',
+        method: 'GET',
+        headers: (key: string) => ({
+          'Authorization': `Bearer ${key}`,
+        }),
+      },
+      gemini: {
+        url: `https://generativelanguage.googleapis.com/v1/models?key=${encodeURIComponent('PLACEHOLDER')}`,
+        method: 'GET',
+        headers: {},
+        getUrl: (key: string) => `https://generativelanguage.googleapis.com/v1/models?key=${encodeURIComponent(key)}`,
+      },
+      deepseek: {
+        url: 'https://api.deepseek.com/v1/models',
+        method: 'GET',
+        headers: (key: string) => ({
+          'Authorization': `Bearer ${key}`,
+        }),
+      },
+    };
+
+    return endpoints[provider] || null;
   }
 
   /**
