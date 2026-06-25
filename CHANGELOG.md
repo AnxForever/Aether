@@ -99,6 +99,93 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Examples**: ~1,500+ lines
 - **Documentation**: ~100+ pages
 
+## [2.1.0] - 2026-06-25
+
+### Added — 10 New Subsystem Activations
+
+#### 🔗 ColaLink — Cross-Device Messaging
+- **End-to-end encrypted messaging**: Signal Protocol-based encryption
+- **Contact management**: Add, block, unblock contacts with status tracking
+- **Conversation history**: Get, search, and paginate message history
+- **WeChat bridge**: Optional WeChat plugin for message relay
+- **ColaLink events**: Real-time events for message and contact changes
+- **New APIs**: `sendColaLinkMessage()`, `listColaLinkContacts()`, `addColaLinkContact()`, `getColaLinkUnreadCount()` (9 methods)
+
+#### 📔 Awareness System — AI Self-Reflection
+- **Daily diary generation**: AI automatically generates daily reflections at 9 PM
+- **Conversation drafts**: Extract and save conversation highlights
+- **Daily episodes**: Summarize each day's conversations
+- **Imprint management**: List and query all diaries/drafts/episodes
+- **Color scheme & cover images**: Auto-generate visual covers for reflections
+- **New APIs**: `generateAwarenessDiary()`, `createAwarenessDraft()`, `generateAwarenessEpisode()`, `listAwarenessImprints()`
+
+#### 🔍 Semantic Search — Vector-Based Search
+- **Embedding-based indexing**: 384-dim vector embeddings for content
+- **Full-text search**: FTS5-powered text search
+- **Fuzzy & regex search**: Advanced search modes
+- **Search history & suggestions**: Auto-suggest based on history
+- **Integrated in main.ts**: Direct IPC channels for desktop search
+- **New APIs**: `searchIndex()`, `searchSemantic()`, `getSearchHistory()`, `removeFromSearchIndex()`
+
+#### 🎯 Recommendation Engine — Intelligent Suggestions
+- **6 recommendation types**: Skills, workflows, content, collaborators, code snippets, learning paths
+- **Collaborative filtering**: User behavior-based recommendations
+- **Content-based filtering**: Feature-based similarity matching
+- **Interaction tracking**: View, use, like, dislike, skip actions
+- **New APIs**: `recordRecommendationInteraction()`, `getRecommendations()`
+
+#### 🪟 Mini Window — Floating Quick Access
+- **280×42px ultra-compact window**: Always-on-top floating bar
+- **6 positions**: top/bottom × left/center/right
+- **Global shortcut**: Cmd/Ctrl+Shift+Space to toggle
+- **Transparent & acrylic**: macOS vibrancy + Windows acrylic material
+- **IPC channels**: `mini-window:show`, `mini-window:hide`, `mini-window:toggle`
+
+#### 🌐 Browser Automation — Playwright Integration
+- **Multi-browser support**: Chromium, Firefox, WebKit
+- **Headless & headed modes**: Configurable for debugging
+- **Page navigation & screenshots**: Full-page capture with format options
+- **New APIs**: `launchBrowser()`, `browserNavigate()`, `browserScreenshot()`, `closeBrowser()`
+
+#### 🎤 Voice Processing — Speech Pipeline
+- **ASR (Sherpa)**: Speech recognition with language support
+- **VAD (Silero)**: Voice activity detection for audio preprocessing
+- **TTS (Marswave)**: Text-to-speech synthesis with voice options
+- **Unified pipeline**: Single API for recognize → synthesize → detect
+- **New APIs**: `recognizeVoice()`, `synthesizeVoice()`, `detectVoiceActivity()`
+
+#### 📊 Visualization Engine — Chart Generation
+- **7 chart types**: Line, bar, pie, scatter, area, radar, heatmap
+- **Data transformation**: Pre-processing for visualization
+- **Multi-format export**: SVG, PNG, JSON output
+- **Theme support**: Light/dark with custom color palettes
+- **New APIs**: `generateChart()`, `transformChartData()`
+
+#### 🔬 Code Analysis Suite — Quality Metrics
+- **AST-based analysis**: Deep code structure analysis
+- **Complexity metrics**: Cyclomatic complexity, maintainability index
+- **Dependency graph**: Full dependency visualization
+- **Batch analysis**: Multi-file analysis support
+- **New APIs**: `analyzeCodeFile()`, `analyzeCodeFiles()`, `getCodeComplexity()`, `getCodeDependencyInfo()`, `getCodeDependencyGraph()`
+
+#### 🔌 MCP Server Manager — Model Context Protocol
+- **Protocol integration**: MCP server lifecycle management
+- **Tool discovery**: Auto-discover tools from running MCP servers
+- **Agent tool conversion**: Convert MCP tools to native agent tools
+- **Multi-server**: Manage multiple MCP servers simultaneously
+- **New APIs**: `startMcpServer()`, `stopMcpServer()`, `discoverMcpTools()`, `getMcpAgentTools()`, `listMcpServers()`
+
+### Changed
+- **agent.ts**: Added 10 subsystem fields, 50+ new API methods, expanded config interface
+- **main.ts**: Added MiniWindowManager initialization and IPC channels
+- **awareness-system.ts**: Fixed circular dependency with `import type`
+
+### Code Statistics
+- **New APIs**: ~50 methods across 10 subsystems
+- **Agent lines**: ~550 → ~900 lines
+- **All subsystems TypeScript**: 0 compilation errors
+- **Total activated codebase**: ~193,400 lines of previously dormant code now accessible
+
 ## [1.0.0] - 2024-06-24
 
 ### Added
