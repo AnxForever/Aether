@@ -1,0 +1,54 @@
+{
+  "gmail": {
+    "name": "Gmail",
+    "description": "管理 Gmail 邮件 - 搜索、阅读、发送和整理邮件",
+    "search": "搜索 Gmail 邮件",
+    "read": "阅读指定邮件",
+    "send": "发送邮件",
+    "label": "添加/移除标签"
+  },
+  "sheets": {
+    "name": "Google Sheets",
+    "description": "读取、写入和操作 Google Sheets 数据",
+    "read": "读取电子表格数据",
+    "write": "写入数据到电子表格",
+    "append": "追加行到电子表格",
+    "create": "创建新电子表格"
+  },
+  "docs": {
+    "name": "Google Docs",
+    "description": "创建和编辑 Google Docs 文档",
+    "read": "读取文档内容",
+    "create": "创建新文档",
+    "update": "更新文档内容"
+  },
+  "calendar": {
+    "name": "Google Calendar",
+    "description": "管理日历事件和日程",
+    "list": "列出日历事件",
+    "create": "创建新事件",
+    "update": "更新事件",
+    "delete": "删除事件"
+  },
+  "github": {
+    "name": "GitHub",
+    "description": "与 GitHub 仓库、Issue 和 Pull Request 交互",
+    "repoInfo": "获取仓库信息",
+    "createIssue": "创建 Issue",
+    "listIssues": "列出 Issue",
+    "createPR": "创建 Pull Request",
+    "searchRepos": "搜索仓库"
+  },
+  "office": {
+    "name": "Office 套件",
+    "description": "处理 PDF、Excel、Word 和 PowerPoint 文件",
+    "pdfRead": "读取 PDF 内容",
+    "pdfCreate": "创建 PDF",
+    "excelRead": "读取 Excel 数据",
+    "excelWrite": "写入 Excel 数据",
+    "wordRead": "读取 Word 文档",
+    "wordCreate": "创建 Word 文档",
+    "pptRead": "读取 PowerPoint",
+    "pptCreate": "创建 PowerPoint"
+  }
+}

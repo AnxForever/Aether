@@ -1,0 +1,45 @@
+{
+  "network": {
+    "timeout": "Network request timed out",
+    "connection": "Connection failed",
+    "offline": "You are offline",
+    "serverError": "Server error occurred"
+  },
+  "validation": {
+    "required": "{{field}} is required",
+    "invalid": "{{field}} is invalid",
+    "tooShort": "{{field}} is too short (minimum {{min}} characters)",
+    "tooLong": "{{field}} is too long (maximum {{max}} characters)",
+    "outOfRange": "{{field}} must be between {{min}} and {{max}}"
+  },
+  "auth": {
+    "unauthorized": "Unauthorized access",
+    "forbidden": "Access forbidden",
+    "sessionExpired": "Session expired, please login again",
+    "invalidCredentials": "Invalid username or password"
+  },
+  "file": {
+    "notFound": "File not found: {{path}}",
+    "readError": "Failed to read file: {{path}}",
+    "writeError": "Failed to write file: {{path}}",
+    "permissionDenied": "Permission denied: {{path}}"
+  },
+  "skill": {
+    "notFound": "Skill not found: {{skillId}}",
+    "executionFailed": "Skill execution failed: {{error}}",
+    "configurationMissing": "Skill configuration missing: {{field}}",
+    "dependencyNotMet": "Skill dependency not met: {{dependency}}"
+  },
+  "agent": {
+    "initializationFailed": "Agent initialization failed",
+    "executionTimeout": "Agent execution timed out",
+    "invalidInput": "Invalid agent input: {{reason}}",
+    "taskFailed": "Task failed: {{taskId}}"
+  },
+  "generic": {
+    "unknown": "An unknown error occurred",
+    "operationFailed": "Operation failed: {{operation}}",
+    "notImplemented": "Feature not implemented: {{feature}}",
+    "deprecated": "This feature is deprecated: {{feature}}"
+  }
+}

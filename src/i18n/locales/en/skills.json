@@ -1,0 +1,54 @@
+{
+  "gmail": {
+    "name": "Gmail",
+    "description": "Manage Gmail emails - search, read, send, and organize messages",
+    "search": "Search Gmail messages",
+    "read": "Read a specific email",
+    "send": "Send an email",
+    "label": "Add/remove labels"
+  },
+  "sheets": {
+    "name": "Google Sheets",
+    "description": "Read, write, and manipulate Google Sheets data",
+    "read": "Read spreadsheet data",
+    "write": "Write data to spreadsheet",
+    "append": "Append rows to spreadsheet",
+    "create": "Create new spreadsheet"
+  },
+  "docs": {
+    "name": "Google Docs",
+    "description": "Create and edit Google Docs documents",
+    "read": "Read document content",
+    "create": "Create new document",
+    "update": "Update document content"
+  },
+  "calendar": {
+    "name": "Google Calendar",
+    "description": "Manage calendar events and schedules",
+    "list": "List calendar events",
+    "create": "Create new event",
+    "update": "Update event",
+    "delete": "Delete event"
+  },
+  "github": {
+    "name": "GitHub",
+    "description": "Interact with GitHub repositories, issues, and pull requests",
+    "repoInfo": "Get repository information",
+    "createIssue": "Create issue",
+    "listIssues": "List issues",
+    "createPR": "Create pull request",
+    "searchRepos": "Search repositories"
+  },
+  "office": {
+    "name": "Office Suite",
+    "description": "Work with PDF, Excel, Word, and PowerPoint files",
+    "pdfRead": "Read PDF content",
+    "pdfCreate": "Create PDF",
+    "excelRead": "Read Excel data",
+    "excelWrite": "Write Excel data",
+    "wordRead": "Read Word document",
+    "wordCreate": "Create Word document",
+    "pptRead": "Read PowerPoint",
+    "pptCreate": "Create PowerPoint"
+  }
+}

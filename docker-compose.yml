@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  nexus-agent:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nexus-agent
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - DATA_DIR=/app/data
+      
+      # AI Provider API Keys (set in .env file)
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - MINIMAX_API_KEY=${MINIMAX_API_KEY}
+      - MOONSHOT_API_KEY=${MOONSHOT_API_KEY}
+      - GLM_API_KEY=${GLM_API_KEY}
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
+      
+      # Google Services
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      
+      # GitHub
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      
+      # Database
+      - ENCRYPTION_PASSWORD=${ENCRYPTION_PASSWORD}
+      
+      # Analytics
+      - POSTHOG_API_KEY=${POSTHOG_API_KEY}
+      
+    volumes:
+      - nexus-data:/app/data
+      - nexus-plugins:/app/plugins
+      - ./logs:/app/logs
+    networks:
+      - nexus-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/health')"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  nexus-data:
+    driver: local
+  nexus-plugins:
+    driver: local
+
+networks:
+  nexus-network:
+    driver: bridge
