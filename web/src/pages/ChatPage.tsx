@@ -186,7 +186,7 @@ export default function ChatPage() {
         <div ref={bottomRef} />
           {transientError ? (
             <div className="px-4 py-2 text-center">
-              <p className="font-body text-caption text-danger bg-danger/5 px-3 py-1.5 rounded-sm border border-danger/15 inline-block">
+              <p className="font-body text-sm text-danger bg-danger/5 px-3 py-1.5 rounded-sm border border-danger/15 inline-block">
                 请求失败: {transientError}
               </p>
             </div>

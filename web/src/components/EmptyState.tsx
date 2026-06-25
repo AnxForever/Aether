@@ -12,8 +12,8 @@ export default function EmptyState({ icon: Icon, title, description }: EmptyStat
       <div className="w-12 h-12 mb-4 rounded-sm glass-elevated flex items-center justify-center">
         <Icon size={22} className="text-ink-muted" />
       </div>
-      <h3 className="font-display text-h1 text-ink mb-1.5">{title}</h3>
-      <p className="font-body text-caption text-ink-muted max-w-xs leading-relaxed">{description}</p>
+      <h3 className="font-display text-2xl text-ink mb-1.5">{title}</h3>
+      <p className="font-body text-sm text-ink-muted max-w-xs leading-relaxed">{description}</p>
     </div>
   );
 }

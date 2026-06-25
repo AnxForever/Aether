@@ -91,8 +91,8 @@ export default function SettingsPage() {
             <Settings size={18} className="text-accent" />
           </div>
           <div>
-            <h1 className="font-display text-h1 text-ink">设置</h1>
-            <p className="font-body text-caption text-ink-muted">系统配置与偏好</p>
+            <h1 className="font-display text-2xl text-ink">设置</h1>
+            <p className="font-body text-sm text-ink-muted">系统配置与偏好</p>
           </div>
         </div>
 
@@ -100,7 +100,7 @@ export default function SettingsPage() {
         <section>
           <div className="flex items-center gap-2 mb-3">
             <Cpu size={14} className="text-ink-muted" />
-            <h2 className="font-ui text-caption text-ink-muted uppercase tracking-wide">AI 模型</h2>
+            <h2 className="font-ui text-sm text-ink-muted uppercase tracking-wide">AI 模型</h2>
           </div>
           <div className="card p-1.5">
             <div className="space-y-0.5">
@@ -111,7 +111,7 @@ export default function SettingsPage() {
                   ))}
                 </div>
               ) : error ? (
-                <p className="font-body text-caption text-danger bg-danger/5 px-3 py-4 text-center rounded-sm border border-danger/15">
+                <p className="font-body text-sm text-danger bg-danger/5 px-3 py-4 text-center rounded-sm border border-danger/15">
                   {error}
                 </p>
               ) : (
@@ -181,7 +181,7 @@ export default function SettingsPage() {
                     );
                   })}
                   {models.length === 0 ? (
-                    <p className="font-body text-caption text-ink-muted px-3 py-4 text-center">
+                    <p className="font-body text-sm text-ink-muted px-3 py-4 text-center">
                       暂无模型数据
                     </p>
                   ) : null}
@@ -195,26 +195,26 @@ export default function SettingsPage() {
         <section>
           <div className="flex items-center gap-2 mb-3">
             <HardDrive size={14} className="text-ink-muted" />
-            <h2 className="font-ui text-caption text-ink-muted uppercase tracking-wide">系统信息</h2>
+            <h2 className="font-ui text-sm text-ink-muted uppercase tracking-wide">系统信息</h2>
           </div>
           <div className="card space-y-2">
             <div className="flex items-center justify-between py-1">
-              <span className="font-body text-caption text-ink-muted">版本</span>
+              <span className="font-body text-sm text-ink-muted">版本</span>
               <span className="font-body text-mono text-ink">v3.0.0 Web</span>
             </div>
             <div className="border-t border-border-subtle" />
             <div className="flex items-center justify-between py-1">
-              <span className="font-body text-caption text-ink-muted">前端</span>
+              <span className="font-body text-sm text-ink-muted">前端</span>
               <span className="font-body text-mono text-ink">Vite + React + Tailwind</span>
             </div>
             <div className="border-t border-border-subtle" />
             <div className="flex items-center justify-between py-1">
-              <span className="font-body text-caption text-ink-muted">后端</span>
+              <span className="font-body text-sm text-ink-muted">后端</span>
               <span className="font-body text-mono text-ink">Express + NexusAgent</span>
             </div>
             <div className="border-t border-border-subtle" />
             <div className="flex items-center justify-between py-1">
-              <span className="font-body text-caption text-ink-muted">运行时</span>
+              <span className="font-body text-sm text-ink-muted">运行时</span>
               <span className="font-body text-mono text-ink">Electron 30 + Node 22</span>
             </div>
           </div>

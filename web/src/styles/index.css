@@ -21,7 +21,7 @@
   body {
     margin: 0;
     font-family: 'JetBrains Mono', 'Noto Sans SC', monospace;
-    font-size: 0.875rem;
+    font-size: 0.9375rem;
     line-height: 1.6;
     overflow: hidden;
     height: 100vh;
@@ -159,7 +159,7 @@
     padding: 0.5rem 1rem;
     border-radius: 4px;
     font-family: 'system-ui', 'Noto Sans SC', sans-serif;
-    font-size: 0.8125rem;
+    font-size: 0.875rem;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.15s ease;

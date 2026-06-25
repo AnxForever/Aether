@@ -84,8 +84,8 @@ export default function WorkflowsPage() {
             <Workflow size={18} className="text-accent" />
           </div>
           <div>
-            <h1 className="font-display text-h1 text-ink">工作流</h1>
-            <p className="font-body text-caption text-ink-muted">{workflows.length} 个模板</p>
+            <h1 className="font-display text-2xl text-ink">工作流</h1>
+            <p className="font-body text-sm text-ink-muted">{workflows.length} 个模板</p>
           </div>
         </div>
 
@@ -98,7 +98,7 @@ export default function WorkflowsPage() {
           </div>
         ) : error ? (
           <div className="flex items-center justify-center py-24">
-            <p className="font-body text-caption text-danger bg-danger/5 px-4 py-3 rounded-sm border border-danger/15">
+            <p className="font-body text-sm text-danger bg-danger/5 px-4 py-3 rounded-sm border border-danger/15">
               {error}
             </p>
           </div>

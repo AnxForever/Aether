@@ -49,8 +49,8 @@ export default function LoginPage() {
           <div className="w-12 h-12 mx-auto mb-3 rounded-sm bg-accent/10 border border-accent/20 flex items-center justify-center">
             <Hash size={24} className="text-accent" />
           </div>
-          <h1 className="font-display text-hero text-ink">Aether</h1>
-          <p className="font-body text-caption text-ink-muted mt-1.5">
+          <h1 className="font-display text-display text-ink">Aether</h1>
+          <p className="font-body text-sm text-ink-muted mt-1.5">
             Multi-AI 编排平台
           </p>
           {/* Provider dots */}
@@ -64,7 +64,7 @@ export default function LoginPage() {
         {/* Form */}
         <form onSubmit={handleSubmit} className="card space-y-4">
           <div>
-            <label htmlFor="username" className="block font-ui text-caption text-ink-secondary mb-1.5">用户名</label>
+            <label htmlFor="username" className="block font-ui text-sm text-ink-secondary mb-1.5">用户名</label>
             <input
               id="username"
               className="field w-full"
@@ -76,7 +76,7 @@ export default function LoginPage() {
             />
           </div>
           <div>
-            <label htmlFor="password" className="block font-ui text-caption text-ink-secondary mb-1.5">密码</label>
+            <label htmlFor="password" className="block font-ui text-sm text-ink-secondary mb-1.5">密码</label>
             <input
               id="password"
               className="field w-full"
@@ -87,7 +87,7 @@ export default function LoginPage() {
             />
           </div>
           {error && (
-            <p className="font-body text-caption text-danger bg-danger/5 px-3 py-2 rounded-sm border border-danger/15">
+            <p className="font-body text-sm text-danger bg-danger/5 px-3 py-2 rounded-sm border border-danger/15">
               {error}
             </p>
           )}

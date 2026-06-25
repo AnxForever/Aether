@@ -53,12 +53,19 @@ export default {
       },
 
       fontSize: {
-        hero: ['1.5rem', { lineHeight: '1.2', letterSpacing: '-0.02em', fontWeight: '700' }],
-        h1: ['1.125rem', { lineHeight: '1.4', fontWeight: '600' }],
-        h2: ['1rem', { lineHeight: '1.4', fontWeight: '600' }],
-        body: ['0.875rem', { lineHeight: '1.6' }],
-        caption: ['0.75rem', { lineHeight: '1.5' }],
-        mono: ['0.8125rem', { lineHeight: '1.6' }],
+        // 1.25 Major Third modular scale — professional typography
+        // Each token: [fontSize, { lineHeight, letterSpacing?, fontWeight? }]
+        xs:     ['0.75rem',   { lineHeight: '1rem' }],                          // 12px — micro labels
+        sm:     ['0.8125rem', { lineHeight: '1.25rem' }],                        // 13px — captions, meta
+        base:   ['0.9375rem', { lineHeight: '1.6rem' }],                         // 15px — body text
+        lg:     ['1.125rem',  { lineHeight: '1.5rem', fontWeight: '600' }],      // 18px — card titles, h3
+        xl:     ['1.375rem',  { lineHeight: '1.4', fontWeight: '600', letterSpacing: '-0.01em' }], // 22px — section headers, h2
+        '2xl':  ['1.75rem',   { lineHeight: '1.3', fontWeight: '700', letterSpacing: '-0.02em' }], // 28px — page titles, h1
+        '3xl':  ['2.25rem',   { lineHeight: '1.2', fontWeight: '700', letterSpacing: '-0.025em' }], // 36px — hero
+        // Fluid display — responsive without breakpoints
+        display: ['clamp(2rem, 5vw, 3rem)', { lineHeight: '1.15', fontWeight: '700', letterSpacing: '-0.03em' }],
+        // Monospace token — code, data, terminal
+        mono:   ['0.875rem',  { lineHeight: '1.5', fontFamily: '"JetBrains Mono", "Noto Sans SC", monospace' }],
       },
 
       spacing: {

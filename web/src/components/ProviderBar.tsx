@@ -140,7 +140,7 @@ export default function ProviderBar() {
                 <button
                   key={p.id}
                   onClick={() => handleSelect(p.id)}
-                  className={`flex items-center gap-2.5 w-full px-3 py-2 text-caption font-ui transition-colors ${
+                  className={`flex items-center gap-2.5 w-full px-3 py-2 text-sm font-ui transition-colors ${
                     currentModel.startsWith(p.id)
                       ? 'text-ink bg-white/[0.04]'
                       : 'text-ink-secondary hover:text-ink hover:bg-white/[0.03]'

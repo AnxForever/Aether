@@ -111,8 +111,8 @@ export default function SkillsPage() {
             <Zap size={18} className="text-accent" />
           </div>
           <div>
-            <h1 className="font-display text-h1 text-ink">技能管理</h1>
-            <p className="font-body text-caption text-ink-muted">
+            <h1 className="font-display text-2xl text-ink">技能管理</h1>
+            <p className="font-body text-sm text-ink-muted">
               {skills.length} 个可用工具
               {totalActive > 0 && <span className="ml-2 text-accent">· {totalActive} 个已启用</span>}
             </p>
@@ -138,7 +138,7 @@ export default function SkillsPage() {
           </div>
         ) : error ? (
           <div className="flex items-center justify-center py-20">
-            <p className="font-body text-caption text-danger bg-danger/5 px-4 py-3 rounded-sm border border-danger/15">
+            <p className="font-body text-sm text-danger bg-danger/5 px-4 py-3 rounded-sm border border-danger/15">
               {error}
             </p>
           </div>
@@ -174,7 +174,7 @@ export default function SkillsPage() {
                           className={`card card-glow text-left border-l-[3px] ${active ? 'border-accent/30 bg-accent/[0.04] border-l-accent/40' : 'border-l-accent/0'}`}
                         >
                           <div className="flex items-center justify-between gap-2">
-                            <span className="font-body text-caption text-ink leading-tight truncate">
+                            <span className="font-body text-sm text-ink leading-tight truncate">
                               {skill.name}
                             </span>
                             {active ? (
@@ -204,7 +204,7 @@ export default function SkillsPage() {
                           className={`card card-glow text-left ${active ? 'border-accent/30 bg-accent/[0.04]' : ''}`}
                         >
                           <div className="flex items-center justify-between gap-2">
-                            <span className="font-body text-caption text-ink leading-tight truncate">
+                            <span className="font-body text-sm text-ink leading-tight truncate">
                               {skill.name}
                             </span>
                             {active ? (

@@ -23,7 +23,7 @@ export default function Sidebar() {
           <span className="text-xs font-bold text-accent font-display">A</span>
         </div>
         <div className="flex flex-col">
-          <span className="font-ui text-caption font-medium text-ink">Admin</span>
+          <span className="font-ui text-sm font-medium text-ink">Admin</span>
           <span className="flex items-center gap-1 text-[10px] text-ink-muted font-ui">
             <span className="w-[5px] h-[5px] rounded-full bg-success animate-pulse-glow inline-block" />
             online
@@ -49,7 +49,7 @@ export default function Sidebar() {
         <button
           onClick={() => { clearMessages(); newSession().catch(() => {}); }}
           aria-label="新建对话"
-          className="flex items-center gap-2 w-full px-3 py-2 rounded-sm border border-border-default text-ink-secondary hover:text-ink hover:bg-white/[0.04] transition-all text-caption font-ui"
+          className="flex items-center gap-2 w-full px-3 py-2 rounded-sm border border-border-default text-ink-secondary hover:text-ink hover:bg-white/[0.04] transition-all text-sm font-ui"
         >
           <Plus size={14} />
           <span>新对话</span>
@@ -63,7 +63,7 @@ export default function Sidebar() {
             key={to}
             to={to}
             className={({ isActive }) =>
-              `flex items-center gap-2.5 px-3 py-2 rounded-sm transition-colors font-ui text-caption ${
+              `flex items-center gap-2.5 px-3 py-2 rounded-sm transition-colors font-ui text-sm ${
                 isActive
                   ? 'bg-accent/10 text-accent border border-accent/20'
                   : 'text-ink-secondary hover:text-ink hover:bg-white/[0.03] border border-transparent'
@@ -80,7 +80,7 @@ export default function Sidebar() {
       <div className="px-3 pt-2 border-t border-border-subtle">
         <button
           onClick={logout}
-          className="flex items-center gap-2.5 w-full px-3 py-2 rounded-sm text-ink-muted hover:text-danger hover:bg-danger/5 transition-colors font-ui text-caption"
+          className="flex items-center gap-2.5 w-full px-3 py-2 rounded-sm text-ink-muted hover:text-danger hover:bg-danger/5 transition-colors font-ui text-sm"
         >
           <LogOut size={14} />
           <span>退出</span>
