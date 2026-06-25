@@ -7,8 +7,12 @@
 import { BaseSkill } from '../base-skill';
 import type { Tool, ToolResult } from '../../types';
 import type { SkillContext } from '../types';
-import { writeFileSync, readFileSync, existsSync } from 'fs';
+import { writeFile, readFile } from 'fs/promises';
+import { existsSync } from 'fs';
 import { resolve } from 'path';
+import { createLogger } from '../../utils/logger';
+
+const logger = createLogger('CreativeSkill');
 
 export class CreativeSkill extends BaseSkill {
   constructor() {
@@ -22,6 +26,8 @@ export class CreativeSkill extends BaseSkill {
       requiresAuth: true,
       dependencies: ['openai', '@google/generative-ai'],
     });
+
+    logger.warn('CreativeSkill: OpenAI API key required for DALL-E and TTS operations. Set OPENAI_API_KEY env var.');
   }
 
   getTools(): Tool[] {
@@ -226,16 +232,37 @@ export class CreativeSkill extends BaseSkill {
         return this.createError('prompt is required');
       }
 
-      // Use OpenAI DALL-E API to generate image
-      // This is a placeholder - actual implementation would use OpenAI SDK
-      const imageUrl = `https://placeholder.image.url/${Date.now()}.png`;
+      const apiKey = process.env.OPENAI_API_KEY;
+      if (!apiKey) {
+        return this.createError('OPENAI_API_KEY not configured');
+      }
+
+      const response = await fetch('https://api.openai.com/v1/images/generations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({ model, prompt, n: 1, size, response_format: 'url' }),
+      });
+
+      if (!response.ok) {
+        const err = await response.text();
+        return this.createError(`DALL-E API error (${response.status}): ${err}`);
+      }
+
+      const data = (await response.json()) as any;
+      const imageUrl = data.data?.[0]?.url;
+      if (!imageUrl) {
+        return this.createError('No image URL in DALL-E response');
+      }
 
       const result: { url: string; filePath?: string } = { url: imageUrl };
 
       if (outputPath) {
-        // Download and save image
-        // This is a placeholder - actual implementation would download the image
-        writeFileSync(outputPath, Buffer.from('image data'));
+        const imageResponse = await fetch(imageUrl);
+        const buffer = Buffer.from(await imageResponse.arrayBuffer());
+        await writeFile(outputPath, buffer);
         result.filePath = outputPath;
       }
 
@@ -266,14 +293,56 @@ export class CreativeSkill extends BaseSkill {
         return this.createError(`Image file not found: ${imagePath}`);
       }
 
-      // Use OpenAI image edit API
-      // This is a placeholder - actual implementation would use OpenAI SDK
-      const imageUrl = `https://placeholder.image.url/edited_${Date.now()}.png`;
+      const apiKey = process.env.OPENAI_API_KEY;
+      if (!apiKey) {
+        return this.createError('OPENAI_API_KEY not configured');
+      }
+
+      // Build multipart form data for image edit
+      const imageBuffer = await readFile(imagePath);
+      const imageBlob = new Blob([imageBuffer], { type: 'image/png' });
+
+      const formData = new FormData();
+      formData.append('image', imageBlob, 'image.png');
+      formData.append('prompt', prompt);
+      formData.append('n', '1');
+      formData.append('size', '1024x1024');
+      formData.append('response_format', 'url');
+
+      if (maskPath) {
+        if (!existsSync(maskPath)) {
+          return this.createError(`Mask file not found: ${maskPath}`);
+        }
+        const maskBuffer = await readFile(maskPath);
+        const maskBlob = new Blob([maskBuffer], { type: 'image/png' });
+        formData.append('mask', maskBlob, 'mask.png');
+      }
+
+      const response = await fetch('https://api.openai.com/v1/images/edits', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const err = await response.text();
+        return this.createError(`DALL-E edit API error (${response.status}): ${err}`);
+      }
+
+      const data = (await response.json()) as any;
+      const imageUrl = data.data?.[0]?.url;
+      if (!imageUrl) {
+        return this.createError('No image URL in DALL-E edit response');
+      }
 
       const result: { url: string; filePath?: string } = { url: imageUrl };
 
       if (outputPath) {
-        writeFileSync(outputPath, Buffer.from('edited image data'));
+        const imageResponse = await fetch(imageUrl);
+        const buffer = Buffer.from(await imageResponse.arrayBuffer());
+        await writeFile(outputPath, buffer);
         result.filePath = outputPath;
       }
 
@@ -302,17 +371,55 @@ export class CreativeSkill extends BaseSkill {
         return this.createError(`Image file not found: ${imagePath}`);
       }
 
-      // Use OpenAI image variation API
-      // This is a placeholder - actual implementation would use OpenAI SDK
-      const variations: string[] = [];
-
-      for (let i = 0; i < Math.min(count, 10); i++) {
-        const url = `https://placeholder.image.url/variation_${i}_${Date.now()}.png`;
-        variations.push(url);
+      const apiKey = process.env.OPENAI_API_KEY;
+      if (!apiKey) {
+        return this.createError('OPENAI_API_KEY not configured');
       }
 
-      return this.createSuccess(variations, {
-        count: variations.length,
+      const imageBuffer = await readFile(imagePath);
+      const imageBlob = new Blob([imageBuffer], { type: 'image/png' });
+
+      const formData = new FormData();
+      formData.append('image', imageBlob, 'image.png');
+      formData.append('n', String(Math.min(count, 10)));
+      formData.append('size', '1024x1024');
+      formData.append('response_format', 'url');
+
+      const response = await fetch('https://api.openai.com/v1/images/variations', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const err = await response.text();
+        return this.createError(`DALL-E variation API error (${response.status}): ${err}`);
+      }
+
+      const data = (await response.json()) as any;
+      const images = data.data as Array<{ url: string }> | undefined;
+      if (!images || images.length === 0) {
+        return this.createError('No image URLs in DALL-E variation response');
+      }
+
+      const result: { urls: string[]; files?: string[] } = { urls: images.map((img) => img.url) };
+
+      if (outputDir) {
+        const files: string[] = [];
+        for (let i = 0; i < images.length; i++) {
+          const imageResponse = await fetch(images[i].url);
+          const buffer = Buffer.from(await imageResponse.arrayBuffer());
+          const filePath = resolve(outputDir, `variation_${i}_${Date.now()}.png`);
+          await writeFile(filePath, buffer);
+          files.push(filePath);
+        }
+        result.files = files;
+      }
+
+      return this.createSuccess(result, {
+        count: images.length,
         hasOutputDir: !!outputDir,
       });
     } catch (error) {
@@ -340,10 +447,33 @@ export class CreativeSkill extends BaseSkill {
         return this.createError('text and outputPath are required');
       }
 
-      // Use OpenAI TTS API
-      // This is a placeholder - actual implementation would use OpenAI SDK
-      const audioBuffer = Buffer.from('audio data');
-      writeFileSync(outputPath, audioBuffer);
+      const apiKey = process.env.OPENAI_API_KEY;
+      if (!apiKey) {
+        return this.createError('OPENAI_API_KEY not configured');
+      }
+
+      const response = await fetch('https://api.openai.com/v1/audio/speech', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model,
+          input: text,
+          voice,
+          speed,
+          response_format: 'mp3',
+        }),
+      });
+
+      if (!response.ok) {
+        const err = await response.text();
+        return this.createError(`OpenAI TTS API error (${response.status}): ${err}`);
+      }
+
+      const audioBuffer = Buffer.from(await response.arrayBuffer());
+      await writeFile(outputPath, audioBuffer);
 
       return this.createSuccess(
         { filePath: outputPath, size: audioBuffer.length },
@@ -376,13 +506,44 @@ export class CreativeSkill extends BaseSkill {
         return this.createError(`Audio file not found: ${audioPath}`);
       }
 
-      // Use OpenAI Whisper API
-      // This is a placeholder - actual implementation would use OpenAI SDK
-      const transcription = 'Transcribed text from audio';
+      const apiKey = process.env.OPENAI_API_KEY;
+      if (!apiKey) {
+        return this.createError('OPENAI_API_KEY not configured');
+      }
+
+      const audioBuffer = await readFile(audioPath);
+      const audioBlob = new Blob([audioBuffer], { type: 'audio/mpeg' });
+
+      const formData = new FormData();
+      formData.append('file', audioBlob, 'audio.mp3');
+      formData.append('model', model);
+      formData.append('response_format', 'json');
+
+      if (language) {
+        formData.append('language', language);
+      }
+      if (prompt) {
+        formData.append('prompt', prompt);
+      }
+
+      const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const err = await response.text();
+        return this.createError(`OpenAI Whisper API error (${response.status}): ${err}`);
+      }
+
+      const data = (await response.json()) as { text: string };
       const detectedLanguage = language || 'en';
 
       return this.createSuccess(
-        { text: transcription, language: detectedLanguage },
+        { text: data.text, language: detectedLanguage },
         {
           model,
           hasPrompt: !!prompt,
@@ -408,11 +569,35 @@ export class CreativeSkill extends BaseSkill {
         return this.createError(`Audio file not found: ${audioPath}`);
       }
 
-      // Use OpenAI Whisper translation API
-      // This is a placeholder - actual implementation would use OpenAI SDK
-      const translation = 'Translated text in English';
+      const apiKey = process.env.OPENAI_API_KEY;
+      if (!apiKey) {
+        return this.createError('OPENAI_API_KEY not configured');
+      }
 
-      return this.createSuccess({ text: translation }, { model });
+      const audioBuffer = await readFile(audioPath);
+      const audioBlob = new Blob([audioBuffer], { type: 'audio/mpeg' });
+
+      const formData = new FormData();
+      formData.append('file', audioBlob, 'audio.mp3');
+      formData.append('model', model);
+      formData.append('response_format', 'json');
+
+      const response = await fetch('https://api.openai.com/v1/audio/translations', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const err = await response.text();
+        return this.createError(`OpenAI Whisper translation API error (${response.status}): ${err}`);
+      }
+
+      const data = (await response.json()) as { text: string };
+
+      return this.createSuccess({ text: data.text }, { model });
     } catch (error) {
       return this.handleError(error, 'Audio translation');
     }

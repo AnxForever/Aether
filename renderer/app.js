@@ -213,6 +213,128 @@
     el.messageInput.addEventListener('keydown', handleInputKeydown);
     el.sendBtn.addEventListener('click', sendMessage);
 
+    // Drag and drop file upload on composer
+    const composerInner = document.querySelector('.composer-inner');
+    const composerParent = composerInner ? composerInner.parentElement : null;
+    let dropOverlay = null;
+
+    function createDropOverlay() {
+      if (dropOverlay) return;
+      dropOverlay = document.createElement('div');
+      dropOverlay.className = 'drop-zone-overlay';
+      dropOverlay.textContent = 'Drop file to upload';
+      if (composerInner) {
+        composerInner.style.position = 'relative';
+        composerInner.appendChild(dropOverlay);
+      }
+    }
+
+    function removeDropOverlay() {
+      if (dropOverlay) {
+        dropOverlay.remove();
+        dropOverlay = null;
+      }
+      if (composerInner) {
+        composerInner.style.position = '';
+      }
+    }
+
+    function onDragEnter(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (composerInner) {
+        composerInner.classList.add('drop-active');
+      }
+      createDropOverlay();
+      if (dropOverlay) {
+        dropOverlay.classList.add('visible');
+        dropOverlay.textContent = 'Drop file to upload';
+      }
+    }
+
+    function onDragOver(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (dropOverlay) {
+        dropOverlay.textContent = 'Release to upload';
+      }
+    }
+
+    function onDragLeave(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      // Only hide when leaving the composer-inner (not child elements)
+      if (composerInner && !composerInner.contains(e.relatedTarget)) {
+        composerInner.classList.remove('drop-active');
+        if (dropOverlay) {
+          dropOverlay.classList.remove('visible');
+        }
+        removeDropOverlay();
+      }
+    }
+
+    function onDrop(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (composerInner) {
+        composerInner.classList.remove('drop-active');
+      }
+      if (dropOverlay) {
+        dropOverlay.classList.remove('visible');
+      }
+
+      const files = e.dataTransfer.files;
+      if (!files || files.length === 0) {
+        removeDropOverlay();
+        return;
+      }
+
+      const file = files[0];
+      const fileName = file.name;
+      const fileSize = file.size;
+      const fileInfo = fileName + ' (' + formatFileSize(fileSize) + ')';
+
+      // Read file and send via IPC
+      const reader = new FileReader();
+      reader.onload = function(loadEvent) {
+        const base64Data = loadEvent.target.result.split(',')[1];
+        callApi(api.uploadFile, {
+          name: fileName,
+          size: fileSize,
+          data: base64Data,
+        }).then(function() {
+          showToast('Uploaded', 'File uploaded: ' + fileName, 'success', 3000);
+        }).catch(function() {
+          showToast('Upload Failed', 'Could not upload ' + fileName, 'error', 3000);
+        });
+      };
+      reader.readAsDataURL(file);
+
+      // Insert file reference in input
+      const fileRef = '[file: ' + fileName + '] ';
+      const cursorPos = el.messageInput.selectionStart;
+      const textBefore = el.messageInput.value.substring(0, cursorPos);
+      const textAfter = el.messageInput.value.substring(cursorPos);
+      el.messageInput.value = textBefore + fileRef + textAfter;
+      updateCharCount();
+      autoResizeTextarea();
+      el.messageInput.focus();
+
+      removeDropOverlay();
+    }
+
+    if (composerInner) {
+      composerInner.addEventListener('dragenter', onDragEnter);
+      composerInner.addEventListener('dragover', onDragOver);
+      composerInner.addEventListener('dragleave', onDragLeave);
+      composerInner.addEventListener('drop', onDrop);
+
+      // Prevent default on document-level drag events to avoid browser file open
+      document.addEventListener('dragenter', function(e) { e.preventDefault(); });
+      document.addEventListener('dragover', function(e) { e.preventDefault(); });
+      document.addEventListener('drop', function(e) { e.preventDefault(); });
+    }
+
     // Export
     el.exportBtn.addEventListener('click', () => el.exportModal.classList.remove('hidden'));
     el.closeExport.addEventListener('click', () => el.exportModal.classList.add('hidden'));
@@ -616,6 +738,12 @@
     return String(str).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   }
 
+  function formatFileSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  }
+
   function toggleShortcutsModal() {
     const m = document.getElementById('shortcutsModal');
     m.classList.toggle('hidden');
@@ -660,6 +788,110 @@
 
   function hideContextMenu() {
     if (contextMenuEl) { contextMenuEl.remove(); contextMenuEl = null; }
+  }
+
+  // ============================================================
+  // Message context menu
+  // ============================================================
+  function showMessageContextMenu(x, y, msg) {
+    hideContextMenu();
+    const menu = document.createElement('div');
+    menu.className = 'context-menu';
+    menu.style.left = x + 'px';
+    menu.style.top = y + 'px';
+
+    let items = '<div class="ctx-item" data-action="copy-msg">📋 Copy</div>';
+    if (msg.role === 'user') {
+      const isLastUser = isLastUserMessage(msg);
+      if (isLastUser) {
+        items += '<div class="ctx-item" data-action="edit-msg">✏️ Edit</div>';
+      }
+    }
+    if (msg.role === 'assistant') {
+      items += '<div class="ctx-item" data-action="regenerate-msg">🔄 Regenerate</div>';
+    }
+    items += '<div class="ctx-item danger" data-action="delete-msg">🗑 Delete message</div>';
+    menu.innerHTML = items;
+
+    menu.querySelector('[data-action="copy-msg"]').addEventListener('click', () => {
+      navigator.clipboard.writeText(msg.content);
+      showToast('Copied', 'Message copied to clipboard', 'success', 2000);
+      hideContextMenu();
+    });
+
+    const editItem = menu.querySelector('[data-action="edit-msg"]');
+    if (editItem) {
+      editItem.addEventListener('click', () => {
+        editLastUserMessage();
+        hideContextMenu();
+      });
+    }
+
+    const regenItem = menu.querySelector('[data-action="regenerate-msg"]');
+    if (regenItem) {
+      regenItem.addEventListener('click', () => {
+        regenerateLast();
+        hideContextMenu();
+      });
+    }
+
+    menu.querySelector('[data-action="delete-msg"]').addEventListener('click', () => {
+      deleteMessage(msg);
+      hideContextMenu();
+    });
+
+    document.body.appendChild(menu);
+    contextMenuEl = menu;
+    setTimeout(() => document.addEventListener('click', hideContextMenu, { once: true }), 0);
+  }
+
+  function isLastUserMessage(msg) {
+    // Find the last user message index in state.messages
+    let lastUserIdx = -1;
+    for (let i = state.messages.length - 1; i >= 0; i--) {
+      if (state.messages[i].role === 'user') {
+        lastUserIdx = i;
+        break;
+      }
+    }
+    if (lastUserIdx === -1) return false;
+    return state.messages[lastUserIdx] === msg;
+  }
+
+  function editLastUserMessage() {
+    // Find last user message
+    let lastUserIdx = -1;
+    for (let i = state.messages.length - 1; i >= 0; i--) {
+      if (state.messages[i].role === 'user') {
+        lastUserIdx = i;
+        break;
+      }
+    }
+    if (lastUserIdx === -1) return;
+
+    const lastUserMsg = state.messages[lastUserIdx];
+
+    // Remove the last user message and all assistant messages after it
+    state.messages.splice(lastUserIdx);
+
+    // Fill input with the message content
+    el.messageInput.value = lastUserMsg.content;
+    updateCharCount();
+    autoResizeTextarea();
+    el.messageInput.focus();
+
+    // Re-render messages
+    renderMessages();
+    showToast('Editing', 'Edit your message and resend', 'info', 2500);
+  }
+
+  function deleteMessage(msg) {
+    if (!confirm('Delete this message?')) return;
+    const idx = state.messages.indexOf(msg);
+    if (idx === -1) return;
+    state.messages.splice(idx, 1);
+    renderMessages();
+    showToast('Deleted', 'Message removed', 'info', 2000);
   }
 
   async function createNewSession() {
@@ -725,6 +957,8 @@
         <div class="message-actions">
           <button class="message-action" data-action="copy-msg">Copy All</button>
           ${msg.role === 'assistant' ? '<button class="message-action" data-action="regenerate">Regenerate</button>' : ''}
+          ${msg.role === 'user' ? '<button class="message-action" data-action="edit">Edit</button>' : ''}
+          <button class="message-action danger" data-action="delete-msg">Delete</button>
         </div>
       </div>
     `;
@@ -749,6 +983,24 @@
     if (regen) {
       regen.addEventListener('click', () => regenerateLast());
     }
+
+    // Edit button for user messages
+    const editBtn = div.querySelector('[data-action="edit"]');
+    if (editBtn) {
+      editBtn.addEventListener('click', () => editLastUserMessage());
+    }
+
+    // Delete message button
+    const deleteBtn = div.querySelector('[data-action="delete-msg"]');
+    if (deleteBtn) {
+      deleteBtn.addEventListener('click', () => deleteMessage(msg));
+    }
+
+    // Right-click context menu
+    div.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      showMessageContextMenu(e.clientX, e.clientY, msg);
+    });
 
     return div;
   }

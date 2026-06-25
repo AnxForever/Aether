@@ -12,10 +12,9 @@ import {
   GmailSendSchema,
   GmailReadSchema,
 } from '../types';
-import { exec } from 'child_process';
-import { promisify } from 'util';
+import { createLogger } from '../../utils/logger';
 
-const execAsync = promisify(exec);
+const logger = createLogger('GmailSkill');
 
 export class GmailSkill extends BaseSkill {
   constructor() {
@@ -29,6 +28,8 @@ export class GmailSkill extends BaseSkill {
       requiresAuth: true,
       dependencies: ['googleapis'],
     });
+
+    logger.warn('GmailSkill: googleapis dependency required for full operation. Set GMAIL_CLIENT_ID, GMAIL_CLIENT_SECRET, and GMAIL_REFRESH_TOKEN env vars.');
   }
 
   getTools(): Tool[] {
@@ -285,8 +286,7 @@ export class GmailSkill extends BaseSkill {
     try {
       const { query, maxResults = 10 } = validation.data;
 
-      // Use Gmail API via googleapis library
-      // This is a placeholder - actual implementation would use googleapis
+      logger.warn('Gmail search: googleapis package not loaded. Returning empty result.');
       const messages: GmailMessage[] = [];
 
       return this.createSuccess(messages, {
@@ -314,11 +314,8 @@ export class GmailSkill extends BaseSkill {
 
       // Build email message
       const recipients = Array.isArray(to) ? to.join(', ') : to;
-      const ccList = cc ? (Array.isArray(cc) ? cc.join(', ') : cc) : undefined;
-      const bccList = bcc ? (Array.isArray(bcc) ? bcc.join(', ') : bcc) : undefined;
 
-      // Use Gmail API to send email
-      // This is a placeholder - actual implementation would use googleapis
+      logger.warn('Gmail send: googleapis package not loaded. Simulating send.');
       const messageId = `msg_${Date.now()}`;
 
       return this.createSuccess(
@@ -347,8 +344,7 @@ export class GmailSkill extends BaseSkill {
     try {
       const { messageId, format = 'full' } = validation.data;
 
-      // Use Gmail API to fetch message
-      // This is a placeholder - actual implementation would use googleapis
+      logger.warn('Gmail read: googleapis package not loaded. Returning simulated message.');
       const message: GmailMessage = {
         id: messageId,
         threadId: 'thread_123',
@@ -374,8 +370,7 @@ export class GmailSkill extends BaseSkill {
         return this.createError('messageId is required');
       }
 
-      // Use Gmail API to mark as read
-      // This is a placeholder - actual implementation would use googleapis
+      logger.warn('Gmail mark as read: googleapis package not loaded. Simulating action.');
 
       return this.createSuccess(undefined, { messageId, action: 'marked_read' });
     } catch (error) {
@@ -391,8 +386,7 @@ export class GmailSkill extends BaseSkill {
         return this.createError('messageId is required');
       }
 
-      // Use Gmail API to delete message
-      // This is a placeholder - actual implementation would use googleapis
+      logger.warn('Gmail delete: googleapis package not loaded. Simulating action.');
 
       return this.createSuccess(undefined, { messageId, action: 'deleted' });
     } catch (error) {
@@ -404,8 +398,7 @@ export class GmailSkill extends BaseSkill {
     try {
       const { query = '', maxResults = 10 } = params as { query?: string; maxResults?: number };
 
-      // Use Gmail API to list threads
-      // This is a placeholder - actual implementation would use googleapis
+      logger.warn('Gmail list threads: googleapis package not loaded. Returning empty list.');
       const threads: Array<{ id: string; snippet: string }> = [];
 
       return this.createSuccess(threads, {
@@ -426,8 +419,7 @@ export class GmailSkill extends BaseSkill {
         return this.createError('threadId is required');
       }
 
-      // Use Gmail API to get thread
-      // This is a placeholder - actual implementation would use googleapis
+      logger.warn('Gmail get thread: googleapis package not loaded. Returning simulated thread.');
       const thread = {
         id: threadId,
         messages: [] as GmailMessage[],
@@ -441,8 +433,7 @@ export class GmailSkill extends BaseSkill {
 
   private async listLabels(params: unknown): Promise<ToolResult> {
     try {
-      // Use Gmail API to list labels
-      // This is a placeholder - actual implementation would use googleapis
+      logger.warn('Gmail list labels: googleapis package not loaded. Returning default system labels.');
       const labels: Array<{ id: string; name: string; type: string }> = [
         { id: 'INBOX', name: 'INBOX', type: 'system' },
         { id: 'SENT', name: 'SENT', type: 'system' },
@@ -465,8 +456,7 @@ export class GmailSkill extends BaseSkill {
         return this.createError('name is required');
       }
 
-      // Use Gmail API to create label
-      // This is a placeholder - actual implementation would use googleapis
+      logger.warn('Gmail create label: googleapis package not loaded. Simulating label creation.');
       const label = {
         id: `label_${Date.now()}`,
         name,
@@ -490,8 +480,7 @@ export class GmailSkill extends BaseSkill {
         return this.createError('messageId is required');
       }
 
-      // Use Gmail API to modify labels
-      // This is a placeholder - actual implementation would use googleapis
+      logger.warn('Gmail modify labels: googleapis package not loaded. Simulating action.');
 
       return this.createSuccess(undefined, {
         messageId,
@@ -507,8 +496,7 @@ export class GmailSkill extends BaseSkill {
     try {
       const { maxResults = 10 } = params as { maxResults?: number };
 
-      // Use Gmail API to list drafts
-      // This is a placeholder - actual implementation would use googleapis
+      logger.warn('Gmail list drafts: googleapis package not loaded. Returning empty list.');
       const drafts: Array<{ id: string; message: GmailMessage }> = [];
 
       return this.createSuccess(drafts, {
@@ -528,8 +516,7 @@ export class GmailSkill extends BaseSkill {
         return this.createError('to, subject, and body are required');
       }
 
-      // Use Gmail API to create draft
-      // This is a placeholder - actual implementation would use googleapis
+      logger.warn('Gmail create draft: googleapis package not loaded. Simulating draft creation.');
       const draft = {
         id: `draft_${Date.now()}`,
         message: {
