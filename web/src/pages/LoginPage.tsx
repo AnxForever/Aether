@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { login } from '../api/client';
 import { useAppStore } from '../stores/app';
+import { Hash } from 'lucide-react';
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
@@ -31,23 +32,41 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-aether-950 via-aether-900 to-blue-950">
-      <div className="w-full max-w-sm">
+    <div className="min-h-screen flex items-center justify-center bg-void">
+      {/* Subtle grid */}
+      <div
+        className="absolute inset-0 opacity-[0.03]"
+        style={{
+          backgroundImage:
+            'linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)',
+          backgroundSize: '60px 60px',
+        }}
+      />
+
+      <div className="relative w-full max-w-sm px-4">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-2xl font-bold shadow-lg shadow-blue-500/20">
-            A
+          <div className="w-12 h-12 mx-auto mb-3 rounded-sm bg-accent/10 border border-accent/20 flex items-center justify-center">
+            <Hash size={24} className="text-accent" />
           </div>
-          <h1 className="text-2xl font-bold">Aether</h1>
-          <p className="text-aether-400 mt-1 text-sm">Multi-AI 编排平台</p>
+          <h1 className="font-display text-hero text-ink">Aether</h1>
+          <p className="font-body text-caption text-ink-muted mt-1.5">
+            Multi-AI 编排平台
+          </p>
+          {/* Provider dots */}
+          <div className="flex justify-center gap-1.5 mt-3">
+            {['#f59e0b', '#10b981', '#4285f4', '#ec4899', '#06b6d4', '#6366f1'].map((c, i) => (
+              <span key={i} className="w-[4px] h-[4px] rounded-full opacity-30" style={{ backgroundColor: c }} />
+            ))}
+          </div>
         </div>
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="card space-y-4">
           <div>
-            <label className="block text-sm text-aether-300 mb-1">用户名</label>
+            <label className="block font-ui text-caption text-ink-secondary mb-1.5">用户名</label>
             <input
-              className="input w-full"
+              className="field w-full"
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
@@ -56,9 +75,9 @@ export default function LoginPage() {
             />
           </div>
           <div>
-            <label className="block text-sm text-aether-300 mb-1">密码</label>
+            <label className="block font-ui text-caption text-ink-secondary mb-1.5">密码</label>
             <input
-              className="input w-full"
+              className="field w-full"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -66,15 +85,17 @@ export default function LoginPage() {
             />
           </div>
           {error && (
-            <p className="text-red-400 text-sm bg-red-900/20 px-3 py-2 rounded-lg">{error}</p>
+            <p className="font-body text-caption text-danger bg-danger/5 px-3 py-2 rounded-sm border border-danger/15">
+              {error}
+            </p>
           )}
-          <button className="btn-primary w-full" type="submit" disabled={loading}>
-            {loading ? '登录中...' : '登录'}
+          <button className="btn btn-primary w-full justify-center" type="submit" disabled={loading}>
+            {loading ? '登录中...' : '进入控制台'}
           </button>
         </form>
 
-        <p className="text-center text-aether-500 text-xs mt-6">
-          默认: admin / aether-admin
+        <p className="text-center font-body text-[11px] text-ink-ghost mt-4">
+          默认凭据: admin / aether-admin
         </p>
       </div>
     </div>

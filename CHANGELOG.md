@@ -5,6 +5,49 @@ All notable changes to Aether will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0] - 2026-06-25
+
+### Added
+
+#### Web Edition — Precision Console Design System
+- **Vite + React + Tailwind CSS**: Modern frontend toolchain with fast HMR and utility-first styling
+- **Precision Console design system**: Tailwind design tokens with void/base/elevated surface system
+- **Accent cyan color scheme**: Dark-only theme with WCAG AA contrast compliance
+- **Space Grotesk + JetBrains Mono + Noto Sans SC**: Multi-lingual typography system
+- **8pt spacing grid**: Consistent `rounded-sm` radius throughout the interface
+
+#### Provider Bar — 7 AI Wavelength Spectrum
+- **Visual provider selector**: Color-coded icons for Claude, OpenAI, Gemini, MiniMax, Moonshot, GLM, DeepSeek
+- **Wavelength spectrum design**: Each provider mapped to a unique color on the electromagnetic spectrum
+- **Quick switching**: One-click provider change with visual feedback
+
+#### Terminal-Style Chat with SSE Streaming
+- **Monospace chat interface**: Terminal-inspired message display with JetBrains Mono
+- **SSE streaming cursor**: Real-time text streaming with animated cursor indicator
+- **Message timestamping**: Per-message timestamps with relative formatting
+- **Input compositor**: Multi-line input with send shortcut and auto-resize
+
+#### Skills Dashboard
+- **Grid-based skill browser**: Visual cards for 105+ skills across 8 categories
+- **Skill cards**: Icon, name, category badge, and quick-action button per skill
+- **Categorized navigation**: Filter skills by category tabs
+
+#### Workflow Automation UI
+- **Workflow cards**: Visual cards showing workflow name, trigger type, schedule, and status
+- **Status indicators**: Active/inactive/error states with color-coded badges
+- **Template-based creation**: Pre-built workflow templates for common automation tasks
+
+#### Settings Panel
+- **Provider configuration**: API key management per provider
+- **Theme settings**: Dark-only theme with consistent design tokens
+- **System preferences**: General application settings
+
+#### Infrastructure
+- **Docker Compose deployment**: Multi-service orchestration with Nginx reverse proxy
+- **Nginx configuration**: Production-ready reverse proxy with gzip and caching
+- **Environment-based configuration**: `.env` support for API keys and ports
+- **Production build pipeline**: Optimized Vite build with code splitting
+
 ## [2.0.0] - 2026-06-25
 
 ### Added

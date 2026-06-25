@@ -1,19 +1,28 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Send, StopCircle, Sparkles } from 'lucide-react';
-import { sendMessage, streamChat } from '../api/client';
+import { Send, StopCircle, Sparkles, Hash } from 'lucide-react';
+import { streamChat } from '../api/client';
 import { useAppStore } from '../stores/app';
+import ChatMessage from '../components/ChatMessage';
 
 export default function ChatPage() {
-  const { messages, addMessage, isStreaming, setStreaming, sessionId, setSessionId } =
+  const { messages, addMessage, isStreaming, setStreaming, sessionId, setSessionId, currentModel } =
     useAppStore();
   const [input, setInput] = useState('');
   const [streamingContent, setStreamingContent] = useState('');
+  const streamingRef = useRef('');
   const abortRef = useRef<AbortController | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
+  // Auto-scroll
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, streamingContent]);
+
+  // Focus input on mount
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
 
   const handleSend = useCallback(async () => {
     const text = input.trim();
@@ -24,43 +33,50 @@ export default function ChatPage() {
       role: 'user' as const,
       content: text,
       timestamp: Date.now(),
+      model: currentModel,
     };
     addMessage(userMsg);
     setInput('');
+    streamingRef.current = '';
     setStreamingContent('');
     setStreaming(true);
 
     const controller = streamChat(
       text,
       sessionId ?? undefined,
-      (chunk) => setStreamingContent((prev) => prev + chunk),
+      (chunk) => {
+        streamingRef.current += chunk;
+        setStreamingContent(streamingRef.current);
+      },
       (newSessionId) => {
         setSessionId(newSessionId);
         setStreaming(false);
-        const content = streamingContent;
-        if (content) {
+        const final = streamingRef.current;
+        if (final) {
           addMessage({
             id: crypto.randomUUID(),
             role: 'assistant',
-            content,
+            content: final,
             timestamp: Date.now(),
+            model: currentModel,
           });
         }
         setStreamingContent('');
       },
       (error) => {
-        console.error('Stream error:', error);
         setStreaming(false);
+        setStreamingContent('');
         addMessage({
           id: crypto.randomUUID(),
           role: 'assistant',
-          content: `错误: ${error}`,
+          content: `Error: ${error}`,
           timestamp: Date.now(),
+          model: currentModel,
         });
       }
     );
     abortRef.current = controller;
-  }, [input, isStreaming, sessionId, streamingContent]);
+  }, [input, isStreaming, sessionId, currentModel]);
 
   const handleStop = () => {
     abortRef.current?.abort();
@@ -77,42 +93,55 @@ export default function ChatPage() {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-6 space-y-6">
+      {/* Messages area */}
+      <div className="flex-1 overflow-y-auto px-6 py-4 space-y-5">
+        {/* Empty state */}
         {messages.length === 0 && !streamingContent && (
           <div className="flex flex-col items-center justify-center h-full text-center">
-            <div className="w-16 h-16 mb-4 rounded-2xl bg-gradient-to-br from-blue-500/20 to-purple-600/20 flex items-center justify-center">
-              <Sparkles size={32} className="text-blue-400" />
+            <div className="w-12 h-12 mb-4 rounded-sm bg-accent/10 border border-accent/20 flex items-center justify-center">
+              <Hash size={24} className="text-accent" />
             </div>
-            <h2 className="text-xl font-semibold mb-2">开始对话</h2>
-            <p className="text-aether-400 text-sm max-w-md">
-              Aether 集成 7 个 AI 提供商。选择一个模型，开始你的创作。
+            <h2 className="font-display text-h1 text-ink mb-1.5">开始对话</h2>
+            <p className="font-body text-caption text-ink-muted max-w-xs leading-relaxed">
+              选择一个 AI 模型，输入消息开始编排。支持 7 个 AI 提供商。
             </p>
+            <div className="flex gap-1.5 mt-4">
+              {['claude', 'openai', 'gemini', 'glm', 'deepseek'].map((p) => (
+                <span
+                  key={p}
+                  className="w-[5px] h-[5px] rounded-full opacity-40"
+                  style={{
+                    backgroundColor: {
+                      claude: '#f59e0b', openai: '#10b981', gemini: '#4285f4',
+                      glm: '#06b6d4', deepseek: '#6366f1',
+                    }[p],
+                  }}
+                />
+              ))}
+            </div>
           </div>
         )}
 
+        {/* Messages */}
         {messages.map((msg) => (
-          <div
-            key={msg.id}
-            className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-          >
-            <div
-              className={`max-w-[75%] rounded-2xl px-4 py-3 ${
-                msg.role === 'user'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-aether-800/70 text-aether-100'
-              }`}
-            >
-              <p className="whitespace-pre-wrap text-sm leading-relaxed">{msg.content}</p>
-            </div>
-          </div>
+          <ChatMessage key={msg.id} msg={msg} />
         ))}
 
         {/* Streaming bubble */}
         {streamingContent && (
-          <div className="flex justify-start">
-            <div className="max-w-[75%] rounded-2xl px-4 py-3 bg-aether-800/70 text-aether-100">
-              <p className="whitespace-pre-wrap text-sm leading-relaxed">{streamingContent}</p>
+          <div className="animate-slide-up">
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className="w-[6px] h-[6px] rounded-full bg-accent animate-pulse-glow" />
+              <span className="font-ui text-[11px] text-ink-muted uppercase tracking-wide">
+                {currentModel}
+              </span>
+              <span className="font-body text-[10px] text-accent animate-pulse-glow">● streaming</span>
+            </div>
+            <div className="max-w-[72%] px-4 py-3 bg-elevated border border-accent/15 rounded-sm">
+              <p className="font-body text-mono leading-relaxed text-ink whitespace-pre-wrap">
+                {streamingContent}
+                <span className="cursor-blink" />
+              </p>
             </div>
           </div>
         )}
@@ -120,29 +149,40 @@ export default function ChatPage() {
         <div ref={bottomRef} />
       </div>
 
-      {/* Input */}
-      <div className="shrink-0 px-4 py-3 border-t border-aether-700/30">
-        <div className="flex items-end gap-2 max-w-3xl mx-auto">
+      {/* Input bar */}
+      <div className="shrink-0 px-4 py-3 border-t border-border-subtle">
+        <div className="flex items-end gap-2 max-w-[900px] mx-auto">
+          {/* Model indicator */}
+          <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-2 border border-border-default rounded-sm shrink-0">
+            <span className="w-[5px] h-[5px] rounded-full bg-accent" />
+            <span className="font-ui text-[11px] text-ink-muted uppercase">{currentModel}</span>
+          </div>
+
           <textarea
+            ref={inputRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="输入消息... (Enter 发送, Shift+Enter 换行)"
+            placeholder="输入消息... (Enter 发送)"
             rows={1}
-            className="input flex-1 resize-none min-h-[44px] max-h-[200px] py-3"
+            className="field flex-1 resize-none min-h-[42px] max-h-[160px]"
             disabled={isStreaming}
           />
+
           {isStreaming ? (
-            <button onClick={handleStop} className="p-3 rounded-xl bg-red-600 hover:bg-red-500 transition-colors">
-              <StopCircle size={20} />
+            <button
+              onClick={handleStop}
+              className="p-2.5 rounded-sm bg-danger/10 border border-danger/20 text-danger hover:bg-danger/20 transition-colors"
+            >
+              <StopCircle size={18} />
             </button>
           ) : (
             <button
               onClick={handleSend}
               disabled={!input.trim()}
-              className="p-3 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-40 transition-colors"
+              className="btn btn-primary p-2.5"
             >
-              <Send size={20} />
+              <Send size={18} />
             </button>
           )}
         </div>

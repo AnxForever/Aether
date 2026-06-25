@@ -1,10 +1,11 @@
 import { create } from 'zustand';
 
-interface Message {
+export interface Message {
   id: string;
   role: 'user' | 'assistant';
   content: string;
   timestamp: number;
+  model?: string;
 }
 
 interface AppState {
@@ -29,10 +30,6 @@ interface AppState {
   // Sidebar
   sidebarOpen: boolean;
   toggleSidebar: () => void;
-
-  // Skills
-  activeSkills: string[];
-  toggleActiveSkill: (id: string) => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -51,7 +48,7 @@ export const useAppStore = create<AppState>((set) => ({
   addMessage: (msg) => set((s) => ({ messages: [...s.messages, msg] })),
   setStreaming: (v) => set({ isStreaming: v }),
   setSessionId: (id) => set({ sessionId: id }),
-  clearMessages: () => set({ messages: [] }),
+  clearMessages: () => set({ messages: [], sessionId: null }),
 
   // Model
   currentModel: localStorage.getItem('aether_model') || 'claude-sonnet-4-20250514',
@@ -63,13 +60,4 @@ export const useAppStore = create<AppState>((set) => ({
   // Sidebar
   sidebarOpen: true,
   toggleSidebar: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
-
-  // Skills
-  activeSkills: [],
-  toggleActiveSkill: (id) =>
-    set((s) => ({
-      activeSkills: s.activeSkills.includes(id)
-        ? s.activeSkills.filter((x) => x !== id)
-        : [...s.activeSkills, id],
-    })),
 }));

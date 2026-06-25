@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { MessageSquare, Zap, Workflow, Settings, LogOut } from 'lucide-react';
+import { MessageSquare, Zap, Workflow, Settings, LogOut, Plus, PanelLeftClose } from 'lucide-react';
 import { useAppStore } from '../stores/app';
 
 const navItems = [
@@ -10,46 +10,64 @@ const navItems = [
 ];
 
 export default function Sidebar() {
-  const logout = useAppStore((s) => s.logout);
+  const { logout, clearMessages, toggleSidebar } = useAppStore();
 
   return (
-    <div className="flex flex-col h-full p-3">
-      {/* Logo */}
-      <div className="flex items-center gap-2 px-3 py-4 mb-4">
-        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center font-bold text-sm">
-          A
+    <div className="flex flex-col h-full py-3">
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 mb-2">
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 rounded-sm bg-accent flex items-center justify-center">
+            <span className="text-[10px] font-bold text-void font-display">A</span>
+          </div>
+          <span className="font-display font-semibold text-[15px] tracking-tight">Aether</span>
         </div>
-        <span className="font-semibold text-lg">Aether</span>
+        <button onClick={toggleSidebar} className="p-1 rounded-sm hover:bg-white/[0.04] text-ink-muted hover:text-ink transition-colors">
+          <PanelLeftClose size={14} />
+        </button>
+      </div>
+
+      {/* New Chat */}
+      <div className="px-3 mb-3">
+        <button
+          onClick={clearMessages}
+          className="flex items-center gap-2 w-full px-3 py-2 rounded-sm border border-border-default text-ink-secondary hover:text-ink hover:bg-white/[0.04] transition-all text-caption font-ui"
+        >
+          <Plus size={14} />
+          <span>新对话</span>
+        </button>
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 space-y-1">
+      <nav className="flex-1 px-2 space-y-0.5">
         {navItems.map(({ to, icon: Icon, label }) => (
           <NavLink
             key={to}
             to={to}
             className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
+              `flex items-center gap-2.5 px-3 py-2 rounded-sm transition-colors font-ui text-caption ${
                 isActive
-                  ? 'bg-blue-600/20 text-blue-400'
-                  : 'text-aether-300 hover:bg-aether-800 hover:text-white'
+                  ? 'bg-accent/10 text-accent border border-accent/20'
+                  : 'text-ink-secondary hover:text-ink hover:bg-white/[0.03] border border-transparent'
               }`
             }
           >
-            <Icon size={18} />
-            <span className="text-sm font-medium">{label}</span>
+            <Icon size={15} />
+            <span>{label}</span>
           </NavLink>
         ))}
       </nav>
 
       {/* Footer */}
-      <button
-        onClick={logout}
-        className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-aether-400 hover:bg-red-900/20 hover:text-red-400 transition-colors text-sm"
-      >
-        <LogOut size={18} />
-        <span>退出</span>
-      </button>
+      <div className="px-3 pt-2 border-t border-border-subtle">
+        <button
+          onClick={logout}
+          className="flex items-center gap-2.5 w-full px-3 py-2 rounded-sm text-ink-muted hover:text-danger hover:bg-danger/5 transition-colors font-ui text-caption"
+        >
+          <LogOut size={14} />
+          <span>退出</span>
+        </button>
+      </div>
     </div>
   );
 }

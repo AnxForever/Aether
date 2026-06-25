@@ -2,27 +2,226 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  * { box-sizing: border-box; }
-  body { margin: 0; font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+/* ==========================================================================
+   Aether Design System v3.0 — "Precision Console"
+   ========================================================================== */
 
-  /* Scrollbar */
-  ::-webkit-scrollbar { width: 6px; }
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    background: #020617;
+    color: #e2e8f0;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    margin: 0;
+    font-family: 'JetBrains Mono', 'Noto Sans SC', monospace;
+    font-size: 0.875rem;
+    line-height: 1.6;
+    overflow: hidden;
+    height: 100vh;
+  }
+
+  #root {
+    height: 100vh;
+  }
+
+  /* ===== Scrollbar ===== */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
   ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: #334e68; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.06);
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255,255,255,0.12);
+  }
+
+  /* ===== Selection ===== */
+  ::selection {
+    background: rgba(6,182,212,0.3);
+    color: #e2e8f0;
+  }
+
+  /* ===== Focus ===== */
+  :focus-visible {
+    outline: 1px solid rgba(6,182,212,0.5);
+    outline-offset: 2px;
+  }
 }
 
+/* ==========================================================================
+   Component Patterns
+   ========================================================================== */
+
 @layer components {
-  .btn-primary {
-    @apply bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg transition-colors font-medium disabled:opacity-50;
+  /* Glass surface — for cards, panels, dropdowns */
+  .glass {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.06);
   }
-  .btn-ghost {
-    @apply text-aether-300 hover:text-white hover:bg-aether-800 px-3 py-1.5 rounded-lg transition-colors;
+
+  .glass-elevated {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
   }
+
+  /* Card */
   .card {
-    @apply bg-aether-800/50 border border-aether-700/30 rounded-xl p-4;
+    background: #0d1520;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 6px;
+    padding: 1rem;
+    transition: background 0.15s ease, border-color 0.15s ease;
   }
-  .input {
-    @apply bg-aether-800 border border-aether-600/50 rounded-lg px-3 py-2 text-white placeholder-aether-400 focus:outline-none focus:border-blue-500 transition-colors;
+  .card:hover {
+    border-color: rgba(255, 255, 255, 0.10);
+  }
+
+  /* Input field */
+  .field {
+    background: #0a1018;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 4px;
+    padding: 0.625rem 0.75rem;
+    color: #e2e8f0;
+    font-family: 'JetBrains Mono', 'Noto Sans SC', monospace;
+    font-size: 0.8125rem;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+  .field::placeholder {
+    color: #64748b;
+  }
+  .field:focus {
+    outline: none;
+    border-color: rgba(6,182,212,0.4);
+    box-shadow: 0 0 0 3px rgba(6,182,212,0.1);
+  }
+
+  /* Button — primary */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    font-family: 'system-ui', 'Noto Sans SC', sans-serif;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    border: 1px solid transparent;
+    white-space: nowrap;
+  }
+  .btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .btn-primary {
+    background: #06b6d4;
+    color: #020617;
+    border-color: #06b6d4;
+  }
+  .btn-primary:hover:not(:disabled) {
+    background: #0891b2;
+    border-color: #0891b2;
+  }
+
+  .btn-ghost {
+    background: transparent;
+    color: #94a3b8;
+  }
+  .btn-ghost:hover:not(:disabled) {
+    background: rgba(255,255,255,0.04);
+    color: #e2e8f0;
+  }
+
+  .btn-outline {
+    background: transparent;
+    border-color: rgba(255,255,255,0.10);
+    color: #e2e8f0;
+  }
+  .btn-outline:hover:not(:disabled) {
+    background: rgba(255,255,255,0.04);
+    border-color: rgba(255,255,255,0.16);
+  }
+
+  /* Provider badge */
+  .provider-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+}
+
+/* ==========================================================================
+   Animations
+   ========================================================================== */
+
+@layer utilities {
+  .animate-slide-up {
+    animation: slide-up 0.2s ease-out;
+  }
+  .animate-fade-in {
+    animation: fade-in 0.15s ease-out;
+  }
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Streaming cursor */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+.cursor-blink::after {
+  content: '▊';
+  animation: blink 1s step-end infinite;
+  color: #06b6d4;
+}
+
+/* Subtle scanline overlay (decorative, pointer-events disabled) */
+.scanlines::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(255,255,255,0.004) 2px,
+    rgba(255,255,255,0.004) 4px
+  );
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* ==========================================================================
+   Reduced Motion
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }
