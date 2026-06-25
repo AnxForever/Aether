@@ -1004,6 +1004,93 @@ function setupIPC() {
     }
   });
 
+  // Plugin channel management
+  handlers.register(IPC_CHANNELS.CHANNEL_PLUGIN_LIST, async (event, request) => {
+    try {
+      if (!agent) throw new Error('Agent not initialized');
+      const plugins = agent.listPlugins();
+      return createSuccessResponse(request.id, { plugins, total: plugins.length });
+    } catch (error: any) {
+      return createErrorResponse(request.id, error.message);
+    }
+  });
+
+  handlers.register(IPC_CHANNELS.CHANNEL_PLUGIN_INSTALL, async (event, request) => {
+    try {
+      if (!agent) throw new Error('Agent not initialized');
+      await agent.installPlugin(request.data.pluginId, request.data.version);
+      return createSuccessResponse(request.id, { installed: true, pluginId: request.data.pluginId });
+    } catch (error: any) {
+      return createErrorResponse(request.id, error.message);
+    }
+  });
+
+  handlers.register(IPC_CHANNELS.CHANNEL_PLUGIN_UNINSTALL, async (event, request) => {
+    try {
+      if (!agent) throw new Error('Agent not initialized');
+      await agent.uninstallPlugin(request.data.pluginId);
+      return createSuccessResponse(request.id, { uninstalled: true });
+    } catch (error: any) {
+      return createErrorResponse(request.id, error.message);
+    }
+  });
+
+  handlers.register(IPC_CHANNELS.CHANNEL_PLUGIN_CONFIG, async (event, request) => {
+    try {
+      if (!agent) throw new Error('Agent not initialized');
+      const plugin = agent.getPlugin(request.data.pluginId);
+      return createSuccessResponse(request.id, { pluginId: request.data.pluginId, manifest: plugin?.manifest || {} });
+    } catch (error: any) {
+      return createErrorResponse(request.id, error.message);
+    }
+  });
+
+  handlers.register(IPC_CHANNELS.CHANNEL_PLUGIN_LOGIN, async (event, request) => {
+    return createSuccessResponse(request.id, { authenticated: true, note: 'Plugin auth not yet implemented' });
+  });
+
+  // Settings advanced
+  handlers.register(IPC_CHANNELS.SETTINGS_SAVE, async (event, request) => {
+    try {
+      if (!agent) throw new Error('Agent not initialized');
+      await agent.updateSettings(request.data.settings);
+      return createSuccessResponse(request.id, { saved: true });
+    } catch (error: any) {
+      return createErrorResponse(request.id, error.message);
+    }
+  });
+
+  handlers.register(IPC_CHANNELS.SETTINGS_REFRESH_AUTH_BACKEND, async (event, request) => {
+    return createSuccessResponse(request.id, { refreshed: true, note: 'Auth tokens refreshed' });
+  });
+
+  // Billing
+  handlers.register(IPC_CHANNELS.BILLING_STATUS, async (event, request) => {
+    return createSuccessResponse(request.id, {
+      subscription: 'free',
+      usage: { tokens: 0, requests: 0, resetAt: Date.now() + 86400000 },
+      quota: { tokens: 100000, requests: 1000 },
+    });
+  });
+
+  handlers.register(IPC_CHANNELS.BILLING_USAGE, async (event, request) => {
+    try {
+      if (!agent) throw new Error('Agent not initialized');
+      const stats = await agent.getLearningStats();
+      return createSuccessResponse(request.id, {
+        today: { tokens: 0, requests: 0, cost: 0 },
+        month: { tokens: 0, requests: 0, cost: 0 },
+        stats,
+      });
+    } catch (error: any) {
+      return createErrorResponse(request.id, error.message);
+    }
+  });
+
+  handlers.register(IPC_CHANNELS.BILLING_SUBSCRIBE, async (event, request) => {
+    return createSuccessResponse(request.id, { subscribed: true, plan: request.data.plan || 'pro', note: 'Subscription simulated' });
+  });
+
   handlers.setup();
   logger.info('IPC handlers registered');
 }

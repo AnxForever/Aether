@@ -273,6 +273,24 @@
       if (e.target === shortcutsModal) shortcutsModal.classList.add('hidden');
     });
 
+    // Plugin marketplace
+    const openPluginsBtn = document.getElementById('openPluginsBtn');
+    if (openPluginsBtn) {
+      openPluginsBtn.addEventListener('click', async () => {
+        try {
+          const result = await callApi(api.listChannelPlugins);
+          const plugins = (result && result.plugins) || [];
+          const list = plugins.length > 0
+            ? plugins.map(p => `• ${p.name} v${p.version} — ${p.description || ''}`).join('\n')
+            : 'No plugins installed.';
+          showToast('Plugins', `${plugins.length} installed — check console for details`, 'info', 4000);
+          console.log('Installed plugins:', plugins);
+        } catch (err) {
+          showToast('Plugins', 'Failed to load', 'error', 3000);
+        }
+      });
+    }
+
     // Fix scope for model selector click handler
     if (modelSelector) {
       modelSelector.addEventListener('click', (e) => e.stopPropagation());

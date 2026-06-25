@@ -165,6 +165,21 @@ export interface PreloadAPI {
   // Model
   setModel: (modelId: string) => Promise<void>;
 
+  // Plugin channel
+  listChannelPlugins: () => Promise<any>;
+  installChannelPlugin: (pluginId: string, version?: string) => Promise<any>;
+  uninstallChannelPlugin: (pluginId: string) => Promise<any>;
+  getChannelPluginConfig: (pluginId: string) => Promise<any>;
+
+  // Settings advanced
+  saveSettings: (settings: any) => Promise<void>;
+  refreshAuth: () => Promise<void>;
+
+  // Billing
+  getBillingStatus: () => Promise<any>;
+  getBillingUsage: () => Promise<any>;
+  subscribePlan: (plan: string) => Promise<any>;
+
   // Search
   searchConversations: (query: string, limit?: number) => Promise<any>;
   getSearchSuggestions: (prefix: string) => Promise<any>;
@@ -310,6 +325,30 @@ export function createPreloadAPI(client: IPCClient): PreloadAPI {
     // Model
     setModel: (modelId) =>
       client.invoke(IPC_CHANNELS.MODEL_SET, { modelId }),
+
+    // Plugin channel
+    listChannelPlugins: () =>
+      client.invoke(IPC_CHANNELS.CHANNEL_PLUGIN_LIST, {}),
+    installChannelPlugin: (pluginId: string, version?: string) =>
+      client.invoke(IPC_CHANNELS.CHANNEL_PLUGIN_INSTALL, { pluginId, version }),
+    uninstallChannelPlugin: (pluginId: string) =>
+      client.invoke(IPC_CHANNELS.CHANNEL_PLUGIN_UNINSTALL, { pluginId }),
+    getChannelPluginConfig: (pluginId: string) =>
+      client.invoke(IPC_CHANNELS.CHANNEL_PLUGIN_CONFIG, { pluginId }),
+
+    // Settings advanced
+    saveSettings: (settings: any) =>
+      client.invoke(IPC_CHANNELS.SETTINGS_SAVE, { settings }),
+    refreshAuth: () =>
+      client.invoke(IPC_CHANNELS.SETTINGS_REFRESH_AUTH_BACKEND, {}),
+
+    // Billing
+    getBillingStatus: () =>
+      client.invoke(IPC_CHANNELS.BILLING_STATUS, {}),
+    getBillingUsage: () =>
+      client.invoke(IPC_CHANNELS.BILLING_USAGE, {}),
+    subscribePlan: (plan: string) =>
+      client.invoke(IPC_CHANNELS.BILLING_SUBSCRIBE, { plan }),
 
     // Events
     onMessage: (callback) => client.on(IPC_CHANNELS.EVENT_MESSAGE, callback),
