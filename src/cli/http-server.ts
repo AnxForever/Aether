@@ -133,7 +133,10 @@ export class HttpServer {
     const pathname = url.pathname;
 
     // CORS headers
-    res.setHeader('Access-Control-Allow-Origin', '*');
+    const corsOrigin = process.env.NODE_ENV === 'production'
+      ? (process.env.CORS_ORIGIN || 'http://localhost:5173')
+      : '*';
+    res.setHeader('Access-Control-Allow-Origin', corsOrigin);
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 

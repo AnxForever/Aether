@@ -204,18 +204,20 @@ export class RestoreManager extends EventEmitter {
    * Decrypt file
    */
   private async decryptFile(sourcePath: string, targetPath: string, password: string): Promise<void> {
-    const key = await this.deriveKey(password);
-
-    // Read IV from file
+    // Read salt and IV from file
     const encFile = createReadStream(sourcePath + '.enc');
-    const iv = await new Promise<Buffer>((resolve, reject) => {
+    const header = await new Promise<Buffer>((resolve, reject) => {
       encFile.once('readable', () => {
-        const iv = encFile.read(16);
-        if (iv) resolve(iv);
-        else reject(new Error('Failed to read IV'));
+        const buf = encFile.read(32);
+        if (buf && buf.length === 32) resolve(buf);
+        else reject(new Error('Failed to read encryption header'));
       });
       encFile.once('error', reject);
     });
+    const salt = header.subarray(0, 16);
+    const iv = header.subarray(16, 32);
+
+    const key = await this.deriveKey(password, salt);
 
     // Read auth tag
     const authTag = await readFile(sourcePath + '.tag');
@@ -232,17 +234,19 @@ export class RestoreManager extends EventEmitter {
    * Decrypt and decompress file
    */
   private async decryptAndDecompress(sourcePath: string, targetPath: string, password: string): Promise<void> {
-    const key = await this.deriveKey(password);
-
     const encFile = createReadStream(sourcePath + '.gz.enc');
-    const iv = await new Promise<Buffer>((resolve, reject) => {
+    const header = await new Promise<Buffer>((resolve, reject) => {
       encFile.once('readable', () => {
-        const iv = encFile.read(16);
-        if (iv) resolve(iv);
-        else reject(new Error('Failed to read IV'));
+        const buf = encFile.read(32);
+        if (buf && buf.length === 32) resolve(buf);
+        else reject(new Error('Failed to read encryption header'));
       });
       encFile.once('error', reject);
     });
+    const salt = header.subarray(0, 16);
+    const iv = header.subarray(16, 32);
+
+    const key = await this.deriveKey(password, salt);
 
     const authTag = await readFile(sourcePath + '.tag');
 
@@ -258,9 +262,9 @@ export class RestoreManager extends EventEmitter {
   /**
    * Derive encryption key from password
    */
-  private async deriveKey(password: string): Promise<Buffer> {
+  private async deriveKey(password: string, salt: Buffer): Promise<Buffer> {
     return new Promise((resolve, reject) => {
-      scrypt(password, 'nexus-backup-salt', 32, (err, key) => {
+      scrypt(password, salt, 32, (err, key) => {
         if (err) reject(err);
         else resolve(key);
       });

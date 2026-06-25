@@ -32,6 +32,7 @@ export interface BackupMetadata {
   encrypted: boolean;
   compressed: boolean;
   parentBackupId?: string; // For incremental backups
+  salt?: string; // Random salt for key derivation
 }
 
 /**
@@ -366,7 +367,7 @@ export class BackupManager extends EventEmitter {
   private async encryptFile(sourcePath: string, destPath: string): Promise<void> {
     if (!this.config.password) throw new Error('Password required for encryption');
 
-    const key = await this.deriveKey(this.config.password);
+    const { key, salt } = await this.deriveKey(this.config.password);
     const iv = randomBytes(16);
 
     const cipher = createCipheriv('aes-256-gcm', key, iv);
@@ -374,7 +375,8 @@ export class BackupManager extends EventEmitter {
     const input = createReadStream(sourcePath);
     const output = createWriteStream(destPath + '.enc');
 
-    // Write IV first
+    // Write salt and IV first
+    output.write(salt);
     output.write(iv);
 
     await pipeline(input, cipher, output);
@@ -390,7 +392,7 @@ export class BackupManager extends EventEmitter {
   private async compressAndEncrypt(sourcePath: string, destPath: string): Promise<void> {
     if (!this.config.password) throw new Error('Password required for encryption');
 
-    const key = await this.deriveKey(this.config.password);
+    const { key, salt } = await this.deriveKey(this.config.password);
     const iv = randomBytes(16);
 
     const cipher = createCipheriv('aes-256-gcm', key, iv);
@@ -399,6 +401,8 @@ export class BackupManager extends EventEmitter {
     const gzip = createGzip();
     const output = createWriteStream(destPath + '.gz.enc');
 
+    // Write salt and IV first
+    output.write(salt);
     output.write(iv);
 
     await pipeline(input, gzip, cipher, output);
@@ -410,11 +414,12 @@ export class BackupManager extends EventEmitter {
   /**
    * Derive encryption key from password
    */
-  private async deriveKey(password: string): Promise<Buffer> {
+  private async deriveKey(password: string, salt?: Buffer): Promise<{ key: Buffer; salt: Buffer }> {
+    const useSalt = salt || randomBytes(16);
     return new Promise((resolve, reject) => {
-      scrypt(password, 'nexus-backup-salt', 32, (err, key) => {
+      scrypt(password, useSalt, 32, (err, key) => {
         if (err) reject(err);
-        else resolve(key);
+        else resolve({ key, salt: useSalt });
       });
     });
   }

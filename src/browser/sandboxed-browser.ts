@@ -230,6 +230,11 @@ export class SandboxedBrowser extends EventEmitter {
       this.window.contentView.removeChildView(view);
     }
 
+    // 清理该 tab 的 webContents 上的所有事件监听器
+    view.webContents.removeAllListeners();
+    // 也清理 session 级别的监听器（will-download）
+    view.webContents.session.removeAllListeners('will-download');
+
     this.tabs.delete(tabId);
     this.emit('tab-closed', { id: tabId });
 
@@ -360,7 +365,22 @@ export class SandboxedBrowser extends EventEmitter {
    */
   destroy(): void {
     if (this.window) {
+      this.window.webContents.removeAllListeners();
       this.window.close();
+      this.window = undefined;
     }
+
+    // 清理所有 tab 的事件监听器
+    this.tabs.forEach((view) => {
+      view.webContents.removeAllListeners();
+      view.webContents.session.removeAllListeners('will-download');
+    });
+    this.tabs.clear();
+    this.navigationHistory = [];
+
+    // 清理自身 EventEmitter 的监听器
+    this.removeAllListeners();
+
+    logger.info('Browser destroyed');
   }
 }

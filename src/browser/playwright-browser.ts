@@ -103,30 +103,30 @@ export class PlaywrightBrowser extends EventEmitter {
    * 关闭浏览器
    */
   async close(): Promise<void> {
-    if (!this.browser) {
-      return;
-    }
-
     logger.info('Closing browser');
 
-    // 关闭所有页面
-    for (const page of this.pages.values()) {
-      await page.close().catch(() => {});
-    }
-    this.pages.clear();
+    if (this.browser) {
+      // 关闭所有页面
+      for (const page of this.pages.values()) {
+        await page.close().catch(() => {});
+      }
+      this.pages.clear();
 
-    // 关闭上下文
-    if (this.context) {
-      await this.context.close();
-      this.context = undefined;
+      // 关闭上下文
+      if (this.context) {
+        await this.context.close();
+        this.context = undefined;
+      }
+
+      // 关闭浏览器
+      await this.browser.close();
+      this.browser = undefined;
     }
 
-    // 关闭浏览器
-    await this.browser.close();
-    this.browser = undefined;
+    // 清理所有事件监听器，防止内存泄漏
+    this.removeAllListeners();
 
     logger.info('Browser closed');
-    this.emit('closed');
   }
 
   /**
