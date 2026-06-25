@@ -21,9 +21,51 @@ import {
   access,
   constants,
 } from 'fs/promises';
-import { resolve, join, dirname, basename, extname } from 'path';
+import { resolve, join, dirname, basename, extname, normalize } from 'path';
 
 const execAsync = promisify(exec);
+
+/**
+ * Allowed directories for file operations.
+ * File access is restricted to these directories for security.
+ */
+const ALLOWED_DIRECTORIES = (() => {
+  const dirs: string[] = [
+    require('os').homedir(),
+    process.cwd(),
+    // Extend via environment variable (colon-separated paths)
+    ...(process.env.AETHER_ALLOWED_PATHS || '').split(':').filter(Boolean),
+  ];
+  // Normalize all entries
+  return dirs.map((d) => normalize(resolve(d)));
+})();
+
+/**
+ * Validate that the resolved path falls within an allowed directory.
+ * Performs a prefix check on the normalized absolute path.
+ */
+function isPathAllowed(filePath: string): boolean {
+  try {
+    const resolved = normalize(resolve(filePath));
+    return ALLOWED_DIRECTORIES.some((dir) => resolved.startsWith(dir));
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Wraps a resolved path with sandbox validation.
+ * Returns an error ToolResult if the path is not allowed, or undefined on success.
+ */
+function assertPathAllowed(filePath: string, operation: string): ToolResult | undefined {
+  if (!isPathAllowed(filePath)) {
+    return {
+      success: false,
+      error: `Access denied: path "${filePath}" is outside allowed directories for operation "${operation}"`,
+    };
+  }
+  return undefined;
+}
 
 export interface FileInfo {
   path: string;
@@ -387,6 +429,9 @@ export class SystemSkill extends BaseSkill {
         return this.createError('filePath is required');
       }
 
+      const denied = assertPathAllowed(filePath, 'readFile');
+      if (denied) return denied;
+
       const content = await readFile(resolve(filePath), encoding);
 
       return this.createSuccess(content, {
@@ -409,6 +454,9 @@ export class SystemSkill extends BaseSkill {
       if (!filePath || content === undefined) {
         return this.createError('filePath and content are required');
       }
+
+      const denied = assertPathAllowed(filePath, 'writeFile');
+      if (denied) return denied;
 
       const resolvedPath = resolve(filePath);
       await mkdir(dirname(resolvedPath), { recursive: true });
@@ -434,6 +482,9 @@ export class SystemSkill extends BaseSkill {
         return this.createError('filePath and content are required');
       }
 
+      const denied = assertPathAllowed(filePath, 'appendFile');
+      if (denied) return denied;
+
       const resolvedPath = resolve(filePath);
       const existing = await readFile(resolvedPath, 'utf-8').catch(() => '');
       await writeFile(resolvedPath, existing + content, 'utf-8');
@@ -455,6 +506,9 @@ export class SystemSkill extends BaseSkill {
         return this.createError('path is required');
       }
 
+      const denied = assertPathAllowed(path, 'deleteFile');
+      if (denied) return denied;
+
       await rm(resolve(path), { recursive, force: true });
 
       return this.createSuccess(undefined, { path, recursive });
@@ -473,6 +527,11 @@ export class SystemSkill extends BaseSkill {
       if (!source || !destination) {
         return this.createError('source and destination are required');
       }
+
+      const sourceDenied = assertPathAllowed(source, 'copyFile');
+      if (sourceDenied) return sourceDenied;
+      const destDenied = assertPathAllowed(destination, 'copyFile');
+      if (destDenied) return destDenied;
 
       const destPath = resolve(destination);
       await mkdir(dirname(destPath), { recursive: true });
@@ -495,6 +554,11 @@ export class SystemSkill extends BaseSkill {
         return this.createError('source and destination are required');
       }
 
+      const sourceDenied = assertPathAllowed(source, 'moveFile');
+      if (sourceDenied) return sourceDenied;
+      const destDenied = assertPathAllowed(destination, 'moveFile');
+      if (destDenied) return destDenied;
+
       const destPath = resolve(destination);
       await mkdir(dirname(destPath), { recursive: true });
       await renameFile(resolve(source), destPath);
@@ -512,6 +576,9 @@ export class SystemSkill extends BaseSkill {
       if (!path) {
         return this.createError('path is required');
       }
+
+      const denied = assertPathAllowed(path, 'fileExists');
+      if (denied) return denied;
 
       let exists = true;
       try {
@@ -533,6 +600,9 @@ export class SystemSkill extends BaseSkill {
       if (!path) {
         return this.createError('path is required');
       }
+
+      const denied = assertPathAllowed(path, 'getFileInfo');
+      if (denied) return denied;
 
       const resolvedPath = resolve(path);
       const stats = await stat(resolvedPath);
@@ -564,6 +634,9 @@ export class SystemSkill extends BaseSkill {
       if (!path) {
         return this.createError('path is required');
       }
+
+      const denied = assertPathAllowed(path, 'listDirectory');
+      if (denied) return denied;
 
       const resolvedPath = resolve(path);
       const entries = await readdir(resolvedPath, { withFileTypes: true });
@@ -611,6 +684,9 @@ export class SystemSkill extends BaseSkill {
       if (!path) {
         return this.createError('path is required');
       }
+
+      const denied = assertPathAllowed(path, 'createDirectory');
+      if (denied) return denied;
 
       const resolvedPath = resolve(path);
       await mkdir(resolvedPath, { recursive });

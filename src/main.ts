@@ -2,7 +2,7 @@
  * Electron Main Process
  */
 
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow, ipcMain, dialog } from 'electron';
 import { join } from 'path';
 import { IPCHandlerRegistry, createSuccessResponse, createErrorResponse } from './ipc/handlers';
 import { IPC_CHANNELS } from './ipc/protocol';
@@ -115,17 +115,13 @@ function createWindow() {
  * Initialize agent
  */
 async function initializeAgent() {
-  try {
-    agent = new NexusAgent({
-      dataDir: app.getPath('userData'),
-      deviceId: 'electron-' + require('os').hostname()
-    });
+  agent = new NexusAgent({
+    dataDir: app.getPath('userData'),
+    deviceId: 'electron-' + require('os').hostname()
+  });
 
-    await agent.initialize();
-    logger.info('Agent initialized');
-  } catch (error: unknown) {
-    logger.error('Failed to initialize agent:', error instanceof Error ? error : new Error(String(error)));
-  }
+  await agent.initialize();
+  logger.info('Agent initialized');
 }
 
 /**
@@ -235,7 +231,7 @@ async function initializeCollaboration() {
     collaborationLauncher = new CollaborationLauncher({
       port: 8081,
       dataDir: app.getPath('userData'),
-      enableAuth: false // Optional: enable token validation
+      enableAuth: true // Enable token validation for security
     });
 
     // Setup event listeners
@@ -818,14 +814,17 @@ function setupIPC() {
       if (!key || typeof key !== 'string' || !/^[a-zA-Z0-9_-]{1,64}$/.test(key)) {
         return createErrorResponse(request.id, 'Invalid storage key');
       }
-      const { readFileSync, existsSync } = require('fs');
+      const { readFile, access } = require('fs').promises;
       const { join } = require('path');
       const path = join(app.getPath('userData'), key + '.json');
-      if (existsSync(path)) {
-        const data = JSON.parse(readFileSync(path, 'utf8'));
+      try {
+        await access(path);
+        const data = JSON.parse(await readFile(path, 'utf8'));
         return createSuccessResponse(request.id, { key, data });
+      } catch (error: unknown) {
+        if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+        return createSuccessResponse(request.id, { key, data: null });
       }
-      return createSuccessResponse(request.id, { key, data: null });
     } catch (error: unknown) {
       const err = error instanceof Error ? error : new Error(String(error));
       return createErrorResponse(request.id, err.message);
@@ -839,11 +838,15 @@ function setupIPC() {
       if (!key || typeof key !== 'string' || !/^[a-zA-Z0-9_-]{1,64}$/.test(key)) {
         return createErrorResponse(request.id, 'Invalid storage key');
       }
-      const { writeFileSync, mkdirSync, existsSync } = require('fs');
+      const { writeFile, mkdir, access } = require('fs').promises;
       const { join } = require('path');
       const dir = app.getPath('userData');
-      if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
-      writeFileSync(join(dir, key + '.json'), JSON.stringify(data, null, 2));
+      try {
+        await access(dir);
+      } catch {
+        await mkdir(dir, { recursive: true });
+      }
+      await writeFile(join(dir, key + '.json'), JSON.stringify(data, null, 2));
       return createSuccessResponse(request.id, { key, saved: true });
     } catch (error: unknown) {
       const err = error instanceof Error ? error : new Error(String(error));
@@ -858,14 +861,17 @@ function setupIPC() {
       if (!key || typeof key !== 'string' || !/^[a-zA-Z0-9_-]{1,64}$/.test(key)) {
         return createErrorResponse(request.id, 'Invalid storage key');
       }
-      const { unlinkSync, existsSync } = require('fs');
+      const { unlink, access } = require('fs').promises;
       const { join } = require('path');
       const path = join(app.getPath('userData'), key + '.json');
-      if (existsSync(path)) {
-        unlinkSync(path);
+      try {
+        await access(path);
+        await unlink(path);
         return createSuccessResponse(request.id, { key, deleted: true });
+      } catch (error: unknown) {
+        if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+        return createSuccessResponse(request.id, { key, deleted: false });
       }
-      return createSuccessResponse(request.id, { key, deleted: false });
     } catch (error: unknown) {
       const err = error instanceof Error ? error : new Error(String(error));
       return createErrorResponse(request.id, err.message);
@@ -1035,17 +1041,22 @@ function setupIPC() {
   // Scheduled tasks (Cron)
   handlers.register(IPC_CHANNELS.CRON_LIST, async (event, request) => {
     try {
-      const { readdirSync, existsSync } = require('fs');
+      const { readdir, readFile, access } = require('fs').promises;
       const { join } = require('path');
       const cronDir = join(app.getPath('userData'), 'cron');
       let tasks = [];
-      if (existsSync(cronDir)) {
-        tasks = readdirSync(cronDir).filter((f: string) => f.endsWith('.json')).map((f: string) => {
+      try {
+        await access(cronDir);
+        const files = await readdir(cronDir);
+        const jsonFiles = files.filter((f: string) => f.endsWith('.json'));
+        const results = await Promise.all(jsonFiles.map(async (f: string) => {
           try {
-            return JSON.parse(require('fs').readFileSync(join(cronDir, f), 'utf8'));
+            const content = await readFile(join(cronDir, f), 'utf8');
+            return JSON.parse(content);
           } catch { /* parse error — skip */ return null; }
-        }).filter(Boolean);
-      }
+        }));
+        tasks = results.filter(Boolean);
+      } catch { /* directory doesn't exist — empty */ }
       return createSuccessResponse(request.id, { tasks, total: tasks.length });
     } catch (error: unknown) {
       const err = error instanceof Error ? error : new Error(String(error));
@@ -1055,10 +1066,13 @@ function setupIPC() {
 
   handlers.register(IPC_CHANNELS.CRON_DELETE, async (event, request) => {
     try {
-      const { unlinkSync, existsSync } = require('fs');
+      const { unlink, access } = require('fs').promises;
       const { join } = require('path');
       const path = join(app.getPath('userData'), 'cron', request.data.taskId + '.json');
-      if (existsSync(path)) unlinkSync(path);
+      try {
+        await access(path);
+        await unlink(path);
+      } catch { /* file doesn't exist — ignore */ }
       return createSuccessResponse(request.id, { deleted: true });
     } catch (error: unknown) {
       const err = error instanceof Error ? error : new Error(String(error));
@@ -1068,16 +1082,22 @@ function setupIPC() {
 
   handlers.register(IPC_CHANNELS.CRON_SET_ENABLED, async (event, request) => {
     try {
-      const { writeFileSync, readFileSync, existsSync, mkdirSync } = require('fs');
+      const { writeFile, readFile, mkdir, access } = require('fs').promises;
       const { join } = require('path');
       const cronDir = join(app.getPath('userData'), 'cron');
-      if (!existsSync(cronDir)) mkdirSync(cronDir, { recursive: true });
-      const path = join(cronDir, request.data.taskId + '.json');
-      if (existsSync(path)) {
-        const task = JSON.parse(readFileSync(path, 'utf8'));
-        task.enabled = request.data.enabled;
-        writeFileSync(path, JSON.stringify(task, null, 2));
+      try {
+        await access(cronDir);
+      } catch {
+        await mkdir(cronDir, { recursive: true });
       }
+      const path = join(cronDir, request.data.taskId + '.json');
+      try {
+        await access(path);
+        const content = await readFile(path, 'utf8');
+        const task = JSON.parse(content);
+        task.enabled = request.data.enabled;
+        await writeFile(path, JSON.stringify(task, null, 2));
+      } catch { /* file doesn't exist — nothing to update */ }
       return createSuccessResponse(request.id, { taskId: request.data.taskId, enabled: request.data.enabled });
     } catch (error: unknown) {
       const err = error instanceof Error ? error : new Error(String(error));
@@ -1225,8 +1245,8 @@ function setupIPC() {
       if (!resolved.startsWith(userData) && !resolved.startsWith(homeDir)) {
         return createErrorResponse(request.id, 'File access denied — path outside allowed directories');
       }
-      const { statSync } = require('fs');
-      const stats = statSync(resolved);
+      const { stat } = require('fs').promises;
+      const stats = await stat(resolved);
       const id = 'file_' + Date.now();
       return createSuccessResponse(request.id, { id, url: 'file://' + resolved, size: stats.size, type });
     } catch (error: unknown) {
@@ -1360,14 +1380,17 @@ function setupIPC() {
   // Auth management
   handlers.register(IPC_CHANNELS.AUTH_GET, async (event, request) => {
     try {
-      const { readFileSync, existsSync } = require('fs');
+      const { readFile, access } = require('fs').promises;
       const { join } = require('path');
       const authPath = join(app.getPath('userData'), 'auth.json');
-      if (existsSync(authPath)) {
-        const data = JSON.parse(readFileSync(authPath, 'utf8'));
+      try {
+        await access(authPath);
+        const data = JSON.parse(await readFile(authPath, 'utf8'));
         return createSuccessResponse(request.id, { auth: data });
+      } catch (error: unknown) {
+        if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+        return createSuccessResponse(request.id, { auth: null });
       }
-      return createSuccessResponse(request.id, { auth: null });
     } catch (error: unknown) {
       const err = error instanceof Error ? error : new Error(String(error));
       return createErrorResponse(request.id, err.message);
@@ -1380,11 +1403,15 @@ function setupIPC() {
 
   handlers.register(IPC_CHANNELS.AUTH_SET_TOKENS, async (event, request) => {
     try {
-      const { writeFileSync, mkdirSync, existsSync } = require('fs');
+      const { writeFile, mkdir, access } = require('fs').promises;
       const { join } = require('path');
       const dir = app.getPath('userData');
-      if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
-      writeFileSync(join(dir, 'auth.json'), JSON.stringify(request.data.tokens, null, 2));
+      try {
+        await access(dir);
+      } catch {
+        await mkdir(dir, { recursive: true });
+      }
+      await writeFile(join(dir, 'auth.json'), JSON.stringify(request.data.tokens, null, 2));
       return createSuccessResponse(request.id, { saved: true });
     } catch (error: unknown) {
       const err = error instanceof Error ? error : new Error(String(error));
@@ -1394,10 +1421,13 @@ function setupIPC() {
 
   handlers.register(IPC_CHANNELS.AUTH_LOGOUT, async (event, request) => {
     try {
-      const { unlinkSync, existsSync } = require('fs');
+      const { unlink, access } = require('fs').promises;
       const { join } = require('path');
       const authPath = join(app.getPath('userData'), 'auth.json');
-      if (existsSync(authPath)) unlinkSync(authPath);
+      try {
+        await access(authPath);
+        await unlink(authPath);
+      } catch { /* file doesn't exist — ignore */ }
       return createSuccessResponse(request.id, { loggedOut: true });
     } catch (error: unknown) {
       const err = error instanceof Error ? error : new Error(String(error));
@@ -1413,13 +1443,36 @@ function setupIPC() {
  * App ready
  */
 app.whenReady().then(async () => {
-  await initializeAgent();
-  await initializeCollaboration();
-  await initializeThemes();
-  initializeSearch();
-  initializeNotifications();
-  initializeOnboarding();
-  initializeMiniWindow();
+  // Critical subsystems — failure blocks startup
+  const agentInitialized = await initializeAgent().then(() => true).catch(() => false);
+  if (!agentInitialized) {
+    dialog.showErrorBox(
+      'Startup Error',
+      'Failed to initialize AI agent. Please check your configuration and restart.'
+    );
+    app.quit();
+    return;
+  }
+
+  // Non-critical subsystems — failure only logs warning
+  await initializeCollaboration().catch((error) => {
+    logger.error('Non-critical: Collaboration initialization failed:', error);
+  });
+  await initializeThemes().catch((error) => {
+    logger.error('Non-critical: Themes initialization failed:', error);
+  });
+  try { initializeSearch(); } catch (error: unknown) {
+    logger.error('Non-critical: Search initialization failed:', error as Error);
+  }
+  try { initializeNotifications(); } catch (error: unknown) {
+    logger.error('Non-critical: Notifications initialization failed:', error as Error);
+  }
+  try { initializeOnboarding(); } catch (error: unknown) {
+    logger.error('Non-critical: Onboarding initialization failed:', error as Error);
+  }
+  try { initializeMiniWindow(); } catch (error: unknown) {
+    logger.error('Non-critical: Mini window initialization failed:', error as Error);
+  }
   setupIPC();
 
   // Check if onboarding is needed

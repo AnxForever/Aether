@@ -9,6 +9,7 @@ import { Orchestrator } from './core/orchestrator';
 import { createLogger } from './utils/logger';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as crypto from 'crypto';
 
 const logger = createLogger('GatewayStarter');
 
@@ -20,14 +21,21 @@ function loadConfig(): any {
 
   try {
     const configData = fs.readFileSync(configPath, 'utf-8');
-    return JSON.parse(configData);
+    const config = JSON.parse(configData);
+    // If jwtSecret is empty or not set, resolve securely
+    if (!config.auth?.jwtSecret) {
+      config.auth = config.auth || {};
+      config.auth.jwtSecret = resolveJwtSecret();
+    }
+    return config;
   } catch (error) {
     logger.warn('Could not load config file, using defaults');
+    const jwtSecret = resolveJwtSecret();
     return {
       port: 8080,
-      host: '0.0.0.0',
+      host: '127.0.0.1',
       auth: {
-        jwtSecret: process.env.JWT_SECRET || 'your-secret-key-at-least-32-characters-long-change-in-production',
+        jwtSecret,
         publicPaths: ['/health', '/metrics', '/api/auth/login']
       },
       rateLimit: {
@@ -51,7 +59,7 @@ async function startGateway() {
 
     // Load configuration
     const config = loadConfig();
-    logger.info(`Configuration loaded - Port: ${config.port}`);
+    logger.info(`Configuration loaded - Port: ${config.port}, Host: ${config.host}`);
 
     // Initialize orchestrator
     const orchestrator = new Orchestrator({
@@ -114,6 +122,26 @@ async function startGateway() {
     logger.error('Failed to start API Gateway:', error as Error);
     process.exit(1);
   }
+}
+
+/**
+ * Resolve JWT secret securely.
+ * - In production: JWT_SECRET must be set, otherwise throw.
+ * - In development: generate a random secret (warns about non-persistence).
+ */
+function resolveJwtSecret(): string {
+  const secret = process.env.JWT_SECRET;
+  if (secret) {
+    return secret;
+  }
+  const isProduction = process.env.NODE_ENV === 'production';
+  const generated = crypto.randomBytes(32).toString('hex');
+  if (isProduction) {
+    logger.error('JWT_SECRET environment variable is not set — refusing to start in production');
+    throw new Error('JWT_SECRET must be configured in production environment');
+  }
+  logger.warn('JWT_SECRET not set. Generated a random secret — authentication tokens will NOT persist across restarts');
+  return generated;
 }
 
 // Start if run directly

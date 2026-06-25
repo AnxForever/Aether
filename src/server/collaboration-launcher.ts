@@ -21,6 +21,16 @@ export interface CollaborationLauncherConfig {
 }
 
 /**
+ * Internal resolved configuration (all fields resolved to concrete values)
+ */
+interface ResolvedConfig {
+  port: number;
+  dataDir: string;
+  enableAuth: boolean;
+  validateToken?: (token: string) => boolean;
+}
+
+/**
  * Collaboration launcher status
  */
 export interface CollaborationStatus {
@@ -37,7 +47,7 @@ export interface CollaborationStatus {
 export class CollaborationLauncher extends EventEmitter {
   private server?: CollaborationServer;
   private sessionManager?: SessionManager;
-  private config: Required<CollaborationLauncherConfig>;
+  private config: ResolvedConfig;
   private startTime: number = 0;
   private isRunning: boolean = false;
 
@@ -48,7 +58,7 @@ export class CollaborationLauncher extends EventEmitter {
       port: config.port || 8081,
       dataDir: config.dataDir,
       enableAuth: config.enableAuth || false,
-      validateToken: config.validateToken || (() => true)
+      validateToken: config.validateToken
     };
 
     logger.info('Collaboration launcher initialized', {
@@ -79,6 +89,9 @@ export class CollaborationLauncher extends EventEmitter {
         this.config.port,
         this.config.enableAuth ? this.config.validateToken : undefined
       );
+      logger.info(this.config.enableAuth
+        ? 'Collaboration server authentication is ENABLED'
+        : 'Collaboration server authentication is DISABLED');
 
       // Setup event forwarding
       this.setupEventHandlers();

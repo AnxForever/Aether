@@ -6,6 +6,7 @@ import { createLogger } from '../utils/logger';
 import { EventEmitter } from 'events';
 import { Server as WebSocketServer, WebSocket } from 'ws';
 import { v4 as uuidv4 } from 'uuid';
+import * as crypto from 'crypto';
 
 const logger = createLogger('CollaborationServer');
 
@@ -85,9 +86,17 @@ export class CollaborationServer extends EventEmitter {
   private authTokens = new Map<string, string>(); // userId -> token
   private maxMessageSize = 1024 * 1024; // 1MB
   private parseErrorCount = new Map<string, number>(); // userId -> error count
+  private validateToken?: (token: string) => boolean;
 
-  constructor(private port: number = 8081, private validateToken?: (token: string) => boolean) {
+  constructor(private port: number = 8081, validateToken?: (token: string) => boolean) {
     super();
+    if (!validateToken) {
+      const preSharedKey = process.env.COLAB_SECRET || crypto.randomBytes(32).toString('hex');
+      this.validateToken = (token: string) => token === preSharedKey;
+      logger.info('Collaboration server using pre-shared key authentication');
+    } else {
+      this.validateToken = validateToken;
+    }
   }
 
   /**
