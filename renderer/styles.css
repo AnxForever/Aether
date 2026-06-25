@@ -217,8 +217,16 @@ kbd {
   color: rgba(255, 255, 255, 0.8);
 }
 
+.sessions-list-wrapper {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
 .search-box {
-  margin: 0 var(--spacing-md) var(--spacing-md);
+  margin: 0 var(--spacing-md) var(--spacing-sm);
   padding: 8px 12px;
   background: var(--bg-primary);
   border: 1px solid var(--border);
@@ -228,6 +236,7 @@ kbd {
   gap: var(--spacing-sm);
   color: var(--text-muted);
   transition: border-color var(--transition);
+  flex-shrink: 0;
 }
 
 .search-box:focus-within {
@@ -885,6 +894,89 @@ input[type="range"] {
 
 .btn-block {
   width: 100%;
+}
+
+/* === Search Results Panel === */
+.search-results-panel {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  z-index: 50;
+  max-height: 360px;
+  overflow-y: auto;
+  margin: 0 var(--spacing-md);
+}
+
+.search-results-header {
+  padding: 10px 14px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--border);
+}
+
+.search-result-item {
+  padding: 10px 14px;
+  cursor: pointer;
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: flex-start;
+  border-bottom: 1px solid var(--border);
+  transition: background var(--transition);
+}
+
+.search-result-item:last-child {
+  border-bottom: none;
+}
+
+.search-result-item:hover {
+  background: var(--bg-hover);
+}
+
+.search-result-score {
+  flex-shrink: 0;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--accent);
+  background: var(--accent-soft);
+  padding: 2px 6px;
+  border-radius: var(--radius-pill);
+  min-width: 38px;
+  text-align: center;
+}
+
+.search-result-preview {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.search-result-preview mark {
+  background: rgba(255, 200, 50, 0.35);
+  color: var(--text-primary);
+  font-weight: 600;
+  border-radius: 2px;
+  padding: 0 2px;
+}
+
+/* Make the sessions list wrapper position: relative for search panel positioning */
+.sessions-list-wrapper {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 /* === Scrollbar === */

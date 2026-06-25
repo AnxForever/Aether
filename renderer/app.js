@@ -361,8 +361,82 @@
     }
   }
 
+  let searchTimeout = null;
+  let searchResultsPanel = null;
+
   function filterSessions() {
-    renderSessions(el.searchInput.value);
+    const query = el.searchInput.value.trim();
+    clearTimeout(searchTimeout);
+
+    if (!query) {
+      renderSessions('');
+      hideSearchResults();
+      return;
+    }
+
+    // Debounced full-text search via backend
+    searchTimeout = setTimeout(async () => {
+      try {
+        const result = await callApi(api.searchConversations, query, 8);
+        if (result && result.results) {
+          showSearchResults(result.results, query);
+        } else {
+          // Fallback to local title filtering
+          renderSessions(query);
+          hideSearchResults();
+        }
+      } catch (err) {
+        // Fallback to local title filtering
+        renderSessions(query);
+        hideSearchResults();
+      }
+    }, 250);
+  }
+
+  function showSearchResults(results, query) {
+    // Hide normal session list, show search results dropdown
+    hideSearchResults();
+    searchResultsPanel = document.createElement('div');
+    searchResultsPanel.className = 'search-results-panel';
+    searchResultsPanel.innerHTML = `<div class="search-results-header">Results for "${escapeHtml(query)}" (${results.length})</div>`;
+
+    for (const r of results) {
+      const item = document.createElement('div');
+      item.className = 'search-result-item';
+      const preview = r.content ? r.content.substring(0, 120) + '...' : '';
+      let highlighted = escapeHtml(preview);
+      if (query) {
+        const re = new RegExp(`(${escapeRegex(query)})`, 'gi');
+        highlighted = highlighted.replace(re, '<mark>$1</mark>');
+      }
+      item.innerHTML = `
+        <div class="search-result-score">${Math.round(r.score * 100)}%</div>
+        <div class="search-result-preview">${highlighted}</div>
+      `;
+      item.addEventListener('click', () => {
+        if (r.metadata && r.metadata.sessionId) {
+          loadSession(r.metadata.sessionId);
+        }
+        hideSearchResults();
+        el.searchInput.value = '';
+        renderSessions('');
+      });
+      searchResultsPanel.appendChild(item);
+    }
+    el.sessionsList.parentElement.appendChild(searchResultsPanel);
+    el.sessionsList.style.display = 'none';
+  }
+
+  function hideSearchResults() {
+    if (searchResultsPanel) {
+      searchResultsPanel.remove();
+      searchResultsPanel = null;
+    }
+    el.sessionsList.style.display = '';
+  }
+
+  function escapeRegex(str) {
+    return String(str).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   }
 
   async function createNewSession() {

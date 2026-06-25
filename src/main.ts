@@ -11,6 +11,8 @@ import { createLogger } from './utils/logger';
 import { OnboardingManager } from './onboarding';
 import { ConfigManager } from './storage/config-manager';
 import { CollaborationLauncher } from './server/collaboration-launcher';
+import { SemanticSearch } from './search/semantic-search';
+import { MiniWindowManager } from './mini-window/manager';
 
 const logger = createLogger('Main');
 
@@ -19,6 +21,8 @@ let onboardingWindow: BrowserWindow | null = null;
 let agent: NexusAgent | null = null;
 let onboardingManager: OnboardingManager | null = null;
 let collaborationLauncher: CollaborationLauncher | null = null;
+let searchEngine: SemanticSearch | null = null;
+let miniWindowManager: MiniWindowManager | null = null;
 
 /**
  * Create onboarding window
@@ -151,6 +155,32 @@ function initializeOnboarding() {
     logger.info('Onboarding manager initialized');
   } catch (error) {
     logger.error('Failed to initialize onboarding:', error as Error);
+  }
+}
+
+/**
+ * Initialize search engine
+ */
+function initializeSearch() {
+  try {
+    const searchDbPath = join(app.getPath('userData'), 'search-index.db');
+    searchEngine = new SemanticSearch(searchDbPath);
+    logger.info('Search engine initialized');
+  } catch (error) {
+    logger.error('Failed to initialize search engine:', error as Error);
+  }
+}
+
+/**
+ * Initialize mini window
+ */
+function initializeMiniWindow() {
+  try {
+    miniWindowManager = new MiniWindowManager();
+    miniWindowManager.initialize();
+    logger.info('Mini window initialized');
+  } catch (error) {
+    logger.error('Failed to initialize mini window:', error as Error);
   }
 }
 
@@ -439,6 +469,84 @@ function setupIPC() {
     }
   });
 
+  // Search
+  handlers.register(IPC_CHANNELS.SEARCH_CONVERSATIONS, async (event, request) => {
+    try {
+      if (!searchEngine) throw new Error('Search engine not initialized');
+      const { query, limit = 10 } = request.data;
+      let results = await searchEngine.fullTextSearch(query, limit);
+      if (results.length === 0) {
+        results = await searchEngine.fuzzySearch(query, 2, limit);
+      }
+      return createSuccessResponse(request.id, { results, total: results.length });
+    } catch (error: any) {
+      return createErrorResponse(request.id, error.message);
+    }
+  });
+
+  handlers.register(IPC_CHANNELS.SEARCH_SUGGESTIONS, async (event, request) => {
+    try {
+      if (!searchEngine) throw new Error('Search engine not initialized');
+      const { prefix } = request.data;
+      const suggestions = await searchEngine.getSuggestions(prefix, 5);
+      return createSuccessResponse(request.id, { suggestions });
+    } catch (error: any) {
+      return createErrorResponse(request.id, error.message);
+    }
+  });
+
+  handlers.register(IPC_CHANNELS.SEARCH_INDEX, async (event, request) => {
+    try {
+      if (!searchEngine) throw new Error('Search engine not initialized');
+      const { id, content, metadata } = request.data;
+      await searchEngine.index(id, content, metadata || {});
+      return createSuccessResponse(request.id, { indexed: true });
+    } catch (error: any) {
+      return createErrorResponse(request.id, error.message);
+    }
+  });
+
+  // Mini Window
+  handlers.register(IPC_CHANNELS.MINI_WINDOW_SHOW, async (event, request) => {
+    try {
+      if (!miniWindowManager) throw new Error('Mini window not initialized');
+      miniWindowManager.show();
+      return createSuccessResponse(request.id, { success: true });
+    } catch (error: any) {
+      return createErrorResponse(request.id, error.message);
+    }
+  });
+
+  handlers.register(IPC_CHANNELS.MINI_WINDOW_HIDE, async (event, request) => {
+    try {
+      if (!miniWindowManager) throw new Error('Mini window not initialized');
+      miniWindowManager.hide();
+      return createSuccessResponse(request.id, { success: true });
+    } catch (error: any) {
+      return createErrorResponse(request.id, error.message);
+    }
+  });
+
+  handlers.register(IPC_CHANNELS.MINI_WINDOW_TOGGLE, async (event, request) => {
+    try {
+      if (!miniWindowManager) throw new Error('Mini window not initialized');
+      miniWindowManager.toggle();
+      return createSuccessResponse(request.id, { success: true });
+    } catch (error: any) {
+      return createErrorResponse(request.id, error.message);
+    }
+  });
+
+  handlers.register(IPC_CHANNELS.SEARCH_HISTORY, async (event, request) => {
+    try {
+      if (!searchEngine) throw new Error('Search engine not initialized');
+      const history = searchEngine.getSearchHistory(20);
+      return createSuccessResponse(request.id, { history });
+    } catch (error: any) {
+      return createErrorResponse(request.id, error.message);
+    }
+  });
+
   handlers.setup();
   logger.info('IPC handlers registered');
 }
@@ -449,7 +557,9 @@ function setupIPC() {
 app.whenReady().then(async () => {
   await initializeAgent();
   await initializeCollaboration();
+  initializeSearch();
   initializeOnboarding();
+  initializeMiniWindow();
   setupIPC();
 
   // Check if onboarding is needed

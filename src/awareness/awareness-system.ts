@@ -12,7 +12,7 @@ import { EventEmitter } from 'events';
 import { writeFile, readFile, mkdir } from 'fs/promises';
 import { join } from 'path';
 import { createLogger } from '../utils/logger';
-import { NexusAgent } from '../agent';
+import type { NexusAgent } from '../agent';
 import Anthropic from '@anthropic-ai/sdk';
 
 const logger = createLogger('Awareness');

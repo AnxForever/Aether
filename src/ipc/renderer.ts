@@ -136,6 +136,12 @@ export interface PreloadAPI {
   skipOnboarding: () => Promise<void>;
   resetOnboarding: () => Promise<void>;
 
+  // Search
+  searchConversations: (query: string, limit?: number) => Promise<any>;
+  getSearchSuggestions: (prefix: string) => Promise<any>;
+  indexContent: (id: string, content: string, metadata?: any) => Promise<any>;
+  getSearchHistory: () => Promise<any>;
+
   // Events
   onMessage: (callback: EventCallback) => void;
   onStreamChunk: (callback: EventCallback) => void;
@@ -201,6 +207,16 @@ export function createPreloadAPI(client: IPCClient): PreloadAPI {
       client.invoke(IPC_CHANNELS.ONBOARDING_SKIP, {}),
     resetOnboarding: () =>
       client.invoke(IPC_CHANNELS.ONBOARDING_RESET, {}),
+
+    // Search
+    searchConversations: (query, limit = 10) =>
+      client.invoke(IPC_CHANNELS.SEARCH_CONVERSATIONS, { query, limit }),
+    getSearchSuggestions: (prefix) =>
+      client.invoke(IPC_CHANNELS.SEARCH_SUGGESTIONS, { prefix }),
+    indexContent: (id, content, metadata) =>
+      client.invoke(IPC_CHANNELS.SEARCH_INDEX, { id, content, metadata }),
+    getSearchHistory: () =>
+      client.invoke(IPC_CHANNELS.SEARCH_HISTORY, {}),
 
     // Events
     onMessage: (callback) => client.on(IPC_CHANNELS.EVENT_MESSAGE, callback),

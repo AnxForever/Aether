@@ -163,6 +163,12 @@ export const IPC_CHANNELS = {
   ONBOARDING_SKIP: 'onboarding:skip',
   ONBOARDING_RESET: 'onboarding:reset',
 
+  // Search
+  SEARCH_CONVERSATIONS: 'search:conversations',
+  SEARCH_SUGGESTIONS: 'search:suggestions',
+  SEARCH_INDEX: 'search:index',
+  SEARCH_HISTORY: 'search:history',
+
   // Events (renderer <- main)
   EVENT_MESSAGE: 'event:message',
   EVENT_STREAM_CHUNK: 'event:stream-chunk',
