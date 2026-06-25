@@ -2,16 +2,20 @@ import { useState, useCallback } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { MessageSquare, Zap, Workflow, Settings, LogOut, Plus, PanelLeftClose } from 'lucide-react';
 import { useAppStore } from '../stores/app';
+import { useI18n } from '../stores/i18n';
 import { newSession } from '../api/client';
 
 const navItems = [
-  { to: '/chat', icon: MessageSquare, label: '对话' },
-  { to: '/skills', icon: Zap, label: '技能' },
-  { to: '/workflows', icon: Workflow, label: '工作流' },
-  { to: '/settings', icon: Settings, label: '设置' },
+  { to: '/chat', icon: MessageSquare, labelKey: 'chat' as const },
+  { to: '/skills', icon: Zap, labelKey: 'skills' as const },
+  { to: '/workflows', icon: Workflow, labelKey: 'workflows' as const },
+  { to: '/settings', icon: Settings, labelKey: 'settings' as const },
 ];
 
 export default function Sidebar() {
+  const t = useI18n((s) => s.t);
+  const setLocale = useI18n((s) => s.setLocale);
+  const locale = useI18n((s) => s.locale);
   const logout = useAppStore((s) => s.logout);
   const clearMessages = useAppStore((s) => s.clearMessages);
   const toggleSidebar = useAppStore((s) => s.toggleSidebar);
@@ -61,7 +65,7 @@ export default function Sidebar() {
           </div>
           <span className="font-display font-semibold text-[15px] tracking-tight">Aether</span>
         </div>
-        <button onClick={toggleSidebar} aria-label="切换侧边栏" className="p-1 rounded-sm hover:bg-white/[0.04] text-ink-muted hover:text-ink transition-colors">
+        <button onClick={toggleSidebar} aria-label={t.common.appName} className="p-1 rounded-sm hover:bg-white/[0.04] text-ink-muted hover:text-ink transition-colors">
           <PanelLeftClose size={14} />
         </button>
       </div>
@@ -70,17 +74,17 @@ export default function Sidebar() {
       <div className="px-3 mb-3">
         <button
           onClick={() => { clearMessages(); newSession().catch(() => {}); }}
-          aria-label="新建对话"
+          aria-label={t.common.newChat}
           className="flex items-center gap-2 w-full px-3 py-2 rounded-sm border border-border-default text-ink-secondary hover:text-ink hover:bg-white/[0.04] transition-all text-sm font-ui"
         >
           <Plus size={14} />
-          <span>新对话</span>
+          <span>{t.common.newChat}</span>
         </button>
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 px-2 space-y-0.5" role="navigation" aria-label="主导航">
-        {navItems.map(({ to, icon: Icon, label }, index) => {
+      <nav className="flex-1 px-2 space-y-0.5" role="navigation" aria-label={t.nav.chat}>
+        {navItems.map(({ to, icon: Icon, labelKey }, index) => {
           const isActive = location.pathname === to || location.pathname.startsWith(to + '/');
           return (
             <NavLink
@@ -99,7 +103,7 @@ export default function Sidebar() {
               }
             >
               <Icon size={15} />
-              <span>{label}</span>
+              <span>{t.nav[labelKey]}</span>
             </NavLink>
           );
         })}
@@ -107,12 +111,22 @@ export default function Sidebar() {
 
       {/* Footer */}
       <div className="px-3 pt-2 border-t border-border-subtle">
+        {/* Language switcher */}
+        <div className="px-3 mb-2">
+          <button
+            onClick={() => setLocale(locale === 'zh' ? 'en' : 'zh')}
+            className="text-[10px] px-2 py-1 border border-border-default rounded-sm text-ink-muted hover:text-ink hover:bg-white/[0.04] transition-colors font-ui"
+            aria-label={locale === 'zh' ? 'Switch to English' : '切换到中文'}
+          >
+            {locale === 'zh' ? 'EN' : '中'}
+          </button>
+        </div>
         <button
           onClick={logout}
           className="flex items-center gap-2.5 w-full px-3 py-2 rounded-sm text-ink-muted hover:text-danger hover:bg-danger/5 transition-colors font-ui text-sm"
         >
           <LogOut size={14} />
-          <span>退出</span>
+          <span>{t.common.logout}</span>
         </button>
       </div>
     </div>

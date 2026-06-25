@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getWorkflows, runWorkflow } from '../api/client';
+import { useI18n } from '../stores/i18n';
 import { Workflow, Play, FileText, Database, Bell, Clock } from 'lucide-react';
 import { createLogger } from '../../../src/utils/logger';
 import Skeleton from '../components/Skeleton';
@@ -46,6 +47,7 @@ function formatTimestamp(iso?: string): string {
 }
 
 export default function WorkflowsPage() {
+  const t = useI18n((s) => s.t);
   const [workflows, setWorkflows] = useState<WorkflowItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -84,8 +86,8 @@ export default function WorkflowsPage() {
             <Workflow size={18} className="text-accent" />
           </div>
           <div>
-            <h1 className="font-display text-2xl text-ink">工作流</h1>
-            <p className="font-body text-sm text-ink-muted">{workflows.length} 个模板</p>
+            <h1 className="font-display text-2xl text-ink">{t.workflows.title}</h1>
+            <p className="font-body text-sm text-ink-muted">{t.workflows.count.replace('{}', String(workflows.length))}</p>
           </div>
         </div>
 
@@ -105,7 +107,7 @@ export default function WorkflowsPage() {
         ) : (
           <div className="space-y-2">
             {workflows.length === 0 && !loading ? (
-              <EmptyState icon={Workflow} title="暂无工作流" description="创建您第一个自动化工作流" />
+              <EmptyState icon={Workflow} title={t.workflows.noWorkflows} description={t.chat.startChat} />
             ) : null}
 
             {workflows.map((wf) => {
@@ -128,7 +130,7 @@ export default function WorkflowsPage() {
                         {/* Step count badge */}
                         {wf.stepCount != null && (
                           <span className="font-body text-[10px] text-ink-ghost bg-white/[0.04] px-1.5 py-[1px] rounded-sm shrink-0 leading-tight">
-                            {wf.stepCount} 步骤
+                            {t.workflows.steps.replace('{}', String(wf.stepCount))}
                           </span>
                         )}
                         {/* Running indicator */}
@@ -145,7 +147,7 @@ export default function WorkflowsPage() {
                       {wf.lastRunAt && (
                         <div className="flex items-center gap-1 mt-1">
                           <Clock size={10} className="text-ink-ghost" />
-                          <span className="font-body text-[10px] text-ink-ghost">上次执行 {formatTimestamp(wf.lastRunAt)}</span>
+                          <span className="font-body text-[10px] text-ink-ghost">{t.workflows.lastRun} {formatTimestamp(wf.lastRunAt)}</span>
                         </div>
                       )}
                     </div>
@@ -161,7 +163,7 @@ export default function WorkflowsPage() {
                     ) : (
                       <Play size={14} />
                     )}
-                    执行
+                    {t.workflows.run}
                   </button>
                 </div>
               );

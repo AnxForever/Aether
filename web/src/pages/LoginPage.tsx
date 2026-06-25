@@ -2,9 +2,11 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { login } from '../api/client';
 import { useAppStore } from '../stores/app';
+import { useI18n } from '../stores/i18n';
 import { Hash } from 'lucide-react';
 
 export default function LoginPage() {
+  const t = useI18n((s) => s.t);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -22,10 +24,10 @@ export default function LoginPage() {
         appLogin();
         navigate('/');
       } else {
-        setError(res.error || '登录失败');
+        setError(res.error || t.errors.networkError);
       }
     } catch {
-      setError('网络错误');
+      setError(t.errors.networkError);
     } finally {
       setLoading(false);
     }
@@ -51,7 +53,7 @@ export default function LoginPage() {
           </div>
           <h1 className="font-display text-display text-ink">Aether</h1>
           <p className="font-body text-sm text-ink-muted mt-1.5">
-            Multi-AI 编排平台
+            {t.common.tagline}
           </p>
           {/* Provider dots */}
           <div className="flex justify-center gap-1.5 mt-3">
@@ -64,7 +66,7 @@ export default function LoginPage() {
         {/* Form */}
         <form onSubmit={handleSubmit} className="card space-y-4">
           <div>
-            <label htmlFor="username" className="block font-ui text-sm text-ink-secondary mb-1.5">用户名</label>
+            <label htmlFor="username" className="block font-ui text-sm text-ink-secondary mb-1.5">{t.common.username}</label>
             <input
               id="username"
               className="field w-full"
@@ -76,7 +78,7 @@ export default function LoginPage() {
             />
           </div>
           <div>
-            <label htmlFor="password" className="block font-ui text-sm text-ink-secondary mb-1.5">密码</label>
+            <label htmlFor="password" className="block font-ui text-sm text-ink-secondary mb-1.5">{t.common.password}</label>
             <input
               id="password"
               className="field w-full"
@@ -92,7 +94,7 @@ export default function LoginPage() {
             </p>
           )}
           <button className="btn btn-primary w-full justify-center" type="submit" disabled={loading}>
-            {loading ? '登录中...' : '进入控制台'}
+            {loading ? `${t.common.login}...` : t.common.enterConsole}
           </button>
         </form>
 

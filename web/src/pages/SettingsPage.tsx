@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getModels, switchModel as switchModelApi } from '../api/client';
 import { useAppStore } from '../stores/app';
+import { useI18n } from '../stores/i18n';
 import { Settings, Cpu, HardDrive, Check, Circle } from 'lucide-react';
 import { createLogger } from '../../../src/utils/logger';
 import Skeleton from '../components/Skeleton';
@@ -42,6 +43,7 @@ const checkVariants = {
 } as const;
 
 export default function SettingsPage() {
+  const t = useI18n((s) => s.t);
   const currentModel = useAppStore((s) => s.currentModel);
   const setModel = useAppStore((s) => s.setModel);
   const [models, setModels] = useState<ModelItem[]>([]);
@@ -58,7 +60,7 @@ export default function SettingsPage() {
       })
       .catch((err) => {
         logger.error('获取模型列表失败:', err);
-        setError('获取模型列表失败，请检查网络连接');
+        setError(t.settings.fetchFailed);
         setLoading(false);
       });
   }, []);
@@ -91,8 +93,8 @@ export default function SettingsPage() {
             <Settings size={18} className="text-accent" />
           </div>
           <div>
-            <h1 className="font-display text-2xl text-ink">设置</h1>
-            <p className="font-body text-sm text-ink-muted">系统配置与偏好</p>
+            <h1 className="font-display text-2xl text-ink">{t.settings.title}</h1>
+            <p className="font-body text-sm text-ink-muted">{t.settings.subtitle}</p>
           </div>
         </div>
 
@@ -100,7 +102,7 @@ export default function SettingsPage() {
         <section>
           <div className="flex items-center gap-2 mb-3">
             <Cpu size={14} className="text-ink-muted" />
-            <h2 className="font-ui text-sm text-ink-muted uppercase tracking-wide">AI 模型</h2>
+            <h2 className="font-ui text-sm text-ink-muted uppercase tracking-wide">{t.settings.aiModels}</h2>
           </div>
           <div className="card p-1.5">
             <div className="space-y-0.5">
@@ -130,7 +132,7 @@ export default function SettingsPage() {
                               className={connected ? 'text-emerald-400 fill-emerald-400' : 'text-red-400 fill-red-400'}
                             />
                             <span className="font-body text-[9px] text-ink-ghost">
-                              {connected ? '已连接' : '未连接'}
+                              {connected ? t.common.login : t.offline.title}
                             </span>
                           </div>
                         </div>
@@ -184,7 +186,7 @@ export default function SettingsPage() {
                   })}
                   {models.length === 0 ? (
                     <p className="font-body text-sm text-ink-muted px-3 py-4 text-center">
-                      暂无模型数据
+                      {t.settings.noModels}
                     </p>
                   ) : null}
                 </div>
@@ -197,26 +199,26 @@ export default function SettingsPage() {
         <section>
           <div className="flex items-center gap-2 mb-3">
             <HardDrive size={14} className="text-ink-muted" />
-            <h2 className="font-ui text-sm text-ink-muted uppercase tracking-wide">系统信息</h2>
+            <h2 className="font-ui text-sm text-ink-muted uppercase tracking-wide">{t.settings.systemInfo}</h2>
           </div>
           <div className="card space-y-2">
             <div className="flex items-center justify-between py-1">
-              <span className="font-body text-sm text-ink-muted">版本</span>
+              <span className="font-body text-sm text-ink-muted">{t.settings.version}</span>
               <span className="font-body text-mono text-ink">v3.0.0 Web</span>
             </div>
             <div className="border-t border-border-subtle" />
             <div className="flex items-center justify-between py-1">
-              <span className="font-body text-sm text-ink-muted">前端</span>
+              <span className="font-body text-sm text-ink-muted">{t.settings.frontend}</span>
               <span className="font-body text-mono text-ink">Vite + React + Tailwind</span>
             </div>
             <div className="border-t border-border-subtle" />
             <div className="flex items-center justify-between py-1">
-              <span className="font-body text-sm text-ink-muted">后端</span>
+              <span className="font-body text-sm text-ink-muted">{t.settings.backend}</span>
               <span className="font-body text-mono text-ink">Express + NexusAgent</span>
             </div>
             <div className="border-t border-border-subtle" />
             <div className="flex items-center justify-between py-1">
-              <span className="font-body text-sm text-ink-muted">运行时</span>
+              <span className="font-body text-sm text-ink-muted">{t.settings.runtime}</span>
               <span className="font-body text-mono text-ink">Electron 30 + Node 22</span>
             </div>
           </div>

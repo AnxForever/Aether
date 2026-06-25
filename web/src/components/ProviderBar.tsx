@@ -1,5 +1,6 @@
 import { memo, useState, useRef, useEffect, useCallback } from 'react';
 import { useAppStore } from '../stores/app';
+import { useI18n } from '../stores/i18n';
 import { switchModel } from '../api/client';
 import { createLogger } from '../../../src/utils/logger';
 import { MoreHorizontal } from 'lucide-react';
@@ -23,10 +24,11 @@ interface ProviderButtonProps {
   dot: string;
   active: boolean;
   onSelect: (id: string) => void;
+  t: { [key: string]: unknown };
 }
 
 const ProviderButton = memo(
-  function ProviderButton({ id, name, model, dot, active, onSelect }: ProviderButtonProps) {
+  function ProviderButton({ id, name, model, dot, active, onSelect, t }: ProviderButtonProps) {
     return (
       <button
         onClick={() => onSelect(id)}
@@ -39,7 +41,7 @@ const ProviderButton = memo(
         `}
         role="radio"
         aria-checked={active}
-        aria-label={`${name} ${model}${active ? '，已选中' : ''}`}
+        aria-label={`${name} ${model}`}
         title={`${name} · ${model}`}
       >
         {/* Dot + glow */}
@@ -74,10 +76,11 @@ const ProviderButton = memo(
       </button>
     );
   },
-  (prev, next) => prev.id === next.id && prev.active === next.active,
+  (prev, next) => prev.id === next.id && prev.active === next.active && prev.t === next.t,
 );
 
 export default function ProviderBar() {
+  const t = useI18n((s) => s.t);
   const currentModel = useAppStore((s) => s.currentModel);
   const setModel = useAppStore((s) => s.setModel);
   const [overflowOpen, setOverflowOpen] = useState(false);
@@ -121,7 +124,7 @@ export default function ProviderBar() {
 
   return (
     <div className="w-full border-b border-border-subtle bg-base/80 backdrop-blur-sm">
-      <div className="flex items-center px-4 h-12 gap-1 overflow-x-auto scrollbar-none" role="radiogroup" aria-label="AI 提供商选择">
+      <div className="flex items-center px-4 h-12 gap-1 overflow-x-auto scrollbar-none" role="radiogroup" aria-label={t.settings.title}>
         {PROVIDERS.map((p, i) => (
           <div
             key={p.id}
@@ -140,6 +143,7 @@ export default function ProviderBar() {
               dot={p.dot}
               active={currentModel.startsWith(p.id)}
               onSelect={handleSelect}
+              t={t}
             />
           </div>
         ))}
@@ -149,7 +153,7 @@ export default function ProviderBar() {
           <button
             onClick={() => setOverflowOpen(!overflowOpen)}
             className="flex items-center px-2 py-1.5 rounded-sm text-ink-muted hover:text-ink hover:bg-white/[0.04] transition-colors"
-            aria-label="更多模型"
+            aria-label={t.settings.title}
           >
             <MoreHorizontal size={16} />
           </button>

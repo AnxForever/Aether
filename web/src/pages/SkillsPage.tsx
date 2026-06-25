@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { getSkills, toggleSkill } from '../api/client';
+import { useI18n } from '../stores/i18n';
 import { Zap, Search, Wrench } from 'lucide-react';
 import { createLogger } from '../../../src/utils/logger';
 import Skeleton from '../components/Skeleton';
@@ -50,6 +51,7 @@ interface CategoryGroup {
 }
 
 export default function SkillsPage() {
+  const t = useI18n((s) => s.t);
   const [skills, setSkills] = useState<Skill[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -111,10 +113,10 @@ export default function SkillsPage() {
             <Zap size={18} className="text-accent" />
           </div>
           <div>
-            <h1 className="font-display text-2xl text-ink">技能管理</h1>
+            <h1 className="font-display text-2xl text-ink">{t.skills.title}</h1>
             <p className="font-body text-sm text-ink-muted">
-              {skills.length} 个可用工具
-              {totalActive > 0 && <span className="ml-2 text-accent">· {totalActive} 个已启用</span>}
+              {t.skills.count.replace('{}', String(skills.length))}
+              {totalActive > 0 && <span className="ml-2 text-accent">· {totalActive} {t.skills.enabled}</span>}
             </p>
           </div>
         </div>
@@ -124,7 +126,7 @@ export default function SkillsPage() {
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted" />
           <input
             className="field w-full pl-9"
-            placeholder="搜索技能..."
+            placeholder={t.skills.search}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -143,7 +145,7 @@ export default function SkillsPage() {
             </p>
           </div>
         ) : filtered.length === 0 ? (
-          <EmptyState icon={Wrench} title="无匹配技能" description="尝试修改搜索关键词" />
+          <EmptyState icon={Wrench} title={t.skills.noResults} description={t.chat.startChat} />
         ) : (
           <div className="space-y-6">
             {groups.map((group) => {
@@ -155,7 +157,7 @@ export default function SkillsPage() {
                   <div className="flex items-center gap-2 mb-2.5">
                     <span className="font-ui text-[10px] text-ink-muted tracking-widest uppercase">{group.category}</span>
                     <div className="flex-1 border-t border-border-subtle" />
-                    <span className="font-body text-[10px] text-ink-ghost">{group.skills.length} 项</span>
+                    <span className="font-body text-[10px] text-ink-ghost">{group.skills.length}</span>
                   </div>
 
                   <motion.div
@@ -181,7 +183,7 @@ export default function SkillsPage() {
                             </span>
                             {active ? (
                               <span className="font-body text-[9px] text-accent bg-accent/10 px-1.5 py-[1px] rounded-sm whitespace-nowrap shrink-0 leading-tight">
-                                已启用
+                                {t.skills.enabled}
                               </span>
                             ) : (
                               <span className="w-[6px] h-[6px] rounded-full shrink-0 transition-colors" style={{ backgroundColor: '#334155' }} />
@@ -213,7 +215,7 @@ export default function SkillsPage() {
                             </span>
                             {active ? (
                               <span className="font-body text-[9px] text-accent bg-accent/10 px-1.5 py-[1px] rounded-sm whitespace-nowrap shrink-0 leading-tight">
-                                已启用
+                                {t.skills.enabled}
                               </span>
                             ) : (
                               <span className="w-[6px] h-[6px] rounded-full shrink-0 transition-colors" style={{ backgroundColor: '#334155' }} />

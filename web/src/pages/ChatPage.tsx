@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { Send, StopCircle, Hash } from 'lucide-react';
 import { streamChat, newSession } from '../api/client';
 import { useAppStore } from '../stores/app';
+import { useI18n } from '../stores/i18n';
 import ChatMessage from '../components/ChatMessage';
 import EmptyState from '../components/EmptyState';
 import SuggestedPrompts from '../components/SuggestedPrompts';
@@ -29,6 +30,7 @@ function DateSeparator({ ts }: { ts: number }) {
 }
 
 export default function ChatPage() {
+  const t = useI18n((s) => s.t);
   const messages = useAppStore((s) => s.messages);
   const addMessage = useAppStore((s) => s.addMessage);
   const isStreaming = useAppStore((s) => s.isStreaming);
@@ -161,8 +163,8 @@ export default function ChatPage() {
           <div className="flex flex-col items-center pt-24">
             <EmptyState
               icon={Hash}
-              title="开始对话"
-              description="选择一个 AI 模型，输入消息开始编排。支持 7 个 AI 提供商。"
+              title={t.chat.startChat}
+              description={t.chat.startDescription}
             />
             <SuggestedPrompts onSelect={handlePromptSelect} />
           </div>
@@ -179,7 +181,7 @@ export default function ChatPage() {
               <span className="font-ui text-[11px] text-ink-muted uppercase tracking-wide">
                 {currentModel}
               </span>
-              <span className="font-body text-[10px] text-accent animate-pulse-glow">● streaming</span>
+              <span className="font-body text-[10px] text-accent animate-pulse-glow">{t.chat.streaming}</span>
             </div>
             <div className="max-w-[72%] px-4 py-3 bg-elevated border border-accent/15 rounded-sm">
               <p className="font-body text-mono leading-relaxed text-ink whitespace-pre-wrap">
@@ -193,12 +195,12 @@ export default function ChatPage() {
         <div ref={bottomRef} />
           {/* Screen reader announcements */}
           <div className="sr-only" aria-live="assertive" aria-atomic="true">
-            {isStreaming ? 'AI 正在响应' : streamingContent ? '响应完成' : ''}
+            {isStreaming ? t.chat.aiResponding : streamingContent ? t.chat.responseComplete : ''}
           </div>
           {transientError ? (
             <div className="px-4 py-2 text-center">
               <p className="font-body text-sm text-danger bg-danger/5 px-3 py-1.5 rounded-sm border border-danger/15 inline-block">
-                请求失败: {transientError}
+                {t.chat.requestFailed}: {transientError}
               </p>
             </div>
           ) : null}
@@ -220,8 +222,8 @@ export default function ChatPage() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="输入消息... (Enter 发送)"
-            aria-label="消息输入"
+            placeholder={t.chat.placeholder}
+            aria-label={t.chat.placeholder}
             rows={1}
             className="field flex-1 resize-none min-h-[44px] max-h-[160px] focus:shadow-[0_0_0_3px_rgba(6,182,212,0.1),0_0_12px_rgba(6,182,212,0.08)]"
             disabled={isStreaming}
@@ -230,7 +232,7 @@ export default function ChatPage() {
           {isStreaming ? (
             <button
               onClick={handleStop}
-              aria-label="停止生成"
+              aria-label={t.common.stop}
               className="p-2.5 rounded-sm bg-danger/10 border border-danger/20 text-danger hover:bg-danger/20 transition-colors"
             >
               <StopCircle size={18} />
@@ -239,7 +241,7 @@ export default function ChatPage() {
             <button
               onClick={handleSend}
               disabled={!input.trim()}
-              aria-label="发送消息"
+              aria-label={t.common.send}
               className={`btn btn-primary p-2.5 transition-transform duration-75 active:scale-95 ${sentPulse ? 'scale-105' : ''}`}
             >
               <Send size={18} />
