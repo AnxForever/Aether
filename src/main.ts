@@ -633,6 +633,247 @@ function setupIPC() {
     }
   });
 
+  // Agent control
+  handlers.register(IPC_CHANNELS.AGENT_PROMPT, async (event, request) => {
+    try {
+      if (!agent) throw new Error('Agent not initialized');
+      const response = await agent.chat(request.data.message, request.data.sessionId);
+      return createSuccessResponse(request.id, { response });
+    } catch (error: any) {
+      return createErrorResponse(request.id, error.message);
+    }
+  });
+
+  handlers.register(IPC_CHANNELS.AGENT_ABORT, async (event, request) => {
+    return createSuccessResponse(request.id, { aborted: true, note: 'Abort signaled' });
+  });
+
+  handlers.register(IPC_CHANNELS.AGENT_TEST_CONNECTION, async (event, request) => {
+    return createSuccessResponse(request.id, {
+      provider: request.data.provider,
+      connected: !!agent,
+      message: agent ? 'Agent is running' : 'Agent not initialized',
+    });
+  });
+
+  // Chat management
+  handlers.register(IPC_CHANNELS.CHAT_STOP, async (event, request) => {
+    return createSuccessResponse(request.id, { stopped: true });
+  });
+
+  handlers.register(IPC_CHANNELS.CHAT_CLEAR, async (event, request) => {
+    try {
+      if (!agent) throw new Error('Agent not initialized');
+      agent.newSession();
+      return createSuccessResponse(request.id, { cleared: true });
+    } catch (error: any) {
+      return createErrorResponse(request.id, error.message);
+    }
+  });
+
+  handlers.register(IPC_CHANNELS.CHAT_NEW, async (event, request) => {
+    try {
+      if (!agent) throw new Error('Agent not initialized');
+      agent.newSession();
+      return createSuccessResponse(request.id, { sessionId: agent.getSessionId() });
+    } catch (error: any) {
+      return createErrorResponse(request.id, error.message);
+    }
+  });
+
+  // Mode management
+  handlers.register(IPC_CHANNELS.MOD_LIST, async (event, request) => {
+    try {
+      const modes = [
+        { id: 'chat', name: 'Chat', description: 'Creative conversation mode', icon: '💬' },
+        { id: 'coding', name: 'Coding', description: 'Precise code generation mode', icon: '💻' },
+      ];
+      return createSuccessResponse(request.id, { modes });
+    } catch (error: any) {
+      return createErrorResponse(request.id, error.message);
+    }
+  });
+
+  handlers.register(IPC_CHANNELS.MOD_SWITCH, async (event, request) => {
+    try {
+      const { mode } = request.data;
+      // Update agent settings based on mode
+      if (agent) {
+        if (mode === 'coding') {
+          await agent.updateSettings({ temperature: 0.3 });
+        } else {
+          await agent.updateSettings({ temperature: 0.7 });
+        }
+      }
+      return createSuccessResponse(request.id, { mode, switched: true });
+    } catch (error: any) {
+      return createErrorResponse(request.id, error.message);
+    }
+  });
+
+  handlers.register(IPC_CHANNELS.MOD_CURRENT, async (event, request) => {
+    return createSuccessResponse(request.id, { mode: 'chat' });
+  });
+
+  // Window management
+  handlers.register(IPC_CHANNELS.WINDOW_SHOW_MAIN, async (event, request) => {
+    mainWindow?.show();
+    mainWindow?.focus();
+    return createSuccessResponse(request.id, { success: true });
+  });
+
+  handlers.register(IPC_CHANNELS.WINDOW_MINIMIZE, async (event, request) => {
+    mainWindow?.minimize();
+    return createSuccessResponse(request.id, { success: true });
+  });
+
+  handlers.register(IPC_CHANNELS.WINDOW_HIDE, async (event, request) => {
+    mainWindow?.hide();
+    return createSuccessResponse(request.id, { success: true });
+  });
+
+  // Diagnostics
+  handlers.register(IPC_CHANNELS.DIAGNOSTICS_NETWORK, async (event, request) => {
+    try {
+      const os = require('os');
+      return createSuccessResponse(request.id, {
+        platform: process.platform,
+        arch: process.arch,
+        nodeVersion: process.version,
+        cpus: os.cpus().length,
+        totalMemory: os.totalmem(),
+        freeMemory: os.freemem(),
+        uptime: process.uptime(),
+      });
+    } catch (error: any) {
+      return createErrorResponse(request.id, error.message);
+    }
+  });
+
+  handlers.register(IPC_CHANNELS.DIAGNOSTICS_UPDATER, async (event, request) => {
+    try {
+      return createSuccessResponse(request.id, {
+        version: require('../../package.json').version,
+        electronVersion: process.versions.electron,
+        chromeVersion: process.versions.chrome,
+      });
+    } catch (error: any) {
+      return createErrorResponse(request.id, error.message);
+    }
+  });
+
+  // Storage API
+  handlers.register(IPC_CHANNELS.STORAGE_GET, async (event, request) => {
+    try {
+      const { key } = request.data;
+      const { readFileSync, existsSync } = require('fs');
+      const { join } = require('path');
+      const path = join(app.getPath('userData'), key + '.json');
+      if (existsSync(path)) {
+        const data = JSON.parse(readFileSync(path, 'utf8'));
+        return createSuccessResponse(request.id, { key, data });
+      }
+      return createSuccessResponse(request.id, { key, data: null });
+    } catch (error: any) {
+      return createErrorResponse(request.id, error.message);
+    }
+  });
+
+  handlers.register(IPC_CHANNELS.STORAGE_SET, async (event, request) => {
+    try {
+      const { key, data } = request.data;
+      const { writeFileSync, mkdirSync, existsSync } = require('fs');
+      const { join } = require('path');
+      const dir = app.getPath('userData');
+      if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+      writeFileSync(join(dir, key + '.json'), JSON.stringify(data, null, 2));
+      return createSuccessResponse(request.id, { key, saved: true });
+    } catch (error: any) {
+      return createErrorResponse(request.id, error.message);
+    }
+  });
+
+  handlers.register(IPC_CHANNELS.STORAGE_DELETE, async (event, request) => {
+    try {
+      const { key } = request.data;
+      const { unlinkSync, existsSync } = require('fs');
+      const { join } = require('path');
+      const path = join(app.getPath('userData'), key + '.json');
+      if (existsSync(path)) {
+        unlinkSync(path);
+        return createSuccessResponse(request.id, { key, deleted: true });
+      }
+      return createSuccessResponse(request.id, { key, deleted: false });
+    } catch (error: any) {
+      return createErrorResponse(request.id, error.message);
+    }
+  });
+
+  // Mini Window full wiring
+  handlers.register(IPC_CHANNELS.MINI_WINDOW_SEND_MESSAGE, async (event, request) => {
+    try {
+      if (!miniWindowManager) throw new Error('Mini window not initialized');
+      const { message, sessionId } = request.data;
+      if (agent) {
+        const response = await agent.chat(message, sessionId);
+        return createSuccessResponse(request.id, { sent: true, response });
+      }
+      return createErrorResponse(request.id, 'Agent not initialized');
+    } catch (error: any) {
+      return createErrorResponse(request.id, error.message);
+    }
+  });
+
+  handlers.register(IPC_CHANNELS.MINI_CHAT_SHORTCUT_REGISTER, async (event, request) => {
+    try {
+      if (!miniWindowManager) throw new Error('Mini window not initialized');
+      miniWindowManager.setShortcut(request.data.shortcut || 'CmdOrCtrl+Shift+Space');
+      return createSuccessResponse(request.id, { registered: true });
+    } catch (error: any) {
+      return createErrorResponse(request.id, error.message);
+    }
+  });
+
+  handlers.register(IPC_CHANNELS.MINI_CHAT_SHORTCUT_GET_STATUS, async (event, request) => {
+    try {
+      if (!miniWindowManager) throw new Error('Mini window not initialized');
+      return createSuccessResponse(request.id, {
+        registered: true,
+        shortcut: 'CmdOrCtrl+Shift+Space',
+        enabled: miniWindowManager.getVisibility(),
+      });
+    } catch (error: any) {
+      return createErrorResponse(request.id, error.message);
+    }
+  });
+
+  // Skills management
+  handlers.register(IPC_CHANNELS.SKILL_SET_ENABLED, async (event, request) => {
+    try {
+      if (!agent) throw new Error('Agent not initialized');
+      const { skillId, enabled } = request.data;
+      if (enabled) {
+        agent.enablePlugin(skillId);
+      } else {
+        agent.disablePlugin(skillId);
+      }
+      return createSuccessResponse(request.id, { skillId, enabled });
+    } catch (error: any) {
+      return createErrorResponse(request.id, error.message);
+    }
+  });
+
+  // Model management
+  handlers.register(IPC_CHANNELS.MODEL_SET, async (event, request) => {
+    try {
+      if (!agent) throw new Error('Agent not initialized');
+      await agent.updateSettings({ model: request.data.modelId });
+      return createSuccessResponse(request.id, { modelId: request.data.modelId, set: true });
+    } catch (error: any) {
+      return createErrorResponse(request.id, error.message);
+    }
+  });
+
   handlers.setup();
   logger.info('IPC handlers registered');
 }

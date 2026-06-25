@@ -136,6 +136,35 @@ export interface PreloadAPI {
   skipOnboarding: () => Promise<void>;
   resetOnboarding: () => Promise<void>;
 
+  // Agent control
+  testConnection: (provider: string) => Promise<any>;
+  abortAgent: () => Promise<void>;
+
+  // Mode
+  listModes: () => Promise<any>;
+  switchMode: (mode: string) => Promise<any>;
+  getCurrentMode: () => Promise<any>;
+
+  // Window
+  showMainWindow: () => Promise<void>;
+  minimizeWindow: () => Promise<void>;
+  hideWindow: () => Promise<void>;
+
+  // Diagnostics
+  getNetworkDiagnostics: () => Promise<any>;
+  getUpdaterDiagnostics: () => Promise<any>;
+
+  // Storage
+  storageGet: (key: string) => Promise<any>;
+  storageSet: (key: string, data: any) => Promise<void>;
+  storageDelete: (key: string) => Promise<void>;
+
+  // Skills
+  setSkillEnabled: (skillId: string, enabled: boolean) => Promise<void>;
+
+  // Model
+  setModel: (modelId: string) => Promise<void>;
+
   // Search
   searchConversations: (query: string, limit?: number) => Promise<any>;
   getSearchSuggestions: (prefix: string) => Promise<any>;
@@ -237,6 +266,50 @@ export function createPreloadAPI(client: IPCClient): PreloadAPI {
       client.invoke(IPC_CHANNELS.THEMES_LOAD, {}),
     saveTheme: (config) =>
       client.invoke(IPC_CHANNELS.THEMES_SAVE, { theme: config }),
+
+    // Agent control
+    testConnection: (provider) =>
+      client.invoke(IPC_CHANNELS.AGENT_TEST_CONNECTION, { provider }),
+    abortAgent: () =>
+      client.invoke(IPC_CHANNELS.AGENT_ABORT, {}),
+
+    // Mode
+    listModes: () =>
+      client.invoke(IPC_CHANNELS.MOD_LIST, {}),
+    switchMode: (mode) =>
+      client.invoke(IPC_CHANNELS.MOD_SWITCH, { mode }),
+    getCurrentMode: () =>
+      client.invoke(IPC_CHANNELS.MOD_CURRENT, {}),
+
+    // Window
+    showMainWindow: () =>
+      client.invoke(IPC_CHANNELS.WINDOW_SHOW_MAIN, {}),
+    minimizeWindow: () =>
+      client.invoke(IPC_CHANNELS.WINDOW_MINIMIZE, {}),
+    hideWindow: () =>
+      client.invoke(IPC_CHANNELS.WINDOW_HIDE, {}),
+
+    // Diagnostics
+    getNetworkDiagnostics: () =>
+      client.invoke(IPC_CHANNELS.DIAGNOSTICS_NETWORK, {}),
+    getUpdaterDiagnostics: () =>
+      client.invoke(IPC_CHANNELS.DIAGNOSTICS_UPDATER, {}),
+
+    // Storage
+    storageGet: (key) =>
+      client.invoke(IPC_CHANNELS.STORAGE_GET, { key }),
+    storageSet: (key, data) =>
+      client.invoke(IPC_CHANNELS.STORAGE_SET, { key, data }),
+    storageDelete: (key) =>
+      client.invoke(IPC_CHANNELS.STORAGE_DELETE, { key }),
+
+    // Skills
+    setSkillEnabled: (skillId, enabled) =>
+      client.invoke(IPC_CHANNELS.SKILL_SET_ENABLED, { skillId, enabled }),
+
+    // Model
+    setModel: (modelId) =>
+      client.invoke(IPC_CHANNELS.MODEL_SET, { modelId }),
 
     // Events
     onMessage: (callback) => client.on(IPC_CHANNELS.EVENT_MESSAGE, callback),

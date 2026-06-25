@@ -1,0 +1,81 @@
+# .understandignore — patterns for files/dirs to exclude from analysis
+# Syntax: same as .gitignore (globs, # comments, ! negation, trailing / for dirs)
+# Lines below are suggestions — uncomment to activate.
+# Use ! prefix to force-include something excluded by defaults.
+#
+# Built-in defaults (always excluded unless negated):
+#   node_modules/, .git/, dist/, build/, obj/, *.lock, *.min.js, etc.
+#
+
+# --- From .gitignore (uncomment to exclude) ---
+
+# *.tsbuildinfo
+# tsconfig.tsbuildinfo
+# .env
+# .env.local
+# .env.*.local
+# logs/
+# npm-debug.log*
+# yarn-debug.log*
+# yarn-error.log*
+# *.db
+# *.sqlite
+# *.sqlite3
+# *.db-shm
+# *.db-wal
+# *.swp
+# *.swo
+# *~
+# .DS_Store
+# .nyc_output/
+# .vitest/
+# .eslintcache
+# .prettierrc.cache
+# electron-builder-output/
+# release/
+# *.tgz
+# Thumbs.db
+# Desktop.ini
+# tmp/
+# temp/
+# *.tmp
+# data/
+# plugins/
+# skills/generated/
+# *.key
+# *.pem
+# secrets/
+# .nuxt/
+# CLAUDE.md
+# FEATURES.md
+# COLA_ALIGNMENT_PLAN.md
+# PROJECT-*.md
+# PHASE_*.md
+# *COMPLETION*.md
+# *SUMMARY*.md
+# *COMPLETE*.md
+
+# --- Detected directories (uncomment to exclude) ---
+
+# docs/
+# examples/
+# scripts/
+
+# --- Test file patterns (uncomment to exclude) ---
+
+# JS / TS
+# *.test.*
+# *.spec.*
+# *.snap
+# C# / .NET
+# **/*Tests.cs
+# **/*Test.cs
+# **/*Fixture.cs
+# **/*.Tests.csproj
+# Java / Kotlin
+# **/src/test/**
+# **/*Test.java
+# **/*IT.java
+# **/*Spec.kt
+# Go
+# **/*_test.go
