@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { getWorkflows, runWorkflow } from '../api/client';
 import { Workflow, Play, Loader2 } from 'lucide-react';
+import { createLogger } from '../../../src/utils/logger';
+
+const logger = createLogger('WorkflowsPage');
 
 interface WorkflowItem {
   id: string;
@@ -11,15 +14,22 @@ interface WorkflowItem {
 export default function WorkflowsPage() {
   const [workflows, setWorkflows] = useState<WorkflowItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [running, setRunning] = useState<string | null>(null);
 
   useEffect(() => {
-    getWorkflows().then((res) => {
-      if (res.success && res.data) {
-        setWorkflows((res.data.workflows as WorkflowItem[]) || []);
-      }
-      setLoading(false);
-    });
+    getWorkflows()
+      .then((res) => {
+        if (res.success && res.data) {
+          setWorkflows((res.data.workflows as WorkflowItem[]) || []);
+        }
+        setLoading(false);
+      })
+      .catch((err) => {
+        logger.error('获取工作流列表失败:', err);
+        setError('获取工作流列表失败，请检查网络连接');
+        setLoading(false);
+      });
   }, []);
 
   const handleRun = async (wf: WorkflowItem) => {
@@ -49,6 +59,12 @@ export default function WorkflowsPage() {
         {loading ? (
           <div className="flex items-center justify-center py-24">
             <Loader2 size={22} className="animate-spin text-ink-muted" />
+          </div>
+        ) : error ? (
+          <div className="flex items-center justify-center py-24">
+            <p className="font-body text-caption text-danger bg-danger/5 px-4 py-3 rounded-sm border border-danger/15">
+              {error}
+            </p>
           </div>
         ) : (
           <div className="space-y-2">

@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react';
 import { getModels, switchModel as switchModelApi } from '../api/client';
 import { useAppStore } from '../stores/app';
-import { Settings, Cpu, HardDrive, Check } from 'lucide-react';
+import { Settings, Cpu, HardDrive, Check, Loader2 } from 'lucide-react';
+import { createLogger } from '../../../src/utils/logger';
+
+const logger = createLogger('SettingsPage');
 
 interface ModelItem {
   id: string;
@@ -12,13 +15,22 @@ interface ModelItem {
 export default function SettingsPage() {
   const { currentModel, setModel } = useAppStore();
   const [models, setModels] = useState<ModelItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    getModels().then((res) => {
-      if (res.success && res.data) {
-        setModels((res.data.models as ModelItem[]) || []);
-      }
-    });
+    getModels()
+      .then((res) => {
+        if (res.success && res.data) {
+          setModels((res.data.models as ModelItem[]) || []);
+        }
+        setLoading(false);
+      })
+      .catch((err) => {
+        logger.error('获取模型列表失败:', err);
+        setError('获取模型列表失败，请检查网络连接');
+        setLoading(false);
+      });
   }, []);
 
   return (
@@ -43,12 +55,22 @@ export default function SettingsPage() {
           </div>
           <div className="card p-1.5">
             <div className="space-y-0.5">
+              {loading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 size={18} className="animate-spin text-ink-muted" />
+                </div>
+              ) : error ? (
+                <p className="font-body text-caption text-danger bg-danger/5 px-3 py-4 text-center rounded-sm border border-danger/15">
+                  {error}
+                </p>
+              ) : (
+                <>
               {models.map((m) => {
                 const selected = currentModel === (m.id || m.name);
                 return (
                   <button
                     key={m.id || m.name}
-                    onClick={() => { setModel(m.id || m.name); switchModelApi(m.id || m.name).catch(() => {}); }}
+                    onClick={() => { setModel(m.id || m.name); switchModelApi(m.id || m.name).catch((err) => { logger.error('切换模型失败:', err); }); }}
                     className={`w-full flex items-center justify-between px-3 py-2.5 rounded-sm transition-all text-left ${
                       selected
                         ? 'bg-accent/8 border border-accent/20'
@@ -71,6 +93,8 @@ export default function SettingsPage() {
                 <p className="font-body text-caption text-ink-muted px-3 py-4 text-center">
                   暂无模型数据
                 </p>
+              )}
+              </>
               )}
             </div>
           </div>

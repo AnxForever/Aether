@@ -64,8 +64,9 @@ export default function LoginPage() {
         {/* Form */}
         <form onSubmit={handleSubmit} className="card space-y-4">
           <div>
-            <label className="block font-ui text-caption text-ink-secondary mb-1.5">用户名</label>
+            <label htmlFor="username" className="block font-ui text-caption text-ink-secondary mb-1.5">用户名</label>
             <input
+              id="username"
               className="field w-full"
               type="text"
               value={username}
@@ -75,8 +76,9 @@ export default function LoginPage() {
             />
           </div>
           <div>
-            <label className="block font-ui text-caption text-ink-secondary mb-1.5">密码</label>
+            <label htmlFor="password" className="block font-ui text-caption text-ink-secondary mb-1.5">密码</label>
             <input
+              id="password"
               className="field w-full"
               type="password"
               value={password}
@@ -95,7 +97,7 @@ export default function LoginPage() {
         </form>
 
         <p className="text-center font-body text-[11px] text-ink-ghost mt-4">
-          默认凭据: admin / aether-admin
+          Protected system
         </p>
       </div>
     </div>

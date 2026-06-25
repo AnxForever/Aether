@@ -23,7 +23,7 @@ export default function Sidebar() {
           </div>
           <span className="font-display font-semibold text-[15px] tracking-tight">Aether</span>
         </div>
-        <button onClick={toggleSidebar} className="p-1 rounded-sm hover:bg-white/[0.04] text-ink-muted hover:text-ink transition-colors">
+        <button onClick={toggleSidebar} aria-label="切换侧边栏" className="p-1 rounded-sm hover:bg-white/[0.04] text-ink-muted hover:text-ink transition-colors">
           <PanelLeftClose size={14} />
         </button>
       </div>
@@ -32,6 +32,7 @@ export default function Sidebar() {
       <div className="px-3 mb-3">
         <button
           onClick={() => { clearMessages(); newSession().catch(() => {}); }}
+          aria-label="新建对话"
           className="flex items-center gap-2 w-full px-3 py-2 rounded-sm border border-border-default text-ink-secondary hover:text-ink hover:bg-white/[0.04] transition-all text-caption font-ui"
         >
           <Plus size={14} />

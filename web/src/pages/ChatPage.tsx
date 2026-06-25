@@ -3,12 +3,16 @@ import { Send, StopCircle, Sparkles, Hash } from 'lucide-react';
 import { streamChat, newSession } from '../api/client';
 import { useAppStore } from '../stores/app';
 import ChatMessage from '../components/ChatMessage';
+import { createLogger } from '../../../src/utils/logger';
+
+const logger = createLogger('ChatPage');
 
 export default function ChatPage() {
   const { messages, addMessage, isStreaming, setStreaming, sessionId, setSessionId, currentModel } =
     useAppStore();
   const [input, setInput] = useState('');
   const [streamingContent, setStreamingContent] = useState('');
+  const [transientError, setTransientError] = useState<string | null>(null);
   const streamingRef = useRef('');
   const abortRef = useRef<AbortController | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -65,15 +69,11 @@ export default function ChatPage() {
         setStreamingContent('');
       },
       (error) => {
+        logger.error('流式响应出错: ' + error);
         setStreaming(false);
         setStreamingContent('');
-        addMessage({
-          id: crypto.randomUUID(),
-          role: 'assistant',
-          content: `Error: ${error}`,
-          timestamp: Date.now(),
-          model: currentModel,
-        });
+        setTransientError(error);
+        setTimeout(() => setTransientError(null), 6000);
       }
     );
     abortRef.current = controller;
@@ -148,6 +148,13 @@ export default function ChatPage() {
         )}
 
         <div ref={bottomRef} />
+          {transientError && (
+            <div className="px-4 py-2 text-center">
+              <p className="font-body text-caption text-danger bg-danger/5 px-3 py-1.5 rounded-sm border border-danger/15 inline-block">
+                请求失败: {transientError}
+              </p>
+            </div>
+          )}
       </div>
 
       {/* Input bar */}
@@ -165,14 +172,16 @@ export default function ChatPage() {
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="输入消息... (Enter 发送)"
+            aria-label="消息输入"
             rows={1}
-            className="field flex-1 resize-none min-h-[42px] max-h-[160px]"
+            className="field flex-1 resize-none min-h-[44px] max-h-[160px]"
             disabled={isStreaming}
           />
 
           {isStreaming ? (
             <button
               onClick={handleStop}
+              aria-label="停止生成"
               className="p-2.5 rounded-sm bg-danger/10 border border-danger/20 text-danger hover:bg-danger/20 transition-colors"
             >
               <StopCircle size={18} />
@@ -181,6 +190,7 @@ export default function ChatPage() {
             <button
               onClick={handleSend}
               disabled={!input.trim()}
+              aria-label="发送消息"
               className="btn btn-primary p-2.5"
             >
               <Send size={18} />

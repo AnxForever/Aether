@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { getSkills, toggleSkill } from '../api/client';
 import { Zap, Search, Loader2, Wrench } from 'lucide-react';
+import { createLogger } from '../../../src/utils/logger';
+
+const logger = createLogger('SkillsPage');
 
 interface Skill {
   id: string;
@@ -14,20 +17,33 @@ export default function SkillsPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [activeIds, setActiveIds] = useState<string[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    getSkills().then((res) => {
-      if (res.success && res.data?.skills) setSkills(res.data.skills as Skill[]);
-      setLoading(false);
-    });
+    getSkills()
+      .then((res) => {
+        if (res.success && res.data?.skills) setSkills(res.data.skills as Skill[]);
+        setLoading(false);
+      })
+      .catch((err) => {
+        logger.error('获取技能列表失败:', err);
+        setError('获取技能列表失败，请检查网络连接');
+        setLoading(false);
+      });
   }, []);
 
   const handleToggle = async (skill: Skill) => {
-    const next = activeIds.includes(skill.id)
+    const wasActive = activeIds.includes(skill.id);
+    const next = wasActive
       ? activeIds.filter((id) => id !== skill.id)
       : [...activeIds, skill.id];
     setActiveIds(next);
-    await toggleSkill(skill.id, !activeIds.includes(skill.id));
+    try {
+      await toggleSkill(skill.id, !wasActive);
+    } catch (err) {
+      logger.error('切换技能失败:', err as Error);
+      setActiveIds(wasActive ? [...activeIds, skill.id] : activeIds.filter((id) => id !== skill.id));
+    }
   };
 
   const filtered = skills.filter(
@@ -62,6 +78,12 @@ export default function SkillsPage() {
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <Loader2 size={24} className="animate-spin text-ink-muted" />
+          </div>
+        ) : error ? (
+          <div className="flex items-center justify-center py-20">
+            <p className="font-body text-caption text-danger bg-danger/5 px-4 py-3 rounded-sm border border-danger/15">
+              {error}
+            </p>
           </div>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">

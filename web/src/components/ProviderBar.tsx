@@ -1,5 +1,8 @@
 import { useAppStore } from '../stores/app';
 import { switchModel } from '../api/client';
+import { createLogger } from '../../../src/utils/logger';
+
+const logger = createLogger('ProviderBar');
 
 const PROVIDERS = [
   { id: 'claude', name: 'Claude', model: 'Sonnet', color: 'bg-provider-claude', dot: '#f59e0b' },
@@ -27,7 +30,7 @@ export default function ProviderBar() {
               key={p.id}
               onClick={() => {
                 setModel(p.id);
-                switchModel(p.id).catch(() => {});
+                switchModel(p.id).catch((err) => { logger.error('切换模型失败:', err); });
               }}
               className={`
                 group flex items-center gap-2 px-3 py-1.5 rounded-sm transition-all duration-300
@@ -36,6 +39,7 @@ export default function ProviderBar() {
                   : 'border border-transparent hover:bg-white/[0.02]'
                 }
               `}
+              aria-label={`切换到 ${p.name} ${p.model}`}
               title={`${p.name} · ${p.model}`}
             >
               {/* Dot + glow */}

@@ -52,13 +52,20 @@ export default function ChatMessage({ msg }: { msg: MessageData }) {
   );
 }
 
+const PROVIDER_COLORS: Record<string, string> = {
+  claude: '#f59e0b',
+  openai: '#10b981',
+  gemini: '#4285f4',
+  minimax: '#ec4899',
+  moonshot: '#94a3b8',
+  glm: '#06b6d4',
+  deepseek: '#6366f1',
+};
+
 function getProviderColor(provider: string): string {
-  const map: Record<string, string> = {
-    claude: '#f59e0b', openai: '#10b981', gemini: '#4285f4',
-    minimax: '#ec4899', moonshot: '#94a3b8', glm: '#06b6d4', deepseek: '#6366f1',
-  };
-  for (const [key, color] of Object.entries(map)) {
-    if (provider.toLowerCase().includes(key)) return color;
+  const lower = provider.toLowerCase();
+  for (const prefix of Object.keys(PROVIDER_COLORS)) {
+    if (lower.startsWith(prefix)) return PROVIDER_COLORS[prefix];
   }
   return '#06b6d4';
 }
