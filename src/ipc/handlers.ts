@@ -2,7 +2,7 @@
  * IPC Handlers - Main process IPC handlers
  */
 
-import { ipcMain, IpcMainInvokeEvent } from 'electron';
+import { ipcMain, BrowserWindow, IpcMainInvokeEvent } from 'electron';
 import { IPC_CHANNELS, IPCRequest, IPCResponse } from './protocol';
 import { isValidMainChannel } from './channels';
 import { createLogger } from '../utils/logger';
@@ -115,7 +115,6 @@ export function sendToRenderer(window: Electron.BrowserWindow, channel: string, 
  * Broadcast event to all windows
  */
 export function broadcastToAll(channel: string, data: any): void {
-  const { BrowserWindow } = require('electron');
   const windows = BrowserWindow.getAllWindows();
 
   for (const window of windows) {

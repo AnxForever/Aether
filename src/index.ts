@@ -20,7 +20,6 @@ export * from './skills';
 // System (removed scheduler to avoid TaskQueue conflict)
 export * from './gateway';
 export * from './updater';
-export * from './analytics';
 export * from './telemetry';
 export * from './watcher';
 export * from './system';

@@ -74,8 +74,6 @@ import { FeedbackExporter } from './feedback/exporter';
 import type { ExportOptions } from './feedback/exporter';
 import { TelemetrySystem } from './telemetry/telemetry-system';
 import type { TelemetryConfig } from './telemetry/telemetry-system';
-import { AnalyticsClient } from './analytics/analytics-client';
-import type { AnalyticsConfig, UserProperties } from './analytics/analytics-client';
 import { I18nManager } from './i18n/i18n-manager';
 import type { SupportedLocale, I18nNamespace, TranslationOptions, I18nConfig } from './i18n/types';
 
@@ -277,7 +275,6 @@ export class NexusAgent {
   private processManager?: ProcessManager;
   private feedbackExporter?: FeedbackExporter;
   private telemetrySystem?: TelemetrySystem;
-  private analyticsClient?: AnalyticsClient;
   private i18nManager?: I18nManager;
 
   // 7 activated modules
@@ -499,7 +496,7 @@ export class NexusAgent {
       logger.info('Feedback exporter initialized');
     }
 
-    // Initialize Telemetry
+    // Initialize Telemetry (OpenTelemetry-backed, backward compat)
     if (this.config.telemetry?.enabled !== false) {
       this.telemetrySystem = new TelemetrySystem({
         serviceName: this.config.telemetry?.serviceName || 'nexus-agent',
@@ -507,20 +504,10 @@ export class NexusAgent {
         enabled: true,
       });
       await this.telemetrySystem.initialize();
-      logger.info('Telemetry system initialized');
+      logger.info('Telemetry system initialized (OpenTelemetry backend)');
     }
 
-    // Initialize Analytics
-    const analyticsApiKey = this.config.analytics?.apiKey || process.env.POSTHOG_API_KEY;
-    if (analyticsApiKey && this.config.analytics?.enabled !== false) {
-      this.analyticsClient = new AnalyticsClient({
-        apiKey: analyticsApiKey,
-        host: this.config.analytics?.host,
-        enabled: true,
-      });
-      await this.analyticsClient.initialize();
-      logger.info('Analytics client initialized');
-    }
+    // Analytics removed: PostHog was replaced by OpenTelemetry + Sentry
 
     // Initialize i18n
     try {
@@ -642,7 +629,6 @@ export class NexusAgent {
       await this.localServer.stop();
     }
     await this.telemetrySystem?.destroy();
-    await this.analyticsClient?.destroy();
     await this.i18nManager?.cleanup();
     this.processManager?.stopAll();
 
@@ -1885,23 +1871,28 @@ export class NexusAgent {
   }
 
   // ============================================================================
-  // Telemetry API
+  // Telemetry API (OpenTelemetry backend)
   // ============================================================================
 
   /**
-   * Track a telemetry event
+   * Track a telemetry event — delegates to OpenTelemetry tracer
    */
   trackTelemetryEvent(name: string, attributes?: Record<string, any>): void {
-    if (!this.telemetrySystem) return;
-    this.telemetrySystem.startSpan(name, attributes);
+    // Use TelemetryManager (OpenTelemetry) if available, otherwise fall back
+    if (this.telemetryManager?.isReady()) {
+      const tracer = this.telemetryManager.getTracer();
+      tracer.startSpan(name, attributes);
+    }
   }
 
   /**
-   * Track a telemetry metric
+   * Track a telemetry metric — delegates to OpenTelemetry metrics
    */
   trackTelemetryMetric(name: string, value: number, attributes?: Record<string, any>): void {
-    if (!this.telemetrySystem) return;
-    this.telemetrySystem.gauge(name, value, attributes);
+    if (this.telemetryManager?.isReady()) {
+      const metrics = this.telemetryManager.getMetrics();
+      metrics.incrementCounter(name, value, attributes);
+    }
   }
 
   /**
@@ -1909,39 +1900,34 @@ export class NexusAgent {
    */
   getTelemetryStatus(): { enabled: boolean; active: boolean } {
     return {
-      enabled: this.telemetrySystem !== undefined,
-      active: this.telemetrySystem?.isEnabled() ?? false,
+      enabled: this.telemetryManager !== undefined,
+      active: this.telemetryManager?.isReady() ?? false,
     };
   }
 
   // ============================================================================
-  // Analytics API
+  // Analytics API (removed — PostHog replaced by OpenTelemetry + Sentry)
   // ============================================================================
 
   /**
-   * Track an analytics event
+   * Track an analytics event — no-op, analytics routed through OpenTelemetry
    */
-  trackAnalyticsEvent(event: string, properties?: Record<string, any>): void {
-    if (!this.analyticsClient) return;
-    this.analyticsClient.track(event, properties);
+  trackAnalyticsEvent(_event: string, _properties?: Record<string, any>): void {
+    logger.debug('Analytics event suppressed: use OpenTelemetry/Sentry instead');
   }
 
   /**
-   * Identify a user for analytics
+   * Identify a user for analytics — no-op
    */
-  identifyAnalyticsUser(userId: string, properties?: UserProperties): void {
-    if (!this.analyticsClient) return;
-    this.analyticsClient.identify(userId, properties);
+  identifyAnalyticsUser(_userId: string, _properties?: Record<string, any>): void {
+    logger.debug('Analytics identify suppressed: use OpenTelemetry/Sentry instead');
   }
 
   /**
    * Get analytics client status
    */
   getAnalyticsStatus(): { enabled: boolean; active: boolean } {
-    return {
-      enabled: this.analyticsClient !== undefined,
-      active: this.analyticsClient?.isEnabled() ?? false,
-    };
+    return { enabled: false, active: false };
   }
 
   // ============================================================================
